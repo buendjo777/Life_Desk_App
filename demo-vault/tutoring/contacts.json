@@ -1,0 +1,22 @@
+{
+  "AB": {
+    "parent": "Marta",
+    "student": "Álex",
+    "phone": "+34600000001"
+  },
+  "CD": {
+    "parent": "Javier",
+    "student": "Carla",
+    "phone": "+34600000002"
+  },
+  "EM": {
+    "parent": "Claire",
+    "student": "Emma",
+    "phone": "+34600000003"
+  },
+  "LR": {
+    "parent": "Ana",
+    "student": "Lucas",
+    "phone": "+34600000004"
+  }
+}

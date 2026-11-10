@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Swift / Xcode
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Build output
+build/
+dist/
+Desk.app/
+
+# Inspiration images: third-party shots, never committed
+design/inspiration/

@@ -1,0 +1,388 @@
+[
+  {
+    "id": "e001",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-10-26T16:00:00Z",
+    "end": "2026-10-26T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e002",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-10-27T17:00:00Z",
+    "end": "2026-10-27T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e003",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-10-28T16:00:00Z",
+    "end": "2026-10-28T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e004",
+    "calendar": "Tutoring",
+    "title": "CD",
+    "start": "2026-10-28T18:00:00Z",
+    "end": "2026-10-28T19:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e005",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-10-29T17:00:00Z",
+    "end": "2026-10-29T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e006",
+    "calendar": "Tutoring",
+    "title": "LR",
+    "start": "2026-10-30T15:00:00Z",
+    "end": "2026-10-30T16:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e007",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-02T16:00:00Z",
+    "end": "2026-11-02T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e008",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-11-03T17:00:00Z",
+    "end": "2026-11-03T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e009",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-04T16:00:00Z",
+    "end": "2026-11-04T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e010",
+    "calendar": "Tutoring",
+    "title": "CD",
+    "start": "2026-11-04T18:00:00Z",
+    "end": "2026-11-04T19:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e011",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-11-05T17:00:00Z",
+    "end": "2026-11-05T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e012",
+    "calendar": "Tutoring",
+    "title": "LR",
+    "start": "2026-11-06T15:00:00Z",
+    "end": "2026-11-06T16:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e037",
+    "calendar": "Personal",
+    "title": "Gym",
+    "start": "2026-11-09T06:00:00Z",
+    "end": "2026-11-09T06:50:00Z",
+    "all_day": false,
+    "location": "Gym"
+  },
+  {
+    "id": "e013",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-09T16:00:00Z",
+    "end": "2026-11-09T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e014",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-11-10T17:00:00Z",
+    "end": "2026-11-10T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e038",
+    "calendar": "Personal",
+    "title": "Morning run",
+    "start": "2026-11-11T06:00:00Z",
+    "end": "2026-11-11T06:45:00Z",
+    "all_day": false,
+    "location": "Retiro park"
+  },
+  {
+    "id": "e039",
+    "calendar": "Personal",
+    "title": "Deep work · Grad-CAM figures",
+    "start": "2026-11-11T09:00:00Z",
+    "end": "2026-11-11T10:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e040",
+    "calendar": "Uni",
+    "title": "Call · Prof. Hanna Weber",
+    "start": "2026-11-11T12:30:00Z",
+    "end": "2026-11-11T13:00:00Z",
+    "all_day": false,
+    "location": "Online"
+  },
+  {
+    "id": "e015",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-11T16:00:00Z",
+    "end": "2026-11-11T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e016",
+    "calendar": "Tutoring",
+    "title": "CD",
+    "start": "2026-11-11T18:00:00Z",
+    "end": "2026-11-11T19:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e041",
+    "calendar": "Uni",
+    "title": "Lab group meeting",
+    "start": "2026-11-12T11:00:00Z",
+    "end": "2026-11-12T12:00:00Z",
+    "all_day": false,
+    "location": "Online"
+  },
+  {
+    "id": "e017",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-11-12T17:00:00Z",
+    "end": "2026-11-12T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e042",
+    "calendar": "Personal",
+    "title": "Dentist",
+    "start": "2026-11-13T09:00:00Z",
+    "end": "2026-11-13T09:30:00Z",
+    "all_day": false,
+    "location": "Calle Mayor 12"
+  },
+  {
+    "id": "e018",
+    "calendar": "Tutoring",
+    "title": "LR",
+    "start": "2026-11-13T15:00:00Z",
+    "end": "2026-11-13T16:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e019",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-16T16:00:00Z",
+    "end": "2026-11-16T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e020",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-11-17T17:00:00Z",
+    "end": "2026-11-17T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e021",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-18T16:00:00Z",
+    "end": "2026-11-18T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e022",
+    "calendar": "Tutoring",
+    "title": "CD",
+    "start": "2026-11-18T18:00:00Z",
+    "end": "2026-11-18T19:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e043",
+    "calendar": "Uni",
+    "title": "Info session · Harbor University",
+    "start": "2026-11-19T10:00:00Z",
+    "end": "2026-11-19T11:00:00Z",
+    "all_day": false,
+    "location": "Online"
+  },
+  {
+    "id": "e044",
+    "calendar": "Uni",
+    "title": "Call · Dr. Kenji Sato",
+    "start": "2026-11-19T14:00:00Z",
+    "end": "2026-11-19T14:30:00Z",
+    "all_day": false,
+    "location": "Online"
+  },
+  {
+    "id": "e023",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-11-19T17:00:00Z",
+    "end": "2026-11-19T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e024",
+    "calendar": "Tutoring",
+    "title": "LR",
+    "start": "2026-11-20T15:00:00Z",
+    "end": "2026-11-20T16:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e045",
+    "calendar": "Travel",
+    "title": "Flight MAD → BRU",
+    "start": "2026-11-20T17:40:00Z",
+    "end": "2026-11-20T19:55:00Z",
+    "all_day": false,
+    "location": "Madrid-Barajas T4"
+  },
+  {
+    "id": "e046",
+    "calendar": "Travel",
+    "title": "Flight BRU → MAD",
+    "start": "2026-11-22T18:30:00Z",
+    "end": "2026-11-22T20:55:00Z",
+    "all_day": false,
+    "location": "Brussels Airport"
+  },
+  {
+    "id": "e025",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-23T16:00:00Z",
+    "end": "2026-11-23T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e026",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-11-24T17:00:00Z",
+    "end": "2026-11-24T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e027",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-25T16:00:00Z",
+    "end": "2026-11-25T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e028",
+    "calendar": "Tutoring",
+    "title": "CD",
+    "start": "2026-11-25T18:00:00Z",
+    "end": "2026-11-25T19:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e029",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-11-26T17:00:00Z",
+    "end": "2026-11-26T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e047",
+    "calendar": "Uni",
+    "title": "Exam · Strength of Materials",
+    "start": "2026-11-27T09:30:00Z",
+    "end": "2026-11-27T12:00:00Z",
+    "all_day": false,
+    "location": "Room 214"
+  },
+  {
+    "id": "e030",
+    "calendar": "Tutoring",
+    "title": "LR",
+    "start": "2026-11-27T15:00:00Z",
+    "end": "2026-11-27T16:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e031",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-11-30T16:00:00Z",
+    "end": "2026-11-30T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e032",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-12-01T17:00:00Z",
+    "end": "2026-12-01T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e033",
+    "calendar": "Tutoring",
+    "title": "AB",
+    "start": "2026-12-02T16:00:00Z",
+    "end": "2026-12-02T17:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e034",
+    "calendar": "Tutoring",
+    "title": "CD",
+    "start": "2026-12-02T18:00:00Z",
+    "end": "2026-12-02T19:00:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e035",
+    "calendar": "Tutoring",
+    "title": "EM",
+    "start": "2026-12-03T17:00:00Z",
+    "end": "2026-12-03T18:30:00Z",
+    "all_day": false
+  },
+  {
+    "id": "e036",
+    "calendar": "Tutoring",
+    "title": "LR",
+    "start": "2026-12-04T15:00:00Z",
+    "end": "2026-12-04T16:00:00Z",
+    "all_day": false
+  }
+]

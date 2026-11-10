@@ -1,0 +1,303 @@
+[
+  {
+    "id": "run",
+    "section": "run",
+    "title": "Nightly run",
+    "detail": "ok · 5 agents · 0 failures · 23 emails scanned",
+    "when": "2026-11-11T05:34:10Z",
+    "source": "agent/runs.jsonl",
+    "mode": "nightly"
+  },
+  {
+    "id": "deadline-exam",
+    "section": "deadline",
+    "rank": 1,
+    "title": "Strength of Materials exam",
+    "when": "2026-11-27T09:30:00Z",
+    "source": "study/strength-of-materials.md"
+  },
+  {
+    "id": "deadline-alpine-bme",
+    "section": "deadline",
+    "rank": 2,
+    "title": "Alpine Institute of Technology · MSc Biomedical Engineering",
+    "when": "2026-11-30T10:59:00Z",
+    "source": "nini/masters-deadlines-2027.md"
+  },
+  {
+    "id": "deadline-lakeside-lse",
+    "section": "deadline",
+    "rank": 3,
+    "title": "Lakeside Polytechnic · MSc Life Sciences Engineering",
+    "when": "2026-12-15",
+    "source": "nini/masters-deadlines-2027.md"
+  },
+  {
+    "id": "deadline-thames-medai",
+    "section": "deadline",
+    "rank": 4,
+    "title": "Thames College London · MSc Medical AI",
+    "when": "2027-01-06",
+    "source": "nini/masters-deadlines-2027.md"
+  },
+  {
+    "id": "deadline-harbor-bme",
+    "section": "deadline",
+    "rank": 5,
+    "title": "Harbor University · MSE Biomedical Engineering",
+    "when": "2027-01-15",
+    "source": "nini/masters-deadlines-2027.md"
+  },
+  {
+    "id": "deadline-northbridge-bme",
+    "section": "deadline",
+    "rank": 6,
+    "title": "Northbridge Tech · MS Biomedical Engineering",
+    "when": "2027-01-31",
+    "source": "nini/masters-deadlines-2027.md"
+  },
+  {
+    "id": "today-1",
+    "section": "today",
+    "rank": 1,
+    "title": "Send the Grad-CAM figures to the lab",
+    "detail": "Group meeting tomorrow, 12:00",
+    "source": "TASKS.md"
+  },
+  {
+    "id": "today-2",
+    "section": "today",
+    "rank": 2,
+    "title": "Reply to Maya Chen (Corvid MedTech)",
+    "detail": "She proposed Thursday 15:00 for the interview",
+    "source": "Gmail 18c2f0a1b2c3d4e5"
+  },
+  {
+    "id": "today-3",
+    "section": "today",
+    "rank": 3,
+    "title": "Finish the Alpine motivation letter draft",
+    "detail": "Deadline 30 Nov",
+    "source": "TASKS.md"
+  },
+  {
+    "id": "confirm-event-corvid",
+    "section": "confirm",
+    "rank": 1,
+    "action": "add_event",
+    "title": "Add to calendar: Interview, Corvid MedTech",
+    "event": {
+      "title": "Interview · Corvid MedTech",
+      "start": "2026-11-12T14:00:00Z",
+      "end": "2026-11-12T14:45:00Z",
+      "all_day": false
+    },
+    "evidence": "Would Thursday 12 November at 15:00 CET work for a 45-minute call?",
+    "source": "Gmail 18c2f0a1b2c3d4e5"
+  },
+  {
+    "id": "confirm-tick-pulsewave",
+    "section": "confirm",
+    "rank": 2,
+    "action": "tick",
+    "title": "Tick: Send CV to Pulsewave",
+    "detail": "Your reply in the same thread, 10 Nov 21:14",
+    "evidence": "Attached is my CV, as discussed on the phone.",
+    "source": "Gmail 18c1aa9087f6e5d4"
+  },
+  {
+    "id": "event-e038",
+    "section": "event",
+    "title": "Morning run",
+    "when": "2026-11-11T06:00:00Z",
+    "source": "Calendar",
+    "event": {
+      "title": "Morning run",
+      "start": "2026-11-11T06:00:00Z",
+      "end": "2026-11-11T06:45:00Z",
+      "all_day": false
+    }
+  },
+  {
+    "id": "event-e039",
+    "section": "event",
+    "title": "Deep work · Grad-CAM figures",
+    "when": "2026-11-11T09:00:00Z",
+    "source": "Calendar",
+    "event": {
+      "title": "Deep work · Grad-CAM figures",
+      "start": "2026-11-11T09:00:00Z",
+      "end": "2026-11-11T10:30:00Z",
+      "all_day": false
+    }
+  },
+  {
+    "id": "event-e040",
+    "section": "event",
+    "title": "Call · Prof. Hanna Weber",
+    "when": "2026-11-11T12:30:00Z",
+    "source": "Calendar",
+    "event": {
+      "title": "Call · Prof. Hanna Weber",
+      "start": "2026-11-11T12:30:00Z",
+      "end": "2026-11-11T13:00:00Z",
+      "all_day": false
+    }
+  },
+  {
+    "id": "event-e015",
+    "section": "event",
+    "title": "Tutoring · AB",
+    "when": "2026-11-11T16:00:00Z",
+    "source": "Calendar",
+    "event": {
+      "title": "AB",
+      "start": "2026-11-11T16:00:00Z",
+      "end": "2026-11-11T17:00:00Z",
+      "all_day": false
+    }
+  },
+  {
+    "id": "event-e016",
+    "section": "event",
+    "title": "Tutoring · CD",
+    "when": "2026-11-11T18:00:00Z",
+    "source": "Calendar",
+    "event": {
+      "title": "CD",
+      "start": "2026-11-11T18:00:00Z",
+      "end": "2026-11-11T19:00:00Z",
+      "all_day": false
+    }
+  },
+  {
+    "id": "event-e041",
+    "section": "event",
+    "title": "Lab group meeting",
+    "when": "2026-11-12T11:00:00Z",
+    "source": "Calendar",
+    "event": {
+      "title": "Lab group meeting",
+      "start": "2026-11-12T11:00:00Z",
+      "end": "2026-11-12T12:00:00Z",
+      "all_day": false
+    }
+  },
+  {
+    "id": "event-e017",
+    "section": "event",
+    "title": "Tutoring · EM",
+    "when": "2026-11-12T17:00:00Z",
+    "source": "Calendar",
+    "event": {
+      "title": "EM",
+      "start": "2026-11-12T17:00:00Z",
+      "end": "2026-11-12T18:30:00Z",
+      "all_day": false
+    }
+  },
+  {
+    "id": "draft-maya",
+    "section": "draft",
+    "rank": 1,
+    "title": "To Maya Chen: confirms Thursday 15:00",
+    "source": "agent/drafts/2026-11-11-maya-chen.md"
+  },
+  {
+    "id": "draft-lakeside",
+    "section": "draft",
+    "rank": 2,
+    "title": "To Lakeside admissions: asks which CV format they accept",
+    "source": "agent/drafts/2026-11-11-lakeside.md"
+  },
+  {
+    "id": "waiting-weber",
+    "section": "waiting",
+    "rank": 1,
+    "title": "Prof. Hanna Weber: recommendation letter",
+    "detail": "Asked 9 Nov · nudge from 16 Nov",
+    "when": "2026-11-09",
+    "source": "Gmail 18c09d3e4f5a6b7c"
+  },
+  {
+    "id": "waiting-ortega",
+    "section": "waiting",
+    "rank": 2,
+    "title": "Dr. Luis Ortega: research stay",
+    "detail": "Sent 4 Nov · follow up 16–18 Nov",
+    "when": "2026-11-04",
+    "source": "Gmail 18bf8e7d6c5b4a39"
+  },
+  {
+    "id": "email-1",
+    "section": "email",
+    "rank": 1,
+    "title": "Maya Chen · Corvid MedTech",
+    "subject": "Interview availability",
+    "detail": "Proposes Thursday 12 Nov, 15:00 CET, 45 minutes. Asks you to confirm.",
+    "tag": "needs_reply",
+    "when": "2026-11-10T17:42:00Z",
+    "source": "Gmail 18c2f0a1b2c3d4e5"
+  },
+  {
+    "id": "email-2",
+    "section": "email",
+    "rank": 2,
+    "title": "Prof. Hanna Weber",
+    "subject": "Re: Recommendation letter",
+    "detail": "Happy to write one. Wants the programme list by Friday.",
+    "tag": "needs_reply",
+    "when": "2026-11-10T15:05:00Z",
+    "source": "Gmail 18c2e1d0c9b8a796"
+  },
+  {
+    "id": "email-3",
+    "section": "email",
+    "rank": 3,
+    "title": "Admissions · Lakeside Polytechnic",
+    "subject": "Document upload reminder",
+    "detail": "Transcript and CV uploads close 15 Dec.",
+    "tag": "deadline",
+    "when": "2026-11-10T09:20:00Z",
+    "source": "Gmail 18c2b3c4d5e6f708"
+  },
+  {
+    "id": "email-4",
+    "section": "email",
+    "rank": 4,
+    "title": "Helix Diagnostics Careers",
+    "subject": "Application received",
+    "detail": "Data Science Intern, Basel: under review, reply within three weeks.",
+    "tag": "fyi",
+    "when": "2026-11-09T11:00:00Z",
+    "source": "Gmail 18c25a4b3c2d1e0f"
+  },
+  {
+    "id": "email-5",
+    "section": "email",
+    "rank": 5,
+    "title": "Alpine Institute of Technology",
+    "subject": "Portal maintenance",
+    "detail": "Application portal offline Saturday 14 Nov, 02:00–06:00.",
+    "tag": "fyi",
+    "when": "2026-11-09T08:00:00Z",
+    "source": "Gmail 18c21f0e1d2c3b4a"
+  },
+  {
+    "id": "workout-1",
+    "section": "workout",
+    "rank": 1,
+    "title": "Run · 8.2 km",
+    "detail": "42:10 · avg HR 148",
+    "when": "2026-11-11T06:00:00Z",
+    "source": "Strava"
+  },
+  {
+    "id": "workout-week",
+    "section": "workout",
+    "rank": 2,
+    "title": "This week: 3 sessions · 2 h 37",
+    "detail": "Strength, ride, run",
+    "source": "Strava"
+  }
+]

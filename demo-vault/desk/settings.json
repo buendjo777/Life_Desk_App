@@ -1,0 +1,20 @@
+{
+  "name": "Jose",
+  "timezone": "Europe/Madrid",
+  "scheduled_run_local": "06:30",
+  "exam": {
+    "title": "Strength of Materials",
+    "file": "study/strength-of-materials.md",
+    "mode_starts": "2026-11-16T00:00:00+01:00",
+    "mode_ends": "2026-11-27T13:00:00+01:00"
+  },
+  "tutoring_calendar": "Tutoring",
+  "tutoring_locale": "es_ES",
+  "currency": "EUR",
+  "links": {
+    "internship_board": "https://example.com/demo/internship-board",
+    "contacts_board": "https://example.com/demo/contacts-board",
+    "run_now": "https://example.com/demo/run-now"
+  },
+  "demo_today": "2026-11-11T08:12:00+01:00"
+}

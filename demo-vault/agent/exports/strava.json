@@ -1,0 +1,416 @@
+[
+  {
+    "id": "a202608250",
+    "date": "2026-08-25",
+    "type": "Run",
+    "name": "Tempo run",
+    "duration_s": 3151,
+    "distance_m": 9900,
+    "avg_hr": 142
+  },
+  {
+    "id": "a202608261",
+    "date": "2026-08-26",
+    "type": "Run",
+    "name": "Long run",
+    "duration_s": 2675,
+    "distance_m": 8900,
+    "avg_hr": 151
+  },
+  {
+    "id": "a202608272",
+    "date": "2026-08-27",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 3076,
+    "distance_m": 9700,
+    "avg_hr": 146
+  },
+  {
+    "id": "a202608303",
+    "date": "2026-08-30",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 2400,
+    "avg_hr": 120
+  },
+  {
+    "id": "a202608310",
+    "date": "2026-08-31",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 2700,
+    "avg_hr": 113
+  },
+  {
+    "id": "a202609021",
+    "date": "2026-09-02",
+    "type": "Run",
+    "name": "Morning run",
+    "duration_s": 3294,
+    "distance_m": 10500,
+    "avg_hr": 144
+  },
+  {
+    "id": "a202609032",
+    "date": "2026-09-03",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 2700,
+    "avg_hr": 110
+  },
+  {
+    "id": "a202609063",
+    "date": "2026-09-06",
+    "type": "Run",
+    "name": "Tempo run",
+    "duration_s": 2542,
+    "distance_m": 8100,
+    "avg_hr": 153
+  },
+  {
+    "id": "a202609070",
+    "date": "2026-09-07",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 2069,
+    "distance_m": 6900,
+    "avg_hr": 152
+  },
+  {
+    "id": "a202609081",
+    "date": "2026-09-08",
+    "type": "Run",
+    "name": "Tempo run",
+    "duration_s": 3036,
+    "distance_m": 10200,
+    "avg_hr": 155
+  },
+  {
+    "id": "a202609092",
+    "date": "2026-09-09",
+    "type": "Run",
+    "name": "Long run",
+    "duration_s": 2523,
+    "distance_m": 8100,
+    "avg_hr": 147
+  },
+  {
+    "id": "a202609133",
+    "date": "2026-09-13",
+    "type": "Run",
+    "name": "Morning run",
+    "duration_s": 3335,
+    "distance_m": 10800,
+    "avg_hr": 148
+  },
+  {
+    "id": "a202609150",
+    "date": "2026-09-15",
+    "type": "Run",
+    "name": "Long run",
+    "duration_s": 3292,
+    "distance_m": 10900,
+    "avg_hr": 143
+  },
+  {
+    "id": "a202609181",
+    "date": "2026-09-18",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 2360,
+    "distance_m": 7500,
+    "avg_hr": 142
+  },
+  {
+    "id": "a202609192",
+    "date": "2026-09-19",
+    "type": "Ride",
+    "name": "Hill ride",
+    "duration_s": 4215,
+    "distance_m": 30500,
+    "avg_hr": 125
+  },
+  {
+    "id": "a202609230",
+    "date": "2026-09-23",
+    "type": "Run",
+    "name": "Morning run",
+    "duration_s": 3447,
+    "distance_m": 11400,
+    "avg_hr": 145
+  },
+  {
+    "id": "a202609261",
+    "date": "2026-09-26",
+    "type": "Ride",
+    "name": "Commute ride",
+    "duration_s": 6557,
+    "distance_m": 48200,
+    "avg_hr": 130
+  },
+  {
+    "id": "a202609272",
+    "date": "2026-09-27",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 3600,
+    "avg_hr": 113
+  },
+  {
+    "id": "a202609280",
+    "date": "2026-09-28",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 3000,
+    "avg_hr": 115
+  },
+  {
+    "id": "a202609301",
+    "date": "2026-09-30",
+    "type": "Run",
+    "name": "Tempo run",
+    "duration_s": 3567,
+    "distance_m": 11000,
+    "avg_hr": 146
+  },
+  {
+    "id": "a202610012",
+    "date": "2026-10-01",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 3529,
+    "distance_m": 11400,
+    "avg_hr": 145
+  },
+  {
+    "id": "a202610023",
+    "date": "2026-10-02",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 2700,
+    "avg_hr": 118
+  },
+  {
+    "id": "a202610050",
+    "date": "2026-10-05",
+    "type": "Ride",
+    "name": "Hill ride",
+    "duration_s": 5857,
+    "distance_m": 43000,
+    "avg_hr": 127
+  },
+  {
+    "id": "a202610071",
+    "date": "2026-10-07",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 2380,
+    "distance_m": 7800,
+    "avg_hr": 156
+  },
+  {
+    "id": "a202610092",
+    "date": "2026-10-09",
+    "type": "Swim",
+    "name": "Pool swim",
+    "duration_s": 2616,
+    "distance_m": 2100,
+    "avg_hr": 137
+  },
+  {
+    "id": "a202610103",
+    "date": "2026-10-10",
+    "type": "Run",
+    "name": "Tempo run",
+    "duration_s": 3111,
+    "distance_m": 9800,
+    "avg_hr": 158
+  },
+  {
+    "id": "a202610114",
+    "date": "2026-10-11",
+    "type": "Run",
+    "name": "Tempo run",
+    "duration_s": 3018,
+    "distance_m": 9900,
+    "avg_hr": 155
+  },
+  {
+    "id": "a202610140",
+    "date": "2026-10-14",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 2744,
+    "distance_m": 9100,
+    "avg_hr": 152
+  },
+  {
+    "id": "a202610151",
+    "date": "2026-10-15",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 3341,
+    "distance_m": 10000,
+    "avg_hr": 148
+  },
+  {
+    "id": "a202610162",
+    "date": "2026-10-16",
+    "type": "Ride",
+    "name": "Commute ride",
+    "duration_s": 3205,
+    "distance_m": 20700,
+    "avg_hr": 134
+  },
+  {
+    "id": "a202610173",
+    "date": "2026-10-17",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 2400,
+    "avg_hr": 115
+  },
+  {
+    "id": "a202610190",
+    "date": "2026-10-19",
+    "type": "Ride",
+    "name": "Commute ride",
+    "duration_s": 3901,
+    "distance_m": 24500,
+    "avg_hr": 140
+  },
+  {
+    "id": "a202610201",
+    "date": "2026-10-20",
+    "type": "Run",
+    "name": "Tempo run",
+    "duration_s": 3283,
+    "distance_m": 10500,
+    "avg_hr": 148
+  },
+  {
+    "id": "a202610212",
+    "date": "2026-10-21",
+    "type": "Run",
+    "name": "Morning run",
+    "duration_s": 3260,
+    "distance_m": 10800,
+    "avg_hr": 141
+  },
+  {
+    "id": "a202610233",
+    "date": "2026-10-23",
+    "type": "Ride",
+    "name": "Ride",
+    "duration_s": 3020,
+    "distance_m": 21400,
+    "avg_hr": 136
+  },
+  {
+    "id": "a202610254",
+    "date": "2026-10-25",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 3045,
+    "distance_m": 9800,
+    "avg_hr": 154
+  },
+  {
+    "id": "a202610260",
+    "date": "2026-10-26",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 3672,
+    "distance_m": 11900,
+    "avg_hr": 156
+  },
+  {
+    "id": "a202610281",
+    "date": "2026-10-28",
+    "type": "Ride",
+    "name": "Hill ride",
+    "duration_s": 3987,
+    "distance_m": 25800,
+    "avg_hr": 130
+  },
+  {
+    "id": "a202610312",
+    "date": "2026-10-31",
+    "type": "Run",
+    "name": "Morning run",
+    "duration_s": 2275,
+    "distance_m": 7500,
+    "avg_hr": 154
+  },
+  {
+    "id": "a202611013",
+    "date": "2026-11-01",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 3000,
+    "avg_hr": 119
+  },
+  {
+    "id": "a202611030",
+    "date": "2026-11-03",
+    "type": "Run",
+    "name": "Easy run",
+    "duration_s": 3342,
+    "distance_m": 10400,
+    "avg_hr": 146
+  },
+  {
+    "id": "a202611061",
+    "date": "2026-11-06",
+    "type": "Run",
+    "name": "Morning run",
+    "duration_s": 3175,
+    "distance_m": 9500,
+    "avg_hr": 151
+  },
+  {
+    "id": "a202611072",
+    "date": "2026-11-07",
+    "type": "Run",
+    "name": "Long run",
+    "duration_s": 2867,
+    "distance_m": 9600,
+    "avg_hr": 149
+  },
+  {
+    "id": "a202611083",
+    "date": "2026-11-08",
+    "type": "Ride",
+    "name": "Hill ride",
+    "duration_s": 4291,
+    "distance_m": 30700,
+    "avg_hr": 138
+  },
+  {
+    "id": "a202611090",
+    "date": "2026-11-09",
+    "type": "Strength",
+    "name": "Strength",
+    "duration_s": 3000,
+    "avg_hr": 112
+  },
+  {
+    "id": "a202611100",
+    "date": "2026-11-10",
+    "type": "Ride",
+    "name": "Commute ride",
+    "duration_s": 3900,
+    "distance_m": 24000,
+    "avg_hr": 132
+  },
+  {
+    "id": "a202611110",
+    "date": "2026-11-11",
+    "type": "Run",
+    "name": "Morning run",
+    "duration_s": 2530,
+    "distance_m": 8200,
+    "avg_hr": 148
+  }
+]
