@@ -116,6 +116,13 @@ A custom three-part layout (floating sidebar · content · right rail or inspect
 
 **Run-status rule** (the same as the web Desk): red when the last successful run is older than the latest scheduled run (`scheduled_run_local` in `timezone`, with 60 minutes' grace) or older than 30 hours; amber for a manual snapshot; green otherwise. Always with a word, never colour alone.
 
+## Built to iterate
+The Today mockup is V1 and a little dense, and Jose will keep changing the look. So:
+- Every colour, font size, radius and spacing value lives in `Theme.swift`. Views use tokens, never literals.
+- Every card and section is its own view, listed once per tab in a `TabLayout`. Adding, removing or reordering one is a one-line change.
+- **Customise** (View → Customise…): per tab, show or hide and reorder its cards and sections, and pick the density: Compact (the mockup) or Comfortable (more space, fewer rows). Saved as app preferences, not in the vault. Reset restores the defaults.
+
+
 ## Integrations: what is possible and what is not
 - **WhatsApp: never read.** Reading a personal account needs an unofficial tool, and WhatsApp's terms forbid access "through automated or other means" and allow suspending the account (https://www.whatsapp.com/legal/terms-of-service-eea). Sending uses the official click-to-chat link with prefilled text (https://whatsapp.com/faq/en/general/26000030); Jose presses send.
 - **Calendar.** Live: EventKit with full access (`NSCalendarsFullAccessUsageDescription`; Apple TN3152). Google's own "Show events from Gmail" adds flights, trains, hotels, restaurants and tickets; it is off by default in the EEA (https://support.google.com/calendar/answer/6084018). Anything else arrives as an `add_event` proposal. Agents never write the calendar.
@@ -148,8 +155,9 @@ A custom three-part layout (floating sidebar · content · right rail or inspect
 11. Writes (Live: commit, pull --rebase, push; Demo: memory only) and `desk/decisions.jsonl`.
 12. EventKit: live calendar and Add (Live); `calendar/events.json` (Demo).
 13. Git sync, the banner, the Settings window (vault path, mode).
-14. The Portfolio screen.
-15. App icon, final build and install, screenshots, README.
+14. Customise panel and density ("Built to iterate").
+15. The Portfolio screen.
+16. App icon, final build and install, screenshots, README.
 
 ## Portfolio mode
 - The demo vault plus a Portfolio screen: what the system does, an architecture diagram, the agents and their models, the evaluation result (missed-reply rate), the cost table, the failure log, a link to the thesis repo.

@@ -56,6 +56,7 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 - **Content column:** a 24 pt gap after the sidebar. A search field across the top (⌘F) with scope chips; the greeting; the summary sentence; then the tab's content.
 - **Right rail** (Today, Tutoring): 336 pt, 24 pt from the right edge. Status chip and round `control` icon buttons on top.
 - **Inspector:** a raised panel that slides over the right rail when a row is selected; Esc closes it.
+- **Density:** Compact is the mockup. Comfortable multiplies spacing and padding by 1.25, makes rows 60 pt tall and shows up to two fewer rows per list. Both read their values from `Theme.swift`.
 
 ## Components
 - **Stat card.** 24 pt corners, 20 pt padding, accent background, card title, two to four figures with uppercase captions, an optional mini chart in `onAccent`. One large geometric shape in the accent's deep tone at about 55% opacity, anchored top right and clipped by the card. Shapes per card: Today → circle (a sun) · Deadlines → triangle · Inbox → eight-point star · Health → heart · Studying → triangle · Projects → hexagon · Internship apps → square rotated 15° · Uni apps → chevron · Tutoring → ring · System → twelve-tooth cog. Draw them as SwiftUI `Shape`s.
