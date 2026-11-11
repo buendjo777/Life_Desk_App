@@ -19,3 +19,7 @@ Choices made where SPEC.md and DESIGN.md are silent or disagree. Each one is the
 | 13 | 2 | The Due tab lists tasks due today minus Focus titles (1 in the demo), while the Today card and the sentence count every task due today (4). The mockup shows "Due 4". | The spec defines the Due tab that way; a tab count that disagrees with its own list would be a bug. |
 | 14 | 2 | Run status uses the snapshot's `run` row (time and mode); `runs.jsonl` is the fallback. | The web Desk reads the same row, so both show the same colour. |
 | 15 | 2 | Live is chosen automatically when the vault folder exists and "Use the live vault" is on (the default); otherwise Demo. | "Demo is the default until a live vault path is set and exists." |
+| 16 | 3 | Drafts and Waiting are two short lists under Today's list; a click opens the row in the inspector. Both are hidden in exam mode. | The spec says they "open in the inspector" but not where the rows live; a list is the simplest entry point. |
+| 17 | 3 | In Demo the sidebar says "Synced" two minutes before the pinned clock. | There is no sync in Demo; a fixed time keeps the demo looking the same, like the mockup. |
+| 18 | 3 | Snapshot mode draws scroll views as clipped plain content anchored to the top. | `ImageRenderer` cannot draw `ScrollView`; clipping shows exactly the first screenful. |
+| 19 | 3 | Sections carry a design width; a tab's sections are packed into rows by width and each row stretches to fill. | One list per tab drives both the layout and Customise, so reordering never needs layout code. |

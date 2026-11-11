@@ -102,12 +102,15 @@ private struct SyncBox: View {
     @Environment(\.theme) private var t
 
     var body: some View {
+        let status = store.d.runStatus
         VStack(alignment: .leading, spacing: t.sp4) {
             HStack(spacing: t.sp6) {
-                Circle().fill(t.moss).frame(width: t.dot, height: t.dot)
-                Text(verbatim: "Not synced yet").style(\.small, \.panelText)
+                Circle().fill(store.banner == nil ? t.moss : t.alert).frame(width: t.dot, height: t.dot)
+                Text(verbatim: store.lastSync.map { "Synced \(store.cal.time($0))" } ?? "Not synced yet").style(\.small, \.panelText)
             }
-            Text(verbatim: "Vault · demo-vault").style(\.small, \.panelMuted)
+            Text(verbatim: "Vault · \(store.vaultName)").style(\.small, \.panelMuted).lineLimit(1)
+            Text(verbatim: status.lastRunText.map { "Last run \($0) · \(status.level.rawValue)" } ?? "No run yet · red")
+                .style(\.small, \.panelMuted).lineLimit(1)
         }
         .padding(.horizontal, t.sp12 + t.sp2)
         .padding(.vertical, t.sp12)

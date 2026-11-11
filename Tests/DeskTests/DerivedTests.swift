@@ -92,7 +92,7 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(store.mode, .demo)
         XCTAssertEqual(store.cal.isoStamp(store.now), "2026-11-11T08:12:00+01:00")
         XCTAssertEqual(store.tab, .today)
-        XCTAssertEqual(store.selection, "today-1")
+        XCTAssertEqual(store.selection, .row("today-1"))
         XCTAssertEqual(store.vaultName, "demo-vault")
     }
 }

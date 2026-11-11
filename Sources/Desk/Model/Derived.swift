@@ -230,3 +230,13 @@ struct Derived {
         }
     }
 }
+
+extension Derived {
+    /// The one-sentence summary under each tab's title.
+    func summary(for tab: Tab) -> [Phrase] {
+        switch tab {
+        case .today: todaySummary
+        default: []
+        }
+    }
+}
