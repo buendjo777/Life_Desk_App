@@ -87,8 +87,14 @@ struct Inspector: View {
             } else {
                 EmptyState(line: "This contact is no longer on the board.")
             }
-        default:
-            EmptyState(line: "Nothing to show.")
+        case .student(let initials):
+            if let student = store.d.student(initials) {
+                StudentInspector(student: student)
+            } else {
+                EmptyState(line: "This student is not in tutoring/students.md.")
+            }
+        case .check:
+            EmptyState(line: "Press Space to tick the highlighted item.")
         }
     }
 }

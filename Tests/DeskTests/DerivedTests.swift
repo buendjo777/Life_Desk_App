@@ -158,4 +158,43 @@ final class DerivedTests: XCTestCase {
         }
         XCTAssertEqual(offenders, [])
     }
+
+    // MARK: Tutoring
+
+    func testTutoringMoney() {
+        XCTAssertEqual(d.thisMonth.map(\.lessons), [3, 1, 3, 1])
+        XCTAssertEqual(d.thisMonth.map(\.amount), [75, 22, 135, 22])
+        XCTAssertEqual(d.receivedThisMonth, 398)
+        XCTAssertEqual(d.waitingForPayment.map(\.id), ["2026-10-EM"])
+        XCTAssertEqual(d.pendingAmount, 405)
+        XCTAssertEqual(d.monthEnd.count, 0)
+        XCTAssertEqual(d.weekLessons.count, 6)
+        XCTAssertEqual(d.money(13.5), "13.5 €")
+        // On 1 December, November becomes a finished month that has not been sent.
+        let december = at("2026-12-01T09:00:00+01:00")
+        XCTAssertEqual(december.monthEnd.count, 4)
+        XCTAssertEqual(december.monthEnd.first?.month, "2026-11")
+    }
+
+    func testWhatsAppMessageUsesTheTutoringLocale() throws {
+        let payment = try XCTUnwrap(d.waitingForPayment.first)
+        let reminder = try XCTUnwrap(d.tutoringMessage(for: payment, reminder: true))
+        XCTAssertTrue(reminder.contains("octubre"))
+        XCTAssertTrue(reminder.contains("405 €"))
+        XCTAssertFalse(reminder.contains("{"))
+        let link = try XCTUnwrap(d.whatsAppLink(for: payment, reminder: true))
+        XCTAssertEqual(link.host, "wa.me")
+        XCTAssertTrue(link.path.dropFirst().allSatisfy(\.isNumber))
+        XCTAssertNil(d.whatsAppLink(for: Payment(month: "2026-10", initials: "ZZ", lessons: 1, hours: 1, amount: 1), reminder: true))
+    }
+
+    @MainActor
+    func testMarkPaidInDemoNeverTouchesTheDisk() throws {
+        let store = Store(isSnapshot: true)
+        let file = DemoVault.url.appendingPathComponent(VaultData.paymentsFile)
+        let before = try String(contentsOf: file, encoding: .utf8)
+        store.markPaid(try XCTUnwrap(store.d.waitingForPayment.first))
+        XCTAssertTrue(store.d.waitingForPayment.isEmpty)
+        XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), before)
+    }
 }

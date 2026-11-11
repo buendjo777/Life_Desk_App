@@ -60,6 +60,17 @@ enum TabLayout {
             DeskSection("uni.programmes", "Programmes") { UniGrid() },
             DeskSection("uni.contacts", "Contacts") { ContactsBoard() },
         ]
+        case .tutoring: [
+            DeskSection("tutoring.donut", "Received vs pending", width: 284) { MoneyDonut() },
+            DeskSection("tutoring.received", "Received", width: 168) { MoneyCard(kind: .received) },
+            DeskSection("tutoring.pending", "Pending", width: 168) { MoneyCard(kind: .pending) },
+            DeskSection("tutoring.hours", "Hours", width: 168) { MoneyCard(kind: .hours) },
+            DeskSection("tutoring.waiting", "Waiting for payment", width: 394) { WaitingPayments() },
+            DeskSection("tutoring.monthEnd", "Month end", width: 394) { MonthEnd() },
+            DeskSection("tutoring.month", "This month") { TutoringMonthList() },
+            DeskSection("tutoring.payments", "Payments") { PaymentsTable() },
+            DeskSection("tutoring.week", "This week's lessons", slot: .rail) { WeekLessons() },
+        ]
         default: []
         }
     }

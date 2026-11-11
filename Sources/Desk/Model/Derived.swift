@@ -240,6 +240,7 @@ extension Derived {
         case .projects: projectsSummary
         case .internships: internshipsSummary
         case .uni: uniSummary
+        case .tutoring: tutoringSummary
         default: []
         }
     }

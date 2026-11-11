@@ -31,3 +31,7 @@ Choices made where SPEC.md and DESIGN.md are silent or disagree. Each one is the
 | 25 | 6 | The count cards are Open, Applied, Interview and Rejected (DESIGN.md); Offer and Watching targets still show in the table with their status chip. | The design names four cards; the data contract has six statuses. |
 | 26 | 7 | A programme is "Submitted" when its Submitted item is ticked, "Not started" with no ticks, otherwise "In progress". | The spec asks for a status but `uni/*.md` has no status field; the checklist already says it. |
 | 27 | 7 | The Uni runway covers 90 days, or more when the last programme deadline is later. | A fixed 90 days could push a real deadline off the line. |
+| 28 | 8 | "This month" counts lessons that have already ended; the month's planned hours are shown next to them. | Billing lessons that have not happened yet would overstate the amount. |
+| 29 | 8 | The donut compares money received this month (by paid date) with everything sent and still unpaid. | It answers "what came in, what is still owed" on one ring. |
+| 30 | 8 | Month end lists a finished month when a row has no sent date, or when the calendar has lessons and `payments.csv` has no row; Mark sent writes the row with today's date. | The spec says "a finished month not yet sent" without saying where the figures come from; the calendar is the source for hours. |
+| 31 | 8 | Tutoring has no Open in Claude button, and the tab shows initials only. | "No seed for anything about money"; names live only in `contacts.json` and are read only to fill a WhatsApp message. |

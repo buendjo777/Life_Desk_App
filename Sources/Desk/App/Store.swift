@@ -198,6 +198,30 @@ final class Store {
         lastDecided = nil
     }
 
+    // MARK: Tutoring (tutoring/payments.csv: local, never committed)
+
+    private func upsert(_ payment: Payment) {
+        var payments = data.tutoring.payments
+        if let index = payments.firstIndex(where: { $0.id == payment.id }) {
+            payments[index] = payment
+        } else {
+            payments.append(payment)
+        }
+        save(VaultData.paymentsFile, Parse.paymentsCSV(payments, cal))
+    }
+
+    func markSent(_ payment: Payment) {
+        var payment = payment
+        payment.sent = d.today
+        upsert(payment)
+    }
+
+    func markPaid(_ payment: Payment) {
+        var payment = payment
+        payment.paid = d.today
+        upsert(payment)
+    }
+
     // MARK: Sync (Live git sync arrives in step 13)
 
     func sync() {

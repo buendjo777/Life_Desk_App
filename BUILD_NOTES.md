@@ -46,3 +46,9 @@ The story of the one-session build, step by step: what was built, how it works a
 - **How it works:** deadlines come from the master doc via `comparison_heading`, with the snapshot row as fallback (decision 12).
 - **Decided:** the status rule and the runway length (decisions 26–27).
 - **Checked:** snapshots; days left, progress and the comparison section pinned by a test.
+
+## Step 8 — Tutoring
+- **Built:** the donut (received vs pending), the Received, Pending and Hours cards, Waiting for payment with Send reminder and Mark paid, Month end with Send on WhatsApp and Mark sent, this month per student, the payments table with status chips, this week's lessons in the rail and the student inspector with the last note.
+- **How it works:** hours come from tutoring-calendar events whose title is a student's initials; amount is hours × rate. Messages fill `template.md` or `template-reminder.md` and format `{month}` in `tutoring_locale`; the wa.me link only opens WhatsApp, Jose presses send. Mark sent and Mark paid rewrite `payments.csv` through the store (memory only in Demo).
+- **Decided:** decisions 28–31.
+- **Checked:** snapshots; tests for the amounts, the Spanish month name, the link and that Demo leaves the file on disk untouched.
