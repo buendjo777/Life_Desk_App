@@ -29,3 +29,20 @@ The story of the one-session build, step by step: what was built, how it works a
 - **How it works:** `Derived+Studying.swift` computes progress, `plannedPapers(by:)`, the chart series and the target. Ticks call `Store.toggleCheck`, the same path as `TASKS.md`.
 - **Decided:** ticks instead of per-topic bars, the overall formula, the target rule (decisions 20–22).
 - **Checked:** snapshots in light and dark; a test pins the numbers at the demo clock and on later days.
+
+## Step 5 — Projects
+- **Built:** the four board columns (Active, Waiting, Frozen, Ideas) with count chips and compact cards (next step, date, sub-item progress), and the project inspector: next step, tickable checklist, the linked `nini/` doc, Open in Obsidian and Open in Claude.
+- **How it works:** `MarkdownView` is the only place Markdown is parsed, and it only ever receives `nini/` text; a test scans the sources for Markdown APIs anywhere else. The Claude seed names the file path only.
+- **Decided:** columns as sections; a tiny built-in Markdown renderer (decisions 23–24).
+- **Checked:** board and inspector snapshots (an extra `inspector-*.png` pair is rendered with a project open).
+
+## Step 6 — Internship apps
+- **Built:** count cards per status, the table with Apply now · All targets, rows with company, role, city, next step, days-left and status chips, the target inspector, and the Open board button (the only thing shown when `internships/targets.json` is absent).
+- **Decided:** four count cards as in the design (decision 25).
+- **Checked:** snapshots; counts pinned by a test.
+
+## Step 7 — Uni apps
+- **Built:** the deadline runway across programmes with a today marker, the steel programme cards (days left, checklist progress, status, next item), the programme inspector with its section of the comparison doc and a tickable checklist, and the Contacts Board (counts by status, list, inspector) or an Open board button.
+- **How it works:** deadlines come from the master doc via `comparison_heading`, with the snapshot row as fallback (decision 12).
+- **Decided:** the status rule and the runway length (decisions 26–27).
+- **Checked:** snapshots; days left, progress and the comparison section pinned by a test.

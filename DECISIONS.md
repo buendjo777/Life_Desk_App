@@ -26,3 +26,8 @@ Choices made where SPEC.md and DESIGN.md are silent or disagree. Each one is the
 | 20 | 4 | Topics are ticks, so each Theory and Problems column shows one progress bar and the topic checklist under it. | A bar per topic could only be empty or full; the column bar plus ticks says the same with less ink. |
 | 21 | 4 | Overall progress counts theory ticks, problem ticks and past papers equally. | The spec asks for "overall progress" without a formula; an unweighted count is the simplest honest one. |
 | 22 | 4 | Before `plan_start` today's target points at the next open theory topics; from then on it is the papers needed to reach the plan line. | The plan only defines papers per day from its start date. |
+| 23 | 5 | Each board column is its own section, so Customise can reorder or hide columns. | Falls out of the one-list-per-tab layout; no extra code. |
+| 24 | 5 | Markdown is rendered by one small view (headings, bullets, table rows, paragraphs, inline styles) and only for `nini/` docs. | No third-party parser is allowed, and a single file keeps the "untrusted text stays text" rule checkable by a test. |
+| 25 | 6 | The count cards are Open, Applied, Interview and Rejected (DESIGN.md); Offer and Watching targets still show in the table with their status chip. | The design names four cards; the data contract has six statuses. |
+| 26 | 7 | A programme is "Submitted" when its Submitted item is ticked, "Not started" with no ticks, otherwise "In progress". | The spec asks for a status but `uni/*.md` has no status field; the checklist already says it. |
+| 27 | 7 | The Uni runway covers 90 days, or more when the last programme deadline is later. | A fixed 90 days could push a real deadline off the line. |

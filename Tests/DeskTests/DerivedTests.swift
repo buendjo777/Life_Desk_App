@@ -117,4 +117,45 @@ final class DerivedTests: XCTestCase {
         none.study = nil
         XCTAssertNotNil(Derived(data: none, now: demoNow).emptyState(for: .studying))
     }
+
+    // MARK: Pipeline
+
+    func testProjectsBoard() {
+        XCTAssertEqual(ProjectStatus.allCases.map { d.projects($0).count }, [2, 1, 1, 3])
+        XCTAssertEqual(d.projects(.active).first?.title, "AF detection from ECG")
+    }
+
+    func testInternships() {
+        XCTAssertEqual(Derived.targetStatuses.map { d.targets(status: $0).count }, [3, 2, 1, 1])
+        XCTAssertEqual(d.applyNow.count, 7)
+        XCTAssertEqual(d.allTargets.count, 12)
+        XCTAssertEqual(d.applyNow.first?.company, "Meridian Health AI")
+        XCTAssertEqual(Derived.label("not_contacted"), "Not contacted")
+    }
+
+    func testUniCards() {
+        let cards = d.uniCards
+        XCTAssertEqual(cards.map(\.school).first, "Alpine Institute of Technology")
+        XCTAssertEqual(cards.map(\.daysLeft), [19, 34, 56, 65, 81])
+        XCTAssertEqual(cards[0].progress.text, "3/8")
+        XCTAssertEqual(cards[0].status, "In progress")
+        XCTAssertEqual(cards[4].status, "Not started")
+        XCTAssertTrue(d.comparison(for: cards[0].programme)?.contains("90 ECTS") == true)
+        XCTAssertEqual(Derived.personStatuses.map { d.people(status: $0).count }.reduce(0, +), d.data.people?.count)
+    }
+
+    /// Markdown is parsed in exactly one file, used only for trusted `nini/` docs.
+    func testMarkdownIsParsedInOneFileOnly() throws {
+        let sources = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().appendingPathComponent("Sources/Desk")
+        let files = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []
+        var offenders: [String] = []
+        for file in files where file.pathExtension == "swift" && file.lastPathComponent != "MarkdownView.swift" {
+            let text = try String(contentsOf: file, encoding: .utf8)
+            if text.contains("AttributedString(markdown") || text.contains("LocalizedStringKey(") || text.contains("Text(.init(") {
+                offenders.append(file.lastPathComponent)
+            }
+        }
+        XCTAssertEqual(offenders, [])
+    }
 }

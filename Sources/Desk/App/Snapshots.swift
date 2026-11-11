@@ -15,7 +15,15 @@ enum Snapshots {
                     try render(RootView().environment(store), scheme: scheme, to: folder.appendingPathComponent(name))
                 }
             }
-            print("Rendered \(Tab.allCases.count * 2) snapshots to \(folder.path)")
+            // One extra pair with the inspector open, to check the panel and the Markdown view.
+            for scheme in [ColorScheme.light, .dark] {
+                let store = Store(isSnapshot: true)
+                store.tab = .projects
+                if let project = store.d.projects(.active).first { store.open(.project(project.path)) }
+                try render(RootView().environment(store), scheme: scheme,
+                           to: folder.appendingPathComponent("inspector-\(scheme == .dark ? "dark" : "light").png"))
+            }
+            print("Rendered \(Tab.allCases.count * 2 + 2) snapshots to \(folder.path)")
         } catch {
             FileHandle.standardError.write(Data("Snapshot failed: \(error.localizedDescription)\n".utf8))
             exit(1)

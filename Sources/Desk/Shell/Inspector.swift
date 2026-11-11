@@ -63,6 +63,30 @@ struct Inspector: View {
             } else {
                 EmptyState(line: "This task is no longer in TASKS.md.")
             }
+        case .project(let path):
+            if let project = store.data.projects.first(where: { $0.path == path }) {
+                ProjectInspector(project: project)
+            } else {
+                EmptyState(line: "This project file is gone.", hint: path)
+            }
+        case .uni(let path):
+            if let card = store.d.uniCards.first(where: { $0.id == path }) {
+                UniInspector(card: card)
+            } else {
+                EmptyState(line: "This programme file is gone.", hint: path)
+            }
+        case .target(let id):
+            if let target = store.data.targets?.first(where: { $0.id == id }) {
+                TargetInspector(target: target)
+            } else {
+                EmptyState(line: "This target is no longer on the board.")
+            }
+        case .person(let id):
+            if let person = store.data.people?.first(where: { $0.id == id }) {
+                PersonInspector(person: person)
+            } else {
+                EmptyState(line: "This contact is no longer on the board.")
+            }
         default:
             EmptyState(line: "Nothing to show.")
         }

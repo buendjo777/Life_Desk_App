@@ -49,6 +49,17 @@ enum TabLayout {
             DeskSection("study.plan", "Plan chart", width: 394) { PlanChartCard() },
             DeskSection("study.papers", "Past papers", width: 394) { PaperList() },
         ]
+        case .projects: ProjectStatus.allCases.map { status in
+            DeskSection("projects.\(status.rawValue)", status.title, width: 197) { ProjectColumn(status: status) }
+        }
+        case .internships: Derived.targetStatuses.map { status in
+            DeskSection("internships.\(status)", Derived.label(status), width: 197) { TargetCountCard(status: status) }
+        } + [DeskSection("internships.targets", "Targets") { TargetList() }]
+        case .uni: [
+            DeskSection("uni.runway", "Deadline runway") { UniRunway() },
+            DeskSection("uni.programmes", "Programmes") { UniGrid() },
+            DeskSection("uni.contacts", "Contacts") { ContactsBoard() },
+        ]
         default: []
         }
     }

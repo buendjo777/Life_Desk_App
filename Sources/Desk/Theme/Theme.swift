@@ -177,6 +177,7 @@ struct Theme {
     let ringLine: CGFloat = 12
     let chartHeight: CGFloat = 150
     let boardCardMin: CGFloat = 96
+    let uniColumns = 3
     let lightSize: CGFloat = 12
     let lightGap: CGFloat = 8
     let summaryWidth: CGFloat = 700

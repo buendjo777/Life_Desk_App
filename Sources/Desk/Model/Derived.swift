@@ -237,6 +237,9 @@ extension Derived {
         switch tab {
         case .today: todaySummary
         case .studying: studyingSummary
+        case .projects: projectsSummary
+        case .internships: internshipsSummary
+        case .uni: uniSummary
         default: []
         }
     }
