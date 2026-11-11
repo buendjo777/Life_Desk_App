@@ -216,7 +216,7 @@ struct SectionHeader<Trailing: View>: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: t.sp10) {
-            Text(verbatim: title).style(\.section, \.ink).lineLimit(1)
+            Text(verbatim: title).style(\.section, \.ink).lineLimit(1).minimumScaleFactor(t.tightScale)
             if let subtitle {
                 Text(verbatim: subtitle).style(\.small, \.inkMuted).lineLimit(1)
             }

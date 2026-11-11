@@ -22,7 +22,7 @@ struct Sidebar: View {
             Spacer(minLength: t.sp16)
             SyncBox()
         }
-        .padding(.horizontal, t.sp12 + t.sp2)
+        .padding(.horizontal, t.sidebarPadding)
         .padding(.vertical, t.sp16 + t.sp2)
         .frame(width: t.sidebarWidth)
         .frame(maxHeight: .infinity, alignment: .top)
@@ -66,19 +66,19 @@ private struct NavRow: View {
     var body: some View {
         let selected = store.tab == tab
         Button {
-            store.tab = tab
+            store.show(tab)
         } label: {
-            HStack(spacing: t.sp12) {
+            HStack(spacing: t.navGap) {
                 Image(systemName: tab.symbol)
                     .font(.system(size: t.symbol, weight: .medium))
-                    .frame(width: t.sp20)
-                Text(verbatim: tab.title).style(selected ? \.bodyStrong : \.nav)
+                    .frame(width: t.navIcon)
+                Text(verbatim: tab.title).style(selected ? \.bodyStrong : \.nav).lineLimit(1).minimumScaleFactor(t.tightScale)
                 Spacer(minLength: 0)
                 Text(verbatim: "⌘\(tab.shortcut)").style(\.small, \.panelMuted)
             }
             .foregroundStyle(t.panelText.opacity(selected ? 1 : t.navIdleOpacity))
-            .padding(.leading, t.sp12)
-            .padding(.trailing, t.sp10)
+            .padding(.leading, t.navGap)
+            .padding(.trailing, t.sp8)
             .frame(height: t.navRow)
             .background(Color.white.opacity(selected ? t.navSelectedFill : 0), in: RoundedRectangle(cornerRadius: t.radiusNav))
             .overlay(alignment: .leading) {

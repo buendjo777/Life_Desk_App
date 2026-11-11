@@ -60,4 +60,21 @@ final class Preferences {
         layouts = [:]
         density = .compact
     }
+
+    /// Customise: show or hide one section of a tab.
+    func setHidden(_ hidden: Bool, section: String, tab: Tab) {
+        var layout = layouts[tab.rawValue] ?? TabPrefs()
+        if hidden { layout.hidden.insert(section) } else { layout.hidden.remove(section) }
+        layouts[tab.rawValue] = layout
+    }
+
+    /// Customise: move a section up (-1) or down (+1) within `current`, the tab's present order.
+    func move(_ section: String, by offset: Int, tab: Tab, current: [String]) {
+        guard let index = current.firstIndex(of: section), current.indices.contains(index + offset) else { return }
+        var order = current
+        order.swapAt(index, index + offset)
+        var layout = layouts[tab.rawValue] ?? TabPrefs()
+        layout.order = order
+        layouts[tab.rawValue] = layout
+    }
 }

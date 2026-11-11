@@ -47,7 +47,8 @@ struct MonthCalendar: View {
                         }
                         Text(verbatim: "W\(week.number)")
                             .style(\.micro, week.isCurrent ? \.ink : \.inkMuted)
-                            .padding(.horizontal, t.sp6 + t.hairline)
+                            .fixedSize()
+                            .padding(.horizontal, t.sp4 + t.sp2 + t.hairline)
                             .padding(.vertical, t.sp2 + t.hairline)
                             .background(week.isCurrent ? t.surface : .clear, in: Capsule())
                             .frame(width: t.weekColumn)
@@ -208,7 +209,7 @@ struct DayTimeline: View {
                 filterButton(d.calendars(on: day))
             }
             if events.isEmpty {
-                EmptyState(line: "Nothing in the calendar.", hint: store.mode == .demo ? d.data.hint(VaultData.eventsFile) : nil)
+                EmptyState(line: "Nothing in the calendar.", hint: store.mode == .demo ? d.data.hint(VaultData.eventsFile) : store.calendarHint)
             }
             ForEach(Array(events.enumerated()), id: \.element.id) { index, event in
                 if index == nowIndex { NowLine(time: d.cal.time(d.now)) }
@@ -286,7 +287,8 @@ struct NowLine: View {
         HStack(spacing: t.sp6) {
             Text(verbatim: time)
                 .style(\.micro, \.onAccent)
-                .padding(.horizontal, t.sp6)
+                .fixedSize()
+                .padding(.horizontal, t.sp4 + t.sp2)
                 .padding(.vertical, t.sp2)
                 .background(t.rust, in: Capsule())
                 .frame(width: t.timeColumn, alignment: .leading)

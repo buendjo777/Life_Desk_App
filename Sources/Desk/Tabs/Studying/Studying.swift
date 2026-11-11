@@ -134,6 +134,8 @@ struct CheckLine: View {
                     .foregroundStyle(check.done ? t.mossDeep : t.inkMuted)
             }
             .buttonStyle(.plain)
+            .disabled(!store.canWrite(path))
+            .help(store.canWrite(path) ? "" : "Desk only reads this file. Tick it in Obsidian.")
             .accessibilityLabel(check.done ? "Untick \(check.title)" : "Tick \(check.title)")
             Text(verbatim: check.title)
                 .style(\.body, check.done ? \.inkMuted : \.ink)

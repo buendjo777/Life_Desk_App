@@ -93,6 +93,8 @@ struct Theme {
     let onAccentWash = 0.12
     let onAccentBlock = 0.82
     let onAccentTrack = 0.35
+    /// How far a one-line label may shrink before it truncates (Comfortable density).
+    let tightScale = 0.8
 
     // MARK: Type (DESIGN.md)
 
@@ -152,6 +154,10 @@ struct Theme {
     let railWidth: CGFloat = 336
     let columnGap: CGFloat = 24
     let navRow: CGFloat = 36
+    /// Fixed in both densities: the sidebar keeps its width, so its insets do not scale.
+    let navGap: CGFloat = 12
+    let navIcon: CGFloat = 20
+    let sidebarPadding: CGFloat = 14
     let navBar: CGFloat = 3
     let searchHeight: CGFloat = 46
     let iconButton: CGFloat = 44
@@ -182,7 +188,7 @@ struct Theme {
     let lightGap: CGFloat = 8
     let summaryWidth: CGFloat = 700
     let settingsWidth: CGFloat = 520
-    let customiseSize = CGSize(width: 560, height: 620)
+    let customiseSize = CGSize(width: 680, height: 640)
     let shadowRadius: CGFloat = 18
     let shadowY: CGFloat = 6
     let shadowOpacity = 0.18
@@ -197,6 +203,11 @@ struct Theme {
     // MARK: Motion
 
     let motion: Double = 0.18
+
+    // MARK: Timing
+
+    let clockTick = 60
+    let syncMinutes = 15
 }
 
 enum Density: String, CaseIterable, Codable, Identifiable {
