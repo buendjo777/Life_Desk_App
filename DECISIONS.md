@@ -64,3 +64,4 @@ Choices made where SPEC.md and DESIGN.md are silent or disagree. Each one is the
 | 58 | 16 | Open in Gmail appears on an email row under the pointer or when selected, and in the inspector. | The spec lists it for the list; a permanent button on every row would crowd the mockup's one-line rows. |
 | 59 | 16 | Rows and cards expose an accessibility action as well as a click. | VoiceOver and Full Keyboard Access could see the rows but not open them. |
 | 60 | 16 | A section header drops its tabs under the title when both do not fit. | In Comfortable density "Important emails" was truncated. |
+| 61 | 16 | A store without stored preferences (tests, snapshots) is always Demo. | Found by the Stop hook the moment `~/jose-brain` was cloned: default in-memory preferences resolved to Live and pointed tests at the real vault. Nothing was written, and now nothing can be. |

@@ -17,6 +17,16 @@ final class WriteTests: XCTestCase {
         XCTAssertTrue(VaultWriter.isCommitted("TASKS.md"))
     }
 
+    /// Tests and snapshots must never reach the real vault, whatever exists on this Mac.
+    @MainActor
+    func testAStoreWithoutStoredPreferencesIsAlwaysDemo() {
+        let prefs = Preferences(defaults: nil)
+        XCTAssertFalse(prefs.wantsLive)
+        XCTAssertEqual(prefs.vaultPath, Preferences.defaultVaultPath)
+        XCTAssertEqual(Store().mode, .demo)
+        XCTAssertEqual(Store(prefs: prefs).vaultName, "demo-vault")
+    }
+
     @MainActor
     func testDemoTicksStayInMemory() throws {
         let store = Store()
@@ -61,6 +71,7 @@ final class WriteTests: XCTestCase {
 
         let prefs = Preferences(defaults: nil)
         prefs.vaultPath = vault.path
+        prefs.wantsLive = true
         let calendar = FakeCalendar()
         let store = Store(prefs: prefs, calendar: calendar)
         XCTAssertEqual(store.mode, .live)
@@ -218,6 +229,7 @@ final class WriteTests: XCTestCase {
 
         let prefs = Preferences(defaults: nil)
         prefs.vaultPath = vault.path
+        prefs.wantsLive = true
         let store = Store(prefs: prefs, calendar: FakeCalendar())
         XCTAssertEqual(store.mode, .live)
         // A sync is queued first, so the tick has to wait behind it…

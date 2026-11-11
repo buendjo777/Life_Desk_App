@@ -40,7 +40,9 @@ final class Preferences {
     init(defaults: UserDefaults?) {
         self.defaults = defaults
         vaultPath = defaults?.string(forKey: "vaultPath") ?? Self.defaultVaultPath
-        wantsLive = defaults?.object(forKey: "wantsLive") as? Bool ?? true
+        // Without stored preferences (tests, snapshots) Desk is always Demo: an in-memory store
+        // must never pick up the real vault just because ~/jose-brain exists on this Mac.
+        wantsLive = defaults.map { $0.object(forKey: "wantsLive") as? Bool ?? true } ?? false
         density = defaults?.string(forKey: "density").flatMap(Density.init) ?? .compact
         appearance = defaults?.string(forKey: "appearance").flatMap(Appearance.init) ?? .system
         layouts = defaults?.data(forKey: "layouts").flatMap { try? JSONDecoder().decode([String: TabPrefs].self, from: $0) } ?? [:]
