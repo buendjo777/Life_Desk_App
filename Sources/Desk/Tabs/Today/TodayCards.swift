@@ -61,7 +61,7 @@ struct Runway: View {
             .opacity(t.captionOpacity)
         }
         .accessibilityElement()
-        .accessibilityLabel("\(points.count) deadlines in the next \(Derived.runwayDays) days")
+        .accessibilityLabel(Text(verbatim: "\(points.count) deadlines in the next \(Derived.runwayDays) days"))
     }
 }
 
@@ -141,7 +141,7 @@ struct DayStrip: View {
             .frame(height: t.sp12)
         }
         .accessibilityElement()
-        .accessibilityLabel("\(d.stripBlocks.count) events today")
+        .accessibilityLabel(Text(verbatim: "\(d.stripBlocks.count) events today"))
     }
 }
 

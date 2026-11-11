@@ -34,8 +34,8 @@ extension Derived {
     /// Papers the plan expects done by the end of `day`: `plan_per_day` from `plan_start`, capped at the total.
     func plannedPapers(by day: Date) -> Int {
         guard let study, let start = study.planStart, study.planPerDay > 0 else { return 0 }
-        let days = cal.days(from: start, to: day) + 1
-        return min(study.papers.count, max(0, days) * study.planPerDay)
+        let days = min(Self.maxChartDays, max(0, cal.days(from: start, to: day) + 1))
+        return min(study.papers.count, days * study.planPerDay)
     }
 
     /// Papers done by the end of `day`. A ticked paper with no date counts from today.
@@ -54,11 +54,16 @@ extension Derived {
         var days: Int { max(1, plan.count - 1) }
     }
 
+    /// The plan chart never spans more than a year.
+    static let maxChartDays = 366
+
     /// Done against plan, from the first paper (or the plan start) to the exam.
     var planChart: PlanChart? {
         guard let study, !study.papers.isEmpty, let end = examDate.map(cal.startOfDay) else { return nil }
         let firsts = [study.planStart, study.papers.compactMap(\.date).min(), today].compactMap { $0 }
-        guard let start = firsts.min().map(cal.startOfDay), start < end else { return nil }
+        guard let first = firsts.min().map(cal.startOfDay), first < end else { return nil }
+        // A typo in a date must not ask for a chart thousands of days wide.
+        let start = max(first, cal.add(days: -Self.maxChartDays, to: end))
         let span = cal.days(from: start, to: end)
         let upToToday = min(span, max(0, cal.days(from: start, to: today)))
         return PlanChart(

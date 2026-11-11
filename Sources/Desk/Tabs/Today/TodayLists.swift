@@ -146,6 +146,8 @@ struct EmailList: View {
 /// One email row. Everything in it came from email, so every string is drawn verbatim.
 struct EmailRow: View {
     @Environment(Store.self) private var store
+    @Environment(\.theme) private var t
+    @State private var hovering = false
     let row: SnapshotRow
 
     var body: some View {
@@ -153,10 +155,26 @@ struct EmailRow: View {
         ListRow(leading: .initials(initials(of: row.title), .steel), title: row.title,
                 subtitle: [row.subject, row.detail].compactMap { $0 }.joined(separator: " — "),
                 selected: store.selection == .row(row.id), action: { store.open(.row(row.id)) }) { selected in
+            // Open in Gmail without leaving the list: shown on the row under the pointer and on the selected row.
+            if hovering || selected, let url = row.gmailThread.flatMap(Links.gmail) {
+                Button {
+                    Links.open(url)
+                } label: {
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: t.symbolSmall, weight: .bold))
+                        .foregroundStyle(selected ? t.onAccent : t.ink)
+                        .frame(width: t.sp24, height: t.sp24)
+                        .background(selected ? t.onAccent.opacity(t.onAccentWash) : t.tint(.steel), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .help("Open in Gmail")
+                .accessibilityLabel("Open in Gmail")
+            }
             if let tag {
                 Chip(text: tag.label, accent: tag.accent, onAccent: selected)
             }
         }
+        .onHover { hovering = $0 }
     }
 }
 

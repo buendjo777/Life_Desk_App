@@ -41,7 +41,7 @@ struct UniRunway: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Deadline runway, \(cards.count) programmes ahead")
+        .accessibilityLabel(Text(verbatim: "Deadline runway, \(cards.count) programmes ahead"))
     }
 }
 
@@ -100,6 +100,7 @@ struct UniCardView: View {
             }
             .contentShape(RoundedRectangle(cornerRadius: t.radiusCard))
             .onTapGesture { store.open(.uni(path)) }
+            .accessibilityAction { store.open(.uni(path)) }
             .accessibilityAddTraits(.isButton)
         }
     }
@@ -204,6 +205,6 @@ struct PersonInspector: View {
         }
         if let next = person.next { InspectorField(label: "Next step", value: next) }
         LinkButton(title: "Open board", url: Links.web(d.data.settings.links.contactsBoard))
-        LinkButton(title: "Open in Claude", url: Links.claude(seed: "Help me plan my next message to contact \(person.id) in contacts/people.json in my vault."), primary: true)
+        LinkButton(title: "Open in Claude", url: Links.safeID(person.id).flatMap { Links.claude(seed: "Help me plan my next message to contact \($0) in contacts/people.json in my vault.") }, primary: true)
     }
 }

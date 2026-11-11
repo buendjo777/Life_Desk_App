@@ -152,7 +152,7 @@ struct RowInspector: View {
             if let when = row.when?.date { InspectorField(label: "Received", value: d.cal.format(when, "EEE d MMM, HH:mm")) }
             Text(verbatim: "As of the last run, not live.").style(\.small, \.inkMuted)
             LinkButton(title: "Open in Gmail", url: gmail, primary: true)
-            LinkButton(title: "Open in Claude", url: Links.claude(seed: "Help me reply to the Gmail thread behind row \(row.id) in agent/snapshot.json of my vault."))
+            LinkButton(title: "Open in Claude", url: Links.safeID(row.id).flatMap { Links.claude(seed: "Help me reply to the Gmail thread behind row \($0) in agent/snapshot.json of my vault.") })
         case .draft:
             InspectorTitle(text: row.title)
             if let draft = d.draft(for: row) {
@@ -170,7 +170,7 @@ struct RowInspector: View {
                 Text(verbatim: "Nothing is sent automatically. Copy it into Gmail if you like it.").style(\.small, \.inkMuted)
                 LinkButton(title: "Open thread in Gmail", url: Links.gmail(thread: draft.thread), primary: true)
                 LinkButton(title: "Open in Obsidian", url: Links.obsidian(vault: store.vaultName, file: draft.path))
-                LinkButton(title: "Open in Claude", url: Links.claude(seed: "Review my reply draft at \(draft.path) in my vault and suggest edits."))
+                LinkButton(title: "Open in Claude", url: Links.safeID(row.id).flatMap { Links.claude(seed: "Review the reply draft behind row \($0) in agent/snapshot.json of my vault and suggest edits.") })
             } else {
                 EmptyState(line: "The draft file is missing.", hint: row.source)
             }
@@ -192,7 +192,7 @@ struct RowInspector: View {
                     .buttonStyle(.deskPrimary)
             }
             LinkButton(title: "Open in Gmail", url: gmail)
-            LinkButton(title: "Open in Claude", url: Links.claude(seed: "Help me with focus item \(row.id) from agent/snapshot.json in my vault."))
+            LinkButton(title: "Open in Claude", url: Links.safeID(row.id).flatMap { Links.claude(seed: "Help me with focus item \($0) from agent/snapshot.json in my vault.") })
         }
     }
 }

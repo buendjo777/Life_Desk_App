@@ -91,3 +91,28 @@ The story of the one-session build, step by step: what was built, how it works a
 - **How it works:** `Store.showcase` is a second `Derived` loaded from the bundled demo vault at its pinned clock, so the screen is identical in Demo and Live and cannot show private data.
 - **Decided:** decisions 42–44.
 - **Checked:** light and dark snapshots.
+
+## Step 16 — icon, install, screenshots, README
+- **Built:** the app icon (drawn by `Desk --render-icon`, packed by `iconutil`), the final `scripts/build-app.sh`, `design/screenshots/` (every tab in light and dark, plus the inspector, Customise and Comfortable density) and the README (build, Demo and Live, switching to the live vault, what is not verified).
+- **How it works:** the script builds in release, assembles the bundle in a temporary folder, signs it ad hoc, verifies the signature and copies it to `~/Applications/Desk.app`.
+- **Checked on screen:** the installed app was launched in Demo mode. The traffic lights sit on the sidebar, the tabs switch and the content scrolls. `ClickTests` sends real mouse events to the real view tree in an offscreen window: a click on an email row opens the inspector, a sidebar click switches tab, and Dismiss records the click in memory while the demo file on disk stays byte-identical.
+
+## How the session went
+- One session built steps 1 and 2 and most of step 3, then hit the usage limit. A scheduled run picked the build up from the repo notes and took it through step 15 and a first round of hardening (stale-file ticks, in-place CSV edits, the git timeout, verbatim VoiceOver labels) before hitting the limit too. The first session then came back, audited every tab against the mockup, fixed what was left, and finished step 16.
+- Lesson: the notes in this file, `PLAN.md` and `DECISIONS.md` were enough for a fresh session to continue the same architecture without the conversation.
+
+## Independent review
+A fresh reviewer on a cheaper model read SPEC.md, CLAUDE.md and all the code, and reported correctness gaps only. It confirmed the hard constraints hold (no packages, no network beyond git and links, one write path, verbatim untrusted text, title-and-times-only calendar events, the run-status rule, the demo numbers) and found seven narrow gaps. All seven are fixed and pinned by tests (decisions 53–58):
+1. The write allow-list could be spelled around (`./agent/…`, `Agent/…`, a symlinked folder).
+2. A Live write queued behind a sync could land after a switch to Demo.
+3. A date-only `mode_ends` ended exam mode at the start of that day.
+4. An absurd `plan_per_day` could overflow; an absurd `plan_start` could build a huge chart.
+5. The WhatsApp number kept non-ASCII digits.
+6. The draft's Claude seed carried a file name built from the sender.
+7. Open in Gmail was only in the inspector, not on the email list.
+
+It also noted that Internship apps shows four count cards (Open, Applied, Interview, Rejected) while the spec says "counts per status"; that follows DESIGN.md and is decision 25.
+
+## Not verified
+- EventKit against the real Calendar, and Live sync against the real vault: never run, on purpose. The Live write path is tested against a throwaway local repository; calendar Add is tested with a fake calendar.
+- The Settings window, the Customise sheet and the timeline filter popover were drawn offscreen but not operated on screen.

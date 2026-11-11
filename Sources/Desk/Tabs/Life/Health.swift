@@ -57,7 +57,7 @@ struct StreakGrid: View {
                         }
                         .frame(maxWidth: .infinity)
                         .accessibilityElement()
-                        .accessibilityLabel("\(store.d.cal.format(day.date, "EEEE")): \(day.trained ? "trained" : day.future ? "still to come" : "rest")")
+                        .accessibilityLabel(Text(verbatim: "\(store.d.cal.format(day.date, "EEEE")): \(day.trained ? "trained" : day.future ? "still to come" : "rest")"))
                     }
                 }
             }
@@ -81,21 +81,26 @@ struct WeekBarsCard: View {
                     Spacer()
                     Text(verbatim: "Hours per week · best \(Derived.durationText(top))").style(\.small, \.inkMuted)
                 }
-                HStack(alignment: .bottom, spacing: t.sp6) {
-                    ForEach(bars) { bar in
-                        VStack(spacing: t.sp4) {
-                            Text(verbatim: String(format: "%.1f", Double(bar.seconds) / 3600)).style(\.micro, bar.isCurrent ? \.ink : \.inkMuted)
-                            RoundedRectangle(cornerRadius: t.radiusSmall)
-                                .fill(bar.isCurrent ? t.mossDeep : t.moss)
-                                .frame(height: max(t.sp2, CGFloat(bar.seconds) / CGFloat(top) * t.chartHeight))
-                            Text(verbatim: "W\(d.cal.weekNumber(bar.start))").style(\.micro, bar.isCurrent ? \.ink : \.inkMuted)
+                // The bars grow with the card, so the chart fills the row beside the activity list.
+                GeometryReader { proxy in
+                    let room = max(t.sp2, proxy.size.height - t.sp32)
+                    HStack(alignment: .bottom, spacing: t.sp6) {
+                        ForEach(bars) { bar in
+                            VStack(spacing: t.sp4) {
+                                Text(verbatim: String(format: "%.1f", Double(bar.seconds) / 3600)).style(\.micro, bar.isCurrent ? \.ink : \.inkMuted)
+                                RoundedRectangle(cornerRadius: t.radiusSmall)
+                                    .fill(bar.isCurrent ? t.mossDeep : t.moss)
+                                    .frame(height: max(t.sp2, CGFloat(bar.seconds) / CGFloat(top) * room))
+                                Text(verbatim: "W\(d.cal.weekNumber(bar.start))").style(\.micro, bar.isCurrent ? \.ink : \.inkMuted)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .accessibilityElement()
+                            .accessibilityLabel(Text(verbatim: "Week \(d.cal.weekNumber(bar.start)): \(Derived.durationText(bar.seconds)), \(Derived.plural(bar.sessions, "session"))"))
                         }
-                        .frame(maxWidth: .infinity)
-                        .accessibilityElement()
-                        .accessibilityLabel("Week \(d.cal.weekNumber(bar.start)): \(Derived.durationText(bar.seconds)), \(Derived.plural(bar.sessions, "session"))")
                     }
+                    .frame(height: proxy.size.height, alignment: .bottom)
                 }
-                .frame(height: t.chartHeight + t.sp32, alignment: .bottom)
+                .frame(minHeight: t.chartHeight + t.sp32, maxHeight: .infinity)
             }
         }
     }

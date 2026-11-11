@@ -37,7 +37,7 @@ struct MoneyDonut: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Received \(d.money(received)), pending \(d.money(pending))")
+        .accessibilityLabel(Text(verbatim: "Received \(d.money(received)), pending \(d.money(pending))"))
     }
 
     private func legend(_ accent: Accent, _ label: String, _ value: String) -> some View {
@@ -266,6 +266,7 @@ struct WeekLessons: View {
                 .opacity(event.end <= d.now ? t.pastOpacity : 1)
                 .contentShape(Rectangle())
                 .onTapGesture { store.open(.student(initials)) }
+                .accessibilityAction { store.open(.student(initials)) }
                 .accessibilityElement(children: .combine)
             }
         }

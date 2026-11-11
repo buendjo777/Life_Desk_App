@@ -230,7 +230,7 @@ struct DayTimeline: View {
                 .background(t.primary, in: Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Filter by calendar, showing \(filter ?? "all")")
+        .accessibilityLabel(Text(verbatim: "Filter by calendar, showing \(filter ?? "all")"))
         .popover(isPresented: $showFilter, arrowEdge: .bottom) {
             VStack(alignment: .leading, spacing: t.sp4) {
                 ForEach([String?.none] + calendars.map(Optional.some), id: \.self) { name in
@@ -297,6 +297,6 @@ struct NowLine: View {
                 .frame(height: t.stroke)
         }
         .frame(height: t.sp12)
-        .accessibilityLabel("Now, \(time)")
+        .accessibilityLabel(Text(verbatim: "Now, \(time)"))
     }
 }

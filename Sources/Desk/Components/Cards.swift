@@ -74,7 +74,7 @@ struct Figure: View {
         }
         .fixedSize()
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(parts.map(\.text).joined()) \(caption)")
+        .accessibilityLabel(Text(verbatim: "\(parts.map(\.text).joined()) \(caption)"))
     }
 }
 
@@ -135,6 +135,7 @@ struct ListRow<Trailing: View>: View {
         .background(selected ? t.rust : t.surface, in: RoundedRectangle(cornerRadius: t.radiusRow))
         .contentShape(RoundedRectangle(cornerRadius: t.radiusRow))
         .onTapGesture { action?() }
+        .accessibilityAction { action?() }
         .deskAnimation(selected)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
@@ -154,7 +155,7 @@ struct ListRow<Trailing: View>: View {
             }
             .buttonStyle(.plain)
             .disabled(toggle == nil)
-            .accessibilityLabel(isDone ? "Untick \(title)" : "Tick \(title)")
+            .accessibilityLabel(Text(verbatim: isDone ? "Untick \(title)" : "Tick \(title)"))
         }
     }
 }

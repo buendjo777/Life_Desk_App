@@ -102,7 +102,7 @@ struct CountedTabs<ID: Hashable>: View {
                     .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(item.count.map { "\(item.title), \($0)" } ?? item.title)
+                .accessibilityLabel(Text(verbatim: item.count.map { "\(item.title), \($0)" } ?? item.title))
                 .accessibilityAddTraits(active ? .isSelected : [])
             }
         }
@@ -163,7 +163,7 @@ struct ProgressBar: View {
         .frame(height: t.track)
         .accessibilityElement()
         .accessibilityLabel("Progress")
-        .accessibilityValue("\(Int((value * 100).rounded())) percent")
+        .accessibilityValue(Text(verbatim: "\(Int((value * 100).rounded())) percent"))
     }
 }
 
@@ -215,15 +215,26 @@ struct SectionHeader<Trailing: View>: View {
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: t.sp10) {
-            Text(verbatim: title).style(\.section, \.ink).lineLimit(1).minimumScaleFactor(t.tightScale)
-            if let subtitle {
-                Text(verbatim: subtitle).style(\.small, \.inkMuted).lineLimit(1)
+        // Side by side when it fits; when the controls are too wide (Comfortable), they drop under the title.
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: t.sp10) {
+                titles
+                Spacer(minLength: t.sp8)
+                trailing
             }
-            Spacer(minLength: t.sp8)
-            trailing
+            VStack(alignment: .leading, spacing: t.sp8) {
+                HStack(alignment: .firstTextBaseline, spacing: t.sp10) { titles }
+                trailing
+            }
         }
-        .frame(minHeight: t.sp32)
+        .frame(maxWidth: .infinity, minHeight: t.sp32, alignment: .leading)
+    }
+
+    @ViewBuilder private var titles: some View {
+        Text(verbatim: title).style(\.section, \.ink).lineLimit(1).fixedSize()
+        if let subtitle {
+            Text(verbatim: subtitle).style(\.small, \.inkMuted).lineLimit(1)
+        }
     }
 }
 

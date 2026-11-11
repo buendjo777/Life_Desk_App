@@ -4,6 +4,8 @@ import AppKit
 /// The Settings window (⌘,): the vault path, the mode, appearance and density.
 struct SettingsView: View {
     @Environment(Store.self) private var store
+    /// The path being typed; it is applied on Return or Choose, never per keystroke.
+    @State private var path = ""
 
     var body: some View {
         let t = Theme()
@@ -11,9 +13,9 @@ struct SettingsView: View {
         Form {
             Section("Vault") {
                 HStack {
-                    TextField("Live vault folder", text: $prefs.vaultPath)
+                    TextField("Live vault folder", text: $path)
                         .textFieldStyle(.roundedBorder)
-                        .onSubmit { store.resolveMode() }
+                        .onSubmit { apply() }
                     Button("Choose…") { choose() }
                 }
                 Toggle("Use the live vault when the folder exists", isOn: $prefs.wantsLive)
@@ -34,8 +36,8 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: t.settingsWidth)
         .fixedSize(horizontal: false, vertical: true)
-        .onChange(of: prefs.wantsLive) { store.resolveMode() }
-        .onChange(of: prefs.vaultPath) { store.resolveMode() }
+        .onAppear { path = prefs.vaultPath }
+        .onChange(of: prefs.wantsLive) { store.settingsChanged() }
     }
 
     private var status: String {
@@ -49,6 +51,11 @@ struct SettingsView: View {
         }
     }
 
+    private func apply() {
+        store.prefs.vaultPath = path.trimmingCharacters(in: .whitespaces)
+        store.settingsChanged()
+    }
+
     private func choose() {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
@@ -56,7 +63,8 @@ struct SettingsView: View {
         panel.allowsMultipleSelection = false
         panel.directoryURL = store.prefs.vaultExists ? store.prefs.vaultURL : nil
         if panel.runModal() == .OK, let url = panel.url {
-            store.prefs.vaultPath = url.path
+            path = url.path
+            apply()
         }
     }
 }

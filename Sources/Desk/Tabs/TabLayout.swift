@@ -104,7 +104,7 @@ enum TabLayout {
     @MainActor static func ordered(_ tab: Tab, prefs: TabPrefs?) -> [DeskSection] {
         let all = sections(for: tab)
         guard let order = prefs?.order, !order.isEmpty else { return all }
-        let rank = Dictionary(uniqueKeysWithValues: order.enumerated().map { ($1, $0) })
+        let rank = Dictionary(order.enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
         return all.enumerated().sorted { a, b in
             (rank[a.element.id] ?? order.count + a.offset) < (rank[b.element.id] ?? order.count + b.offset)
         }.map(\.element)

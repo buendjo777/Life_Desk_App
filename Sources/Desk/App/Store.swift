@@ -35,6 +35,10 @@ final class Store {
     @ObservationIgnored private var git: VaultGit?
     /// The tail of the queued git work; `settle()` waits for it.
     @ObservationIgnored private var pending: Task<Void, Never>?
+    /// Git jobs queued or running.
+    @ObservationIgnored private var busy = 0
+    /// Bumped whenever the mode or the vault changes; queued work from an older epoch is dropped.
+    @ObservationIgnored private var epoch = 0
     /// Live calendar events, refreshed on sync.
     @ObservationIgnored private var liveEvents: [CalEvent] = []
     /// Why the live calendar is empty, if it is.
@@ -102,9 +106,18 @@ final class Store {
         liveEvents = []
         banner = nil
         lastSync = nil
+        busy = 0
+        pending = nil
+        epoch += 1
         mode = next
         git = next == .live ? VaultGit(root: prefs.vaultURL) : nil
         reload()
+    }
+
+    /// After a change in Settings: pick the mode again and, in Live, pull and load the calendar at once.
+    func settingsChanged() {
+        resolveMode()
+        sync()
     }
 
     private var reader: VaultReader {
@@ -163,47 +176,85 @@ final class Store {
         VaultWriter.isWritable(path, studyFile: data.settings.exam?.file)
     }
 
-    /// Saves `text` as the new content of one of Jose's files, then reloads.
-    private func save(_ path: String, _ text: String) {
+    /// An edit that was not written, with the sentence for the banner.
+    private struct Refused: Error { let message: String }
+
+    /// Changes one of Jose's files. `transform` gets the file's current text and returns the new
+    /// text, or `nil` when the edit no longer applies (the file changed underneath).
+    /// Live edits never overlap a running git operation: they wait behind it and re-read the file.
+    private func edit(_ path: String, _ transform: @escaping (String) -> String?) {
         guard canWrite(path) else {
             banner = "Desk does not write \(path)."
             return
         }
         guard mode == .live else {
             // Demo never writes to disk.
-            overlay[path] = text
+            if let text = transform(reader.text(path) ?? "") {
+                overlay[path] = text
+            } else {
+                banner = Self.stale(path)
+            }
             reload()
             return
         }
-        do {
-            try VaultWriter.write(text, to: path, in: prefs.vaultURL, studyFile: data.settings.exam?.file)
-        } catch {
-            banner = "Could not save \(path): \(error.localizedDescription)"
-            return
-        }
-        reload()
-        if VaultWriter.isCommitted(path) {
-            let message = VaultWriter.commitMessage(for: path)
-            enqueue(failure: "Saved locally, but the vault did not sync") { try await $0.commitAndSync(path: path, message: message) }
-        }
-    }
-
-    /// Queues git work behind whatever is already running. A failure shows the banner.
-    private func enqueue(failure: String, _ work: @escaping @Sendable (VaultGit) async throws -> Void) {
-        guard let git else { return }
-        let previous = pending
-        pending = Task { [weak self] in
-            await previous?.value
+        let message = VaultWriter.commitMessage(for: path)
+        if busy == 0 {
             do {
-                try await work(git)
-                self?.finished(nil)
+                try applyLive(path, transform)
             } catch {
-                self?.finished("\(failure). \(error.localizedDescription)")
+                banner = (error as? Refused)?.message ?? "Could not save \(path): \(error.localizedDescription)"
+                return
+            }
+            if VaultWriter.isCommitted(path) {
+                enqueue(failure: "Saved locally, but the vault did not sync") { try await $0.commitAndSync(path: path, message: message) }
+            }
+        } else {
+            enqueue(failure: "Could not save \(path)") { [weak self] git in
+                try self?.applyLive(path, transform)
+                if VaultWriter.isCommitted(path) { try await git.commitAndSync(path: path, message: message) }
             }
         }
     }
 
-    private func finished(_ problem: String?) {
+    private static func stale(_ path: String) -> String {
+        "\(path) changed on disk, so nothing was written. The view is reloaded; try again."
+    }
+
+    private func applyLive(_ path: String, _ transform: (String) -> String?) throws {
+        // Demo never writes to disk, even if an edit was queued while the app was still Live.
+        guard mode == .live else { throw Refused(message: "Not saved: Desk is no longer in Live mode.") }
+        guard let text = transform(reader.text(path) ?? "") else {
+            reload()
+            throw Refused(message: Self.stale(path))
+        }
+        try VaultWriter.write(text, to: path, in: prefs.vaultURL, studyFile: data.settings.exam?.file)
+        reload()
+    }
+
+    /// Queues git work behind whatever is already running. A failure shows the banner.
+    private func enqueue(failure: String, _ work: @escaping (VaultGit) async throws -> Void) {
+        guard let git else { return }
+        let previous = pending
+        let queuedIn = epoch
+        busy += 1
+        pending = Task { [weak self] in
+            await previous?.value
+            // The mode or the vault changed while this waited: drop it, write nothing.
+            guard let self, self.epoch == queuedIn else { return }
+            do {
+                try await work(git)
+                self.finished(nil, queuedIn)
+            } catch let refused as Refused {
+                self.finished(refused.message, queuedIn)
+            } catch {
+                self.finished("\(failure). \(error.localizedDescription)", queuedIn)
+            }
+        }
+    }
+
+    private func finished(_ problem: String?, _ queuedIn: Int) {
+        guard epoch == queuedIn else { return }
+        busy -= 1
         banner = problem
         if problem == nil { lastSync = Date() }
         reload()
@@ -214,10 +265,21 @@ final class Store {
         await pending?.value
     }
 
+    /// The title the model holds for a checkbox, used to check the line is still the same item.
+    private func checkTitle(path: String, line: Int) -> String? {
+        if path == VaultData.tasksFile { return data.tasks.first { $0.line == line }?.title }
+        if path == data.settings.exam?.file, let study = data.study {
+            return (study.theory + study.problems).first { $0.line == line }?.title ?? study.papers.first { $0.line == line }?.title
+        }
+        return (data.unis.first { $0.path == path }?.items ?? data.projects.first { $0.path == path }?.items)?.first { $0.line == line }?.title
+    }
+
     /// Flips a Markdown checkbox in one of Jose's files.
+    /// If the file changed since it was read, the item is found again by its title; a tick never
+    /// lands on a different item.
     func toggleCheck(path: String, line: Int) {
-        guard let text = reader.text(path), let updated = Parse.toggleCheckbox(in: text, line: line) else { return }
-        save(path, updated)
+        guard let title = checkTitle(path: path, line: line) else { return }
+        edit(path) { Parse.toggleCheckbox(in: $0, line: line, expecting: title) }
     }
 
     func toggle(_ task: TaskItem) {
@@ -239,14 +301,19 @@ final class Store {
             String(data: (try? JSONEncoder().encode(value)) ?? Data("\"\"".utf8), encoding: .utf8) ?? "\"\""
         }
         let line = "{\"at\": \(quoted(cal.isoStamp(now))), \"row\": \(quoted(rowID)), \"action\": \(quoted(action.rawValue))}"
-        var text = reader.text(VaultData.decisionsFile) ?? ""
-        if !text.isEmpty && !text.hasSuffix("\n") { text += "\n" }
-        save(VaultData.decisionsFile, text + line + "\n")
+        edit(VaultData.decisionsFile) { text in
+            text + (text.isEmpty || text.hasSuffix("\n") ? "" : "\n") + line + "\n"
+        }
     }
 
     /// Add (a proposed event) or Confirm (a proposed tick). Nothing happens without this click.
     func accept(_ row: SnapshotRow) {
-        if row.action == "add_event", let event = row.event {
+        if row.action == "add_event" {
+            // A proposal with no event cannot be added, and must not be recorded as a clean confirmation.
+            guard let event = row.event else {
+                banner = "This proposal has no event to add."
+                return
+            }
             // Title and times only: nothing else from the email reaches the calendar.
             if mode == .live {
                 do {
@@ -284,14 +351,10 @@ final class Store {
 
     // MARK: Tutoring (tutoring/payments.csv: local, never committed)
 
+    /// Changes one row of `payments.csv` in place; every other line is kept as it is.
     private func upsert(_ payment: Payment) {
-        var payments = data.tutoring.payments
-        if let index = payments.firstIndex(where: { $0.id == payment.id }) {
-            payments[index] = payment
-        } else {
-            payments.append(payment)
-        }
-        save(VaultData.paymentsFile, Parse.paymentsCSV(payments, cal))
+        let cal = cal
+        edit(VaultData.paymentsFile) { Parse.upsertPayment(payment, in: $0, cal) }
     }
 
     func markSent(_ payment: Payment) {

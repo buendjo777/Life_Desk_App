@@ -40,7 +40,7 @@ struct CustomiseView: View {
                                     .background(t.tint(hidden ? .neutral : .moss), in: Circle())
                             }
                             .buttonStyle(.plain)
-                            .accessibilityLabel(hidden ? "Show \(section.title)" : "Hide \(section.title)")
+                            .accessibilityLabel(Text(verbatim: hidden ? "Show \(section.title)" : "Hide \(section.title)"))
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(verbatim: section.title).style(\.rowTitle, hidden ? \.inkMuted : \.ink)
                                 Text(verbatim: section.slot == .rail ? "Right rail" : "Main column").style(\.small, \.inkMuted)

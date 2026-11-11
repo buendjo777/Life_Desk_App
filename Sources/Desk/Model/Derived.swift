@@ -116,8 +116,9 @@ struct Derived {
     /// Between `mode_starts` and `mode_ends`: Studying opens first and Today hides drafts and waiting.
     var examMode: Bool {
         guard let exam = data.settings.exam,
-              let start = Parse.day(exam.modeStarts, cal), let end = Parse.day(exam.modeEnds, cal) else { return false }
-        return (start...end).contains(now)
+              let start = Parse.day(exam.modeStarts, cal), let end = exam.modeEnds.flatMap({ Parse.stamp($0, cal) }) else { return false }
+        // A date without a time means the whole of that day.
+        return end.hasTime ? now >= start && now <= end.date : now >= start && now < cal.add(days: 1, to: end.date)
     }
 
     // MARK: Run status (the same rule as the web Desk)

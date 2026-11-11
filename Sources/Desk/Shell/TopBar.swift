@@ -69,7 +69,7 @@ struct SearchBar: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Search in \(scope.rawValue)")
+        .accessibilityLabel(Text(verbatim: "Search in \(scope.rawValue)"))
         .accessibilityAddTraits(active ? .isSelected : [])
     }
 }
@@ -130,7 +130,7 @@ struct StatusChip: View {
         .frame(height: t.statusChip)
         .raisedPanel(radius: t.statusChip / 2)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Run status \(status.level.word)")
+        .accessibilityLabel(Text(verbatim: "Run status \(status.level.word)"))
     }
 }
 
@@ -182,6 +182,6 @@ struct BannerView: View {
         .background(t.alert, in: RoundedRectangle(cornerRadius: t.radiusRow))
         .environment(\.theme, Theme(scheme: .dark, density: t.density))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Problem: \(message)")
+        .accessibilityLabel(Text(verbatim: "Problem: \(message)"))
     }
 }

@@ -86,7 +86,7 @@ struct RunStrip: View {
                         }
                         .frame(maxWidth: .infinity)
                         .accessibilityElement()
-                        .accessibilityLabel("\(d.cal.shortDay(day.date)): \(day.state.rawValue)")
+                        .accessibilityLabel(Text(verbatim: "\(d.cal.shortDay(day.date)): \(day.state.rawValue)"))
                     }
                 }
             }

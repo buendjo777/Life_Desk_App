@@ -110,8 +110,21 @@ enum Parse {
     }
 
     /// Flips the checkbox on `line`. `nil` when that line is not a checkbox.
-    static func toggleCheckbox(in text: String, line: Int) -> String? {
+    /// With `expecting`, the checkbox must still carry that title; if the file moved underneath,
+    /// the one line that does is used instead, and `nil` is returned when there is not exactly one.
+    static func toggleCheckbox(in text: String, line wanted: Int, expecting title: String? = nil) -> String? {
         var lines = splitLines(text)
+        var line = wanted
+        if let title {
+            func matches(_ index: Int) -> Bool {
+                lines.indices.contains(index) && checkbox(lines[index])?.title.hasPrefix(title) == true
+            }
+            if !matches(line) {
+                let found = lines.indices.filter(matches)
+                guard found.count == 1 else { return nil }
+                line = found[0]
+            }
+        }
         guard lines.indices.contains(line), let box = checkbox(lines[line]),
               let open = lines[line].firstIndex(of: "[") else { return nil }
         let mark = lines[line].index(after: open)
@@ -155,6 +168,9 @@ enum Parse {
         }
     }
 
+    /// More papers a day than anyone sits; keeps arithmetic on file content bounded.
+    static let maxPlanPerDay = 50
+
     /// The study file: front matter, `## Theory`, `## Problems` and `## Past papers`.
     static func study(_ text: String, _ cal: DeskCalendar) -> StudyFile? {
         let lines = splitLines(text)
@@ -175,7 +191,7 @@ enum Parse {
         }
         return StudyFile(
             exam: fields["exam"] ?? "", date: day(fields["date"], cal),
-            planPerDay: fields["plan_per_day"].flatMap(Int.init) ?? 0, planStart: day(fields["plan_start"], cal),
+            planPerDay: min(maxPlanPerDay, max(0, fields["plan_per_day"].flatMap(Int.init) ?? 0)), planStart: day(fields["plan_start"], cal),
             theory: group("Theory"), problems: group("Problems"), papers: papers
         )
     }
@@ -234,7 +250,7 @@ enum Parse {
             let rate = row.first { $0.key.hasPrefix("Rate") }?.value ?? ""
             return Student(
                 initials: initials, level: row["Level"] ?? "", subject: row["Subject"] ?? "",
-                rate: Double(rate.replacingOccurrences(of: ",", with: ".")) ?? 0, paysBy: row["Pays by"] ?? ""
+                rate: Double(rate.replacingOccurrences(of: ",", with: ".")).flatMap { $0.isFinite ? $0 : nil } ?? 0, paysBy: row["Pays by"] ?? ""
             )
         }
     }
@@ -246,7 +262,8 @@ enum Parse {
         splitLines(text).dropFirst().compactMap { line in
             let cells = line.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
             guard cells.count >= 5, cells[0].wholeMatch(of: /\d{4}-\d{2}/) != nil, !cells[1].isEmpty,
-                  let lessons = Int(cells[2]), let hours = Double(cells[3]), let amount = Double(cells[4]) else { return nil }
+                  let lessons = Int(cells[2]), let hours = Double(cells[3]), let amount = Double(cells[4]),
+                  hours.isFinite, amount.isFinite else { return nil }
             return Payment(
                 month: cells[0], initials: cells[1], lessons: lessons, hours: hours, amount: amount,
                 sent: cells.count > 5 ? day(cells[5], cal) : nil, paid: cells.count > 6 ? day(cells[6], cal) : nil
@@ -262,9 +279,28 @@ enum Parse {
         return ([paymentsHeader] + rows).joined(separator: "\n") + "\n"
     }
 
-    /// `13.5` stays `13.5`; `8.0` becomes `8`.
+    /// Replaces the row for that month and student, or appends it. Lines Desk cannot parse are kept untouched.
+    static func upsertPayment(_ payment: Payment, in text: String, _ cal: DeskCalendar) -> String {
+        let row = paymentsCSV([payment], cal).components(separatedBy: "\n")[1]
+        var lines = splitLines(text)
+        while lines.last?.trimmingCharacters(in: .whitespaces).isEmpty == true { lines.removeLast() }
+        if lines.isEmpty { lines = [paymentsHeader] }
+        func isRow(_ line: String) -> Bool {
+            let cells = line.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            return cells.count >= 2 && cells[0] == payment.month && cells[1] == payment.initials
+        }
+        if let index = lines.firstIndex(where: isRow) {
+            lines[index] = row
+        } else {
+            lines.append(row)
+        }
+        return lines.joined(separator: "\n") + "\n"
+    }
+
+    /// `13.5` stays `13.5`; `8.0` becomes `8`. Safe for any value a file can hold.
     static func number(_ value: Double) -> String {
-        value == value.rounded() ? String(Int(value)) : String(value)
+        guard value.isFinite else { return "—" }
+        return value == value.rounded() && abs(value) < 1e15 ? String(Int(value)) : String(value)
     }
 
     /// `notes/<initials>.md`: `## YYYY-MM-DD` entries, newest last.

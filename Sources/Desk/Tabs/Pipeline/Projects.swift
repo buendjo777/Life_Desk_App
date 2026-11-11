@@ -75,6 +75,7 @@ struct ProjectCard: View {
         .background(selected ? t.rust : t.surface, in: RoundedRectangle(cornerRadius: t.radiusRow))
         .contentShape(RoundedRectangle(cornerRadius: t.radiusRow))
         .onTapGesture { store.open(.project(project.path)) }
+        .accessibilityAction { store.open(.project(project.path)) }
         .deskAnimation(selected)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)

@@ -101,6 +101,6 @@ struct TargetInspector: View {
         }
         if let next = target.next { InspectorField(label: "Next step", value: next) }
         LinkButton(title: "Open posting", url: Links.web(target.url), primary: true)
-        LinkButton(title: "Open in Claude", url: Links.claude(seed: "Help me with internship target \(target.id) in internships/targets.json in my vault."))
+        LinkButton(title: "Open in Claude", url: Links.safeID(target.id).flatMap { Links.claude(seed: "Help me with internship target \($0) in internships/targets.json in my vault.") })
     }
 }

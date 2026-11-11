@@ -57,7 +57,7 @@ struct ProgressRing: View {
         .frame(width: t.ring, height: t.ring)
         .padding(t.ringLine / 2)
         .accessibilityElement()
-        .accessibilityLabel("\(caption) \(label)")
+        .accessibilityLabel(Text(verbatim: "\(caption) \(label)"))
     }
 }
 
@@ -136,7 +136,7 @@ struct CheckLine: View {
             .buttonStyle(.plain)
             .disabled(!store.canWrite(path))
             .help(store.canWrite(path) ? "" : "Desk only reads this file. Tick it in Obsidian.")
-            .accessibilityLabel(check.done ? "Untick \(check.title)" : "Tick \(check.title)")
+            .accessibilityLabel(Text(verbatim: check.done ? "Untick \(check.title)" : "Tick \(check.title)"))
             Text(verbatim: check.title)
                 .style(\.body, check.done ? \.inkMuted : \.ink)
                 .strikethrough(check.done)
@@ -148,6 +148,7 @@ struct CheckLine: View {
         .background(selected ? t.tint(.rust) : .clear, in: RoundedRectangle(cornerRadius: t.radiusSmall))
         .contentShape(Rectangle())
         .onTapGesture { store.selection = item }
+        .accessibilityAction { store.selection = item }
     }
 }
 
@@ -218,7 +219,7 @@ struct PlanChartView: View {
             }
         }
         .accessibilityElement()
-        .accessibilityLabel("\(chart.done.last ?? 0) of \(chart.total) papers done")
+        .accessibilityLabel(Text(verbatim: "\(chart.done.last ?? 0) of \(chart.total) papers done"))
     }
 }
 

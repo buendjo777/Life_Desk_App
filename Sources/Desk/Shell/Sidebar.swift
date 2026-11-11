@@ -54,7 +54,7 @@ struct Sidebar: View {
         .padding(.top, t.sp20 + t.sp2)
         .padding(.bottom, t.sp2)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Desk, \(store.mode.rawValue) mode")
+        .accessibilityLabel(Text(verbatim: "Desk, \(store.mode.rawValue) mode"))
     }
 }
 

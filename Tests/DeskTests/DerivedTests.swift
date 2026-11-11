@@ -155,6 +155,11 @@ final class DerivedTests: XCTestCase {
             if text.contains("AttributedString(markdown") || text.contains("LocalizedStringKey(") || text.contains("Text(.init(") {
                 offenders.append(file.lastPathComponent)
             }
+            // Interpolated VoiceOver labels and tooltips must be verbatim too, or they parse Markdown.
+            for line in text.components(separatedBy: "\n")
+            where (line.contains(".accessibilityLabel(\"") || line.contains(".help(\"")) && line.contains("\\(") {
+                offenders.append("\(file.lastPathComponent): \(line.trimmingCharacters(in: .whitespaces))")
+            }
         }
         XCTAssertEqual(offenders, [])
     }
