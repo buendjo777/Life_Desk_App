@@ -23,3 +23,9 @@ The story of the one-session build, step by step: what was built, how it works a
 - **How it works:** `TabLayout.sections(for:)` lists the tab's sections once; `SectionFlow` packs them into rows. `Derived+Today.swift` computes the runway, strip blocks, month grid and search hits as plain values. Ticks and Add/Dismiss go through the `Store`, which in Demo writes to an in-memory overlay and reloads through the same parsers.
 - **Decided:** where Drafts and Waiting live, the demo sync time, snapshot stand-ins for scroll views, width-packed sections (decisions 16–19).
 - **Checked:** light and dark snapshots against the mockup: cards, counts, calendar dots, confirm card and timeline line up. This step was interrupted by a usage limit and finished in a second session (compile fixes, the day-strip offset, the sync box).
+
+## Step 4 — Studying
+- **Built:** the ochre hero (countdown, theory/problems/papers counts, overall ring), today's target, the Theory and Problems columns with ticks, the steel plan chart (done against the plan line) and the past-papers list with score chips. An empty state when no exam is set.
+- **How it works:** `Derived+Studying.swift` computes progress, `plannedPapers(by:)`, the chart series and the target. Ticks call `Store.toggleCheck`, the same path as `TASKS.md`.
+- **Decided:** ticks instead of per-topic bars, the overall formula, the target rule (decisions 20–22).
+- **Checked:** snapshots in light and dark; a test pins the numbers at the demo clock and on later days.

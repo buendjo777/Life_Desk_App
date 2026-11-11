@@ -76,7 +76,11 @@ struct TabHost: View {
                 Scroller {
                     VStack(alignment: .leading, spacing: t.sp20 + t.sp2) {
                         TabHeader()
-                        SectionFlow(sections: main)
+                        if let empty = store.d.emptyState(for: store.tab) {
+                            EmptyState(line: empty.line, hint: empty.hint)
+                        } else {
+                            SectionFlow(sections: main)
+                        }
                     }
                     .padding(.top, t.sp8)
                     .padding(.bottom, t.columnGap)

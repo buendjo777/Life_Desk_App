@@ -23,3 +23,6 @@ Choices made where SPEC.md and DESIGN.md are silent or disagree. Each one is the
 | 17 | 3 | In Demo the sidebar says "Synced" two minutes before the pinned clock. | There is no sync in Demo; a fixed time keeps the demo looking the same, like the mockup. |
 | 18 | 3 | Snapshot mode draws scroll views as clipped plain content anchored to the top. | `ImageRenderer` cannot draw `ScrollView`; clipping shows exactly the first screenful. |
 | 19 | 3 | Sections carry a design width; a tab's sections are packed into rows by width and each row stretches to fill. | One list per tab drives both the layout and Customise, so reordering never needs layout code. |
+| 20 | 4 | Topics are ticks, so each Theory and Problems column shows one progress bar and the topic checklist under it. | A bar per topic could only be empty or full; the column bar plus ticks says the same with less ink. |
+| 21 | 4 | Overall progress counts theory ticks, problem ticks and past papers equally. | The spec asks for "overall progress" without a formula; an unweighted count is the simplest honest one. |
+| 22 | 4 | Before `plan_start` today's target points at the next open theory topics; from then on it is the papers needed to reach the plan line. | The plan only defines papers per day from its start date. |

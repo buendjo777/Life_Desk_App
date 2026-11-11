@@ -95,4 +95,26 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(store.selection, .row("today-1"))
         XCTAssertEqual(store.vaultName, "demo-vault")
     }
+
+    // MARK: Studying
+
+    func testStudying() {
+        XCTAssertEqual(d.examDaysLeft, 16)
+        XCTAssertEqual(d.theoryProgress.text, "3/8")
+        XCTAssertEqual(d.problemsProgress.text, "2/8")
+        XCTAssertEqual(d.papersProgress.text, "3/12")
+        XCTAssertEqual(d.studyProgress.percent, "29%")
+        // The plan: 3 a day from 16 Nov, capped at the 12 papers.
+        XCTAssertEqual(d.plannedPapers(by: demoNow), 0)
+        XCTAssertEqual(at("2026-11-17T09:00:00+01:00").plannedPapers(by: Parse.day("2026-11-17", cal)!), 6)
+        XCTAssertEqual(d.planChart?.plan.last, 12)
+        XCTAssertEqual(d.planChart?.done.last, 3)
+        XCTAssertEqual(d.studyTarget?.headline, "Plan starts Mon 16 Nov")
+        XCTAssertEqual(at("2026-11-16T09:00:00+01:00").studyTarget?.headline, "On plan")
+        XCTAssertEqual(at("2026-11-17T09:00:00+01:00").studyTarget?.headline, "3 papers today")
+        XCTAssertNil(d.emptyState(for: .studying))
+        var none = data
+        none.study = nil
+        XCTAssertNotNil(Derived(data: none, now: demoNow).emptyState(for: .studying))
+    }
 }

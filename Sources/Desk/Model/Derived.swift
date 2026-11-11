@@ -236,7 +236,18 @@ extension Derived {
     func summary(for tab: Tab) -> [Phrase] {
         switch tab {
         case .today: todaySummary
+        case .studying: studyingSummary
         default: []
+        }
+    }
+
+    /// A tab with nothing to show gets one muted line and a hint instead of its sections.
+    func emptyState(for tab: Tab) -> (line: String, hint: String?)? {
+        switch tab {
+        case .studying where data.study == nil:
+            if let exam = data.settings.exam { return ("The study file could not be read.", data.hint(exam.file)) }
+            return ("No exam set — add one in desk/settings.json.", data.hint(VaultData.settingsFile))
+        default: return nil
         }
     }
 }

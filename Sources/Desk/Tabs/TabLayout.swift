@@ -41,6 +41,14 @@ enum TabLayout {
             DeskSection("today.confirm", "Needs confirmation", slot: .rail) { ConfirmCard() },
             DeskSection("today.timeline", "Timeline", slot: .rail) { DayTimeline() },
         ]
+        case .studying: [
+            DeskSection("study.hero", "Exam countdown", width: 500) { StudyHero() },
+            DeskSection("study.target", "Today's target", width: 288) { StudyTargetCard() },
+            DeskSection("study.theory", "Theory", width: 394) { TopicColumn(title: "Theory", theory: true) },
+            DeskSection("study.problems", "Problems", width: 394) { TopicColumn(title: "Problems", theory: false) },
+            DeskSection("study.plan", "Plan chart", width: 394) { PlanChartCard() },
+            DeskSection("study.papers", "Past papers", width: 394) { PaperList() },
+        ]
         default: []
         }
     }
