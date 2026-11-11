@@ -52,3 +52,14 @@ The story of the one-session build, step by step: what was built, how it works a
 - **How it works:** hours come from tutoring-calendar events whose title is a student's initials; amount is hours × rate. Messages fill `template.md` or `template-reminder.md` and format `{month}` in `tutoring_locale`; the wa.me link only opens WhatsApp, Jose presses send. Mark sent and Mark paid rewrite `payments.csv` through the store (memory only in Demo).
 - **Decided:** decisions 28–31.
 - **Checked:** snapshots; tests for the amounts, the Spanish month name, the link and that Demo leaves the file on disk untouched.
+
+## Step 9 — Health
+- **Built:** Sessions, Time and Distance cards for this week, the seven-day streak grid, 12-week bars and the activity list, all from `agent/exports/strava.json`.
+- **How it works:** `Derived+Machine.swift` groups activities by ISO week in the vault's time zone. The summary says the data is as of the last run, not live.
+- **Checked:** snapshots; week totals, streak and bars pinned by a test.
+
+## Step 10 — System
+- **Built:** the navy Latest run card (status, duration, scanned, drafts, usage note, the run-status word), the Models card (model → agents), the 14-day run strip with a word in every cell, and the run history with status chips, models, usage notes and failure lines.
+- **How it works:** every string from `runs.jsonl` is drawn verbatim. The run-status rule is the one from step 2, shared with the chip and the sidebar.
+- **Decided:** decisions 32–33.
+- **Checked:** snapshots; the strip, models and failure log pinned by a test.

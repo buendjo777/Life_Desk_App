@@ -71,6 +71,20 @@ enum TabLayout {
             DeskSection("tutoring.payments", "Payments") { PaymentsTable() },
             DeskSection("tutoring.week", "This week's lessons", slot: .rail) { WeekLessons() },
         ]
+        case .health: [
+            DeskSection("health.sessions", "Sessions", width: 197) { HealthStat(kind: .sessions) },
+            DeskSection("health.time", "Time", width: 197) { HealthStat(kind: .time) },
+            DeskSection("health.distance", "Distance", width: 197) { HealthStat(kind: .distance) },
+            DeskSection("health.streak", "Streak", width: 197) { StreakGrid() },
+            DeskSection("health.weeks", "12-week bars", width: 394) { WeekBarsCard() },
+            DeskSection("health.activities", "Activities", width: 394) { ActivityList() },
+        ]
+        case .system: [
+            DeskSection("system.latest", "Latest run", width: 500) { LatestRunCard() },
+            DeskSection("system.models", "Models", width: 288) { ModelsCard() },
+            DeskSection("system.strip", "14-day strip") { RunStrip() },
+            DeskSection("system.history", "Run history") { RunHistory() },
+        ]
         default: []
         }
     }

@@ -197,4 +197,26 @@ final class DerivedTests: XCTestCase {
         XCTAssertTrue(store.d.waitingForPayment.isEmpty)
         XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), before)
     }
+
+    // MARK: Health and System
+
+    func testHealth() {
+        XCTAssertEqual(d.weekActivities.count, 3)
+        XCTAssertEqual(Derived.durationText(d.weekSeconds), "2 h 37")
+        XCTAssertEqual(Derived.kilometres(d.weekMetres), "32.2")
+        XCTAssertEqual(d.streak.map(\.trained), [true, true, true, false, false, false, false])
+        XCTAssertEqual(d.weekBars.count, 12)
+        XCTAssertEqual(d.weekBars.last?.sessions, 3)
+        XCTAssertEqual(d.activityList.first?.name, "Morning run")
+    }
+
+    func testSystem() {
+        XCTAssertEqual(d.runHistory.count, 15)
+        XCTAssertEqual(d.runStrip.map(\.state).filter { $0 == .failed }.count, 1)
+        XCTAssertEqual(d.runStrip.filter { $0.state == .none }.count, 0)
+        XCTAssertEqual(d.runStrip.last?.state, .ok)
+        XCTAssertEqual(d.modelsUsed.map(\.model), ["sonnet", "haiku"])
+        XCTAssertEqual(d.lastRun.map(Derived.runDuration), "4 min 07 s")
+        XCTAssertEqual(d.failureLog.count, 2)
+    }
 }

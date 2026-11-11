@@ -241,6 +241,8 @@ extension Derived {
         case .internships: internshipsSummary
         case .uni: uniSummary
         case .tutoring: tutoringSummary
+        case .health: healthSummary
+        case .system: systemSummary
         default: []
         }
     }
