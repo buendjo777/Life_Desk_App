@@ -2,7 +2,7 @@ import SwiftUI
 
 struct DeskApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
-    @State private var store = Store()
+    @State private var store = Store(prefs: Preferences(defaults: .standard), calendar: EventKitCalendar())
 
     var body: some Scene {
         Window("Desk", id: "main") {
@@ -13,6 +13,10 @@ struct DeskApp: App {
         .windowStyle(.hiddenTitleBar)
         .defaultSize(Theme().designSize)
         .commands { DeskCommands(store: store) }
+
+        Settings {
+            SettingsView().environment(store)
+        }
     }
 }
 
@@ -26,16 +30,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
-/// Menu commands: ⌘1–⌘8 switch tabs.
+/// Menu commands: ⌘1–⌘8 switch tabs, ⌘R syncs, ⌘F searches, View → Customise….
 struct DeskCommands: Commands {
     let store: Store
 
     var body: some Commands {
+        CommandGroup(replacing: .newItem) {}
+        CommandGroup(after: .sidebar) {
+            Button("Customise…") { store.showCustomise = true }
+            Divider()
+            Button("Sync Now") { store.sync() }.keyboardShortcut("r", modifiers: .command)
+            Button("Find") { store.searchFocus += 1 }.keyboardShortcut("f", modifiers: .command)
+            Divider()
+        }
         CommandMenu("Go") {
             ForEach(Tab.eight) { tab in
-                Button(tab.title) { store.tab = tab }
+                Button(tab.title) { store.show(tab) }
                     .keyboardShortcut(KeyEquivalent(Character(String(tab.shortcut))), modifiers: .command)
             }
+            Divider()
+            Button(Tab.portfolio.title) { store.show(.portfolio) }
+                .keyboardShortcut("9", modifiers: .command)
         }
     }
 }

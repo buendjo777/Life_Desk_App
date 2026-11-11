@@ -124,6 +124,7 @@ struct StatusChip: View {
             Text(verbatim: "\(status.level.word) · \(status.lastRunText.map { "last run \($0)" } ?? "no run yet")")
                 .style(\.smallStrong, \.ink)
                 .lineLimit(1)
+                .minimumScaleFactor(t.tightScale)
         }
         .padding(.horizontal, t.sp12 + t.hairline)
         .frame(height: t.statusChip)
