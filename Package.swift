@@ -9,7 +9,10 @@ let package = Package(
         .executableTarget(
             name: "Desk",
             path: "Sources/Desk",
-            swiftSettings: [.unsafeFlags(["-warnings-as-errors"])]
+            swiftSettings: [
+                .enableUpcomingFeature("BareSlashRegexLiterals"),
+                .unsafeFlags(["-warnings-as-errors"]),
+            ]
         ),
         .testTarget(name: "DeskTests", dependencies: ["Desk"], path: "Tests/DeskTests"),
     ]
