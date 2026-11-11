@@ -29,6 +29,16 @@ final class Store {
     /// True while drawing offscreen snapshots: views swap AppKit-backed controls for stand-ins.
     let isSnapshot: Bool
     @ObservationIgnored private let demoVault: URL
+    /// Live only: EventKit. `nil` in tests, snapshots and Demo.
+    @ObservationIgnored private let calendar: CalendarSource?
+    /// Live only: the vault's git queue.
+    @ObservationIgnored private var git: VaultGit?
+    /// The tail of the queued git work; `settle()` waits for it.
+    @ObservationIgnored private var pending: Task<Void, Never>?
+    /// Live calendar events, refreshed on sync.
+    @ObservationIgnored private var liveEvents: [CalEvent] = []
+    /// Why the live calendar is empty, if it is.
+    private(set) var calendarHint: String?
 
     var tab: Tab = .today
     private(set) var mode: Mode = .demo
@@ -55,10 +65,11 @@ final class Store {
     /// The last proposal decided in this session, for Undo.
     private(set) var lastDecided: String?
 
-    init(prefs: Preferences? = nil, isSnapshot: Bool = false, demoVault: URL = DemoVault.url) {
+    init(prefs: Preferences? = nil, isSnapshot: Bool = false, demoVault: URL = DemoVault.url, calendar: CalendarSource? = nil) {
         self.prefs = prefs ?? Preferences(defaults: nil)
         self.isSnapshot = isSnapshot
         self.demoVault = demoVault
+        self.calendar = calendar
         resolveMode()
         // In exam mode Studying is the first screen.
         tab = d.examMode ? .studying : .today
@@ -77,11 +88,13 @@ final class Store {
     /// Demo is the default until a live vault path is set and exists. Snapshots are always Demo.
     func resolveMode() {
         let next: Mode = !isSnapshot && prefs.wantsLive && prefs.vaultExists ? .live : .demo
-        if next != mode {
-            overlay = [:]
-            addedEvents = []
-        }
+        overlay = [:]
+        addedEvents = []
+        liveEvents = []
+        banner = nil
+        lastSync = nil
         mode = next
+        git = next == .live ? VaultGit(root: prefs.vaultURL) : nil
         reload()
     }
 
@@ -92,7 +105,12 @@ final class Store {
     /// Re-reads the vault and recomputes everything. Demo pins the clock to `demo_today`.
     func reload() {
         var data = VaultData.load(reader)
-        if mode == .demo { data.events += addedEvents }
+        if mode == .demo {
+            data.events += addedEvents
+        } else {
+            // `calendar/events.json` is a Demo stand-in; Live shows the Mac calendar only.
+            data.events = liveEvents
+        }
         let pinned = mode == .demo ? Parse.day(data.settings.demoToday, data.cal) : nil
         d = Derived(data: data, now: pinned ?? Date())
         if mode == .demo { lastSync = d.now.addingTimeInterval(-120) }
@@ -130,15 +148,61 @@ final class Store {
         }
     }
 
-    // MARK: Edits (Demo: memory only. Live: disk, added in step 11.)
+    // MARK: Edits (Demo: memory only. Live: disk, then commit, pull --rebase, push.)
 
-    /// Saves `text` as the new content of a vault file, then reloads.
+    func canWrite(_ path: String) -> Bool {
+        VaultWriter.isWritable(path, studyFile: data.settings.exam?.file)
+    }
+
+    /// Saves `text` as the new content of one of Jose's files, then reloads.
     private func save(_ path: String, _ text: String) {
-        precondition(!path.hasPrefix("agent/"), "Desk never writes agent/")
-        if mode == .demo {
+        guard canWrite(path) else {
+            banner = "Desk does not write \(path)."
+            return
+        }
+        guard mode == .live else {
+            // Demo never writes to disk.
             overlay[path] = text
+            reload()
+            return
+        }
+        do {
+            try VaultWriter.write(text, to: path, in: prefs.vaultURL, studyFile: data.settings.exam?.file)
+        } catch {
+            banner = "Could not save \(path): \(error.localizedDescription)"
+            return
         }
         reload()
+        if VaultWriter.isCommitted(path) {
+            let message = VaultWriter.commitMessage(for: path)
+            enqueue(failure: "Saved locally, but the vault did not sync") { try await $0.commitAndSync(path: path, message: message) }
+        }
+    }
+
+    /// Queues git work behind whatever is already running. A failure shows the banner.
+    private func enqueue(failure: String, _ work: @escaping @Sendable (VaultGit) async throws -> Void) {
+        guard let git else { return }
+        let previous = pending
+        pending = Task { [weak self] in
+            await previous?.value
+            do {
+                try await work(git)
+                self?.finished(nil)
+            } catch {
+                self?.finished("\(failure). \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func finished(_ problem: String?) {
+        banner = problem
+        if problem == nil { lastSync = Date() }
+        reload()
+    }
+
+    /// Waits for queued git work (used by tests).
+    func settle() async {
+        await pending?.value
     }
 
     /// Flips a Markdown checkbox in one of Jose's files.
@@ -175,8 +239,19 @@ final class Store {
     func accept(_ row: SnapshotRow) {
         if row.action == "add_event", let event = row.event {
             // Title and times only: nothing else from the email reaches the calendar.
-            addedEvents.append(CalEvent(id: "added-\(row.id)", calendar: "Desk", title: event.title,
-                                        start: event.start.date, end: event.end.date, allDay: event.allDay ?? false))
+            if mode == .live {
+                do {
+                    guard let calendar else { throw Git.Failure(message: "The calendar is not available.") }
+                    try calendar.add(title: event.title, start: event.start.date, end: event.end.date, allDay: event.allDay ?? false)
+                    refreshCalendar()
+                } catch {
+                    banner = "Could not add the event: \(error.localizedDescription)"
+                    return
+                }
+            } else {
+                addedEvents.append(CalEvent(id: "added-\(row.id)", calendar: "Desk", title: event.title,
+                                            start: event.start.date, end: event.end.date, allDay: event.allDay ?? false))
+            }
             decide(row.id, .add)
         } else {
             if let task = d.task(titled: row.title), !task.done { toggle(task) }
@@ -222,9 +297,29 @@ final class Store {
         upsert(payment)
     }
 
-    // MARK: Sync (Live git sync arrives in step 13)
+    // MARK: Sync
 
+    /// Live: `git pull --ff-only`, then re-read the vault and the calendar. On failure, a banner:
+    /// never a silently stale view. Demo: re-read the bundled vault.
     func sync() {
-        reload()
+        guard mode == .live else {
+            reload()
+            return
+        }
+        enqueue(failure: "Sync failed, so this view may be stale") { try await $0.pull() }
+        refreshCalendar()
+    }
+
+    /// Live: asks for calendar access once, then loads events around today.
+    func refreshCalendar() {
+        guard mode == .live, let calendar else { return }
+        Task { [weak self] in
+            let granted = await calendar.requestAccess()
+            guard let self, self.mode == .live else { return }
+            self.calendarHint = granted ? nil : "Calendar access is off: System Settings → Privacy & Security → Calendars → Desk."
+            let today = Date()
+            self.liveEvents = granted ? calendar.events(from: self.cal.add(days: -62, to: today), to: self.cal.add(days: 120, to: today)) : []
+            self.reload()
+        }
     }
 }

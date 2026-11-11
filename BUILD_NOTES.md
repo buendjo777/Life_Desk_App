@@ -63,3 +63,25 @@ The story of the one-session build, step by step: what was built, how it works a
 - **How it works:** every string from `runs.jsonl` is drawn verbatim. The run-status rule is the one from step 2, shared with the chip and the sidebar.
 - **Decided:** decisions 32–33.
 - **Checked:** snapshots; the strip, models and failure log pinned by a test.
+
+## Step 11 — Writes and decisions
+- **Built:** `VaultWriter` (the allow-list and the disk write), `Git` and the `VaultGit` actor (one git operation at a time, off the main thread), and the store's save path for both modes. Clicks append to `desk/decisions.jsonl`.
+- **How it works:** Demo edits go to an in-memory overlay that the reader checks before the disk. Live edits are written atomically, the view reloads, then the file is committed, the vault is rebased on the remote and pushed; any failure raises the banner. `tutoring/payments.csv` is written but never added to git.
+- **Decided:** decisions 34–36.
+- **Checked:** tests: the allow-list (including `..` and `agent/` tricks), Demo leaving the disk untouched, and a Live round trip against a throwaway bare repo in a temp folder: tick, decision and payment, then `agent/` byte-identical, `tutoring/` absent from git, HEAD equal to origin, and a broken remote raising the banner. The real vault was never touched.
+
+## Step 12 — EventKit
+- **Built:** `CalendarSource` and `EventKitCalendar`: full-access request, events around today, and Add, which creates an event with a title and times only. Demo keeps using `calendar/events.json` and adds proposed events in memory.
+- **Decided:** decisions 37–38.
+- **Checked:** by test with a fake calendar: Add passes only title, start and end. **Not verified:** the real EventKit path, because Live mode was not run on this Mac.
+
+## Step 13 — Git sync, banner, Settings
+- **Built:** sync on launch, every 15 minutes and on ⌘R (`git pull --ff-only`), the alert banner with Retry and Dismiss, the sidebar's sync line, the Settings window (vault path, Use the live vault, appearance, density), ⌘F for search and the Go menu.
+- **How it works:** `Store.resolveMode()` picks Live only when the toggle is on and the folder exists; changing either setting switches at once.
+- **Decided:** decision 39.
+
+## Step 14 — Customise and density
+- **Built:** View → Customise…: per tab, show or hide and reorder sections, Compact or Comfortable, Reset. Saved in `UserDefaults`.
+- **How it works:** the panel edits `TabPrefs` (order and hidden ids); `TabLayout.arranged` applies them. Comfortable scales spacing by 1.25, makes rows 60 pt and shows fewer rows per list, all from `Theme.swift`.
+- **Decided:** decisions 40–41.
+- **Checked:** `customise-*.png` and `comfortable-*.png` snapshots; fixed week numbers, the now pill and sidebar labels wrapping in Comfortable; a test covers reorder, hide and reset.
