@@ -85,7 +85,13 @@ enum TabLayout {
             DeskSection("system.strip", "14-day strip") { RunStrip() },
             DeskSection("system.history", "Run history") { RunHistory() },
         ]
-        default: []
+        case .portfolio: [
+            DeskSection("portfolio.intro", "What it does", width: 500) { PortfolioIntro() },
+            DeskSection("portfolio.evaluation", "Evaluation", width: 288) { PortfolioEvaluation() },
+            DeskSection("portfolio.architecture", "Architecture") { ArchitectureDiagram() },
+            DeskSection("portfolio.agents", "Agents", width: 320) { PortfolioAgents() },
+            DeskSection("portfolio.costs", "Cost and failures", width: 468) { PortfolioCosts() },
+        ]
         }
     }
 

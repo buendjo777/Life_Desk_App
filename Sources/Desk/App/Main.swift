@@ -10,6 +10,10 @@ enum Main {
             MainActor.assumeIsolated { Snapshots.run(directory: arguments[flag + 1]) }
             return
         }
+        if let flag = arguments.firstIndex(of: "--render-icon"), arguments.count > flag + 1 {
+            MainActor.assumeIsolated { AppIcon.run(directory: arguments[flag + 1]) }
+            return
+        }
         DeskApp.main()
     }
 }

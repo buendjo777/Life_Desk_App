@@ -243,7 +243,8 @@ extension Derived {
         case .tutoring: tutoringSummary
         case .health: healthSummary
         case .system: systemSummary
-        default: []
+        case .portfolio: [Phrase(text: "The showcase.", strong: true),
+                          Phrase(text: " Invented demo data only: this screen never reads the live vault.")]
         }
     }
 

@@ -189,6 +189,9 @@ struct Theme {
     let summaryWidth: CGFloat = 700
     let settingsWidth: CGFloat = 520
     let customiseSize = CGSize(width: 680, height: 640)
+    /// The icon tile as a share of the canvas, and its corner as a share of the tile (macOS icon grid).
+    let iconTile: CGFloat = 0.8
+    let iconCorner: CGFloat = 0.225
     let shadowRadius: CGFloat = 18
     let shadowY: CGFloat = 6
     let shadowOpacity = 0.18

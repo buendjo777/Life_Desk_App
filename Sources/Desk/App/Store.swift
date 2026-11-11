@@ -76,6 +76,15 @@ final class Store {
         selection = d.focus.first.map { .row($0.id) }
     }
 
+    /// The Portfolio screen's data: always the bundled demo vault at its pinned clock, never the live vault.
+    @ObservationIgnored private(set) lazy var showcase: Derived = {
+        let data = VaultData.load(VaultReader(root: demoVault))
+        return Derived(data: data, now: Parse.day(data.settings.demoToday, data.cal) ?? Date())
+    }()
+    @ObservationIgnored private(set) lazy var portfolio: PortfolioInfo? = {
+        VaultReader(root: demoVault).text("desk/portfolio.json").flatMap { Parse.json(PortfolioInfo.self, $0, showcase.cal) }
+    }()
+
     var data: VaultData { d.data }
     var now: Date { d.now }
     var cal: DeskCalendar { d.cal }

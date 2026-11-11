@@ -45,3 +45,7 @@ Choices made where SPEC.md and DESIGN.md are silent or disagree. Each one is the
 | 39 | 13 | Settings uses standard macOS form controls. | A Settings window should look like one; theme tokens style the main window. |
 | 40 | 14 | Customise reorders with up and down buttons, and hidden sections stay in the list with a crossed eye. | Simpler and more accessible than drag and drop, and nothing disappears from the panel. |
 | 41 | 14 | The sidebar's insets do not scale with density. | The sidebar keeps its 232 pt width, so scaled insets truncated "Internship apps". |
+| 42 | 15 | The Portfolio screen always loads the bundled demo vault itself, even in Live mode, and is reached from System, the Go menu and ⌘9. | "Never reads the live vault"; it is a ninth screen, so it stays out of the eight sidebar tabs. |
+| 43 | 15 | The evaluation result and the thesis link come from an optional `desk/portfolio.json` (`evaluation {missed_reply_rate, sample, note}`, `thesis_url`); without it the card says "Not measured yet". | Neither exists yet, and a showcase must not invent a result. |
+| 44 | 15 | The cost table lists the spec's zero-cost facts and quotes the agent's latest usage note. | Those are the only cost facts the repo holds. |
+| 45 | 16 | The icon is drawn by the app (`--render-icon`) from theme colours and packed by `iconutil` in the build script. | No binary asset to keep in sync with the palette, and no extra tools. |

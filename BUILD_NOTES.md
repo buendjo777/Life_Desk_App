@@ -85,3 +85,9 @@ The story of the one-session build, step by step: what was built, how it works a
 - **How it works:** the panel edits `TabPrefs` (order and hidden ids); `TabLayout.arranged` applies them. Comfortable scales spacing by 1.25, makes rows 60 pt and shows fewer rows per list, all from `Theme.swift`.
 - **Decided:** decisions 40–41.
 - **Checked:** `customise-*.png` and `comfortable-*.png` snapshots; fixed week numbers, the now pill and sidebar labels wrapping in Comfortable; a test covers reorder, hide and reset.
+
+## Step 15 — Portfolio
+- **Built:** what the system does (navy), the evaluation card (missed-reply rate, or an honest "Not measured yet"), the architecture diagram, the agents and their models, the cost table and the failure log.
+- **How it works:** `Store.showcase` is a second `Derived` loaded from the bundled demo vault at its pinned clock, so the screen is identical in Demo and Live and cannot show private data.
+- **Decided:** decisions 42–44.
+- **Checked:** light and dark snapshots.
