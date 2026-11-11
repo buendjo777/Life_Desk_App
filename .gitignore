@@ -15,3 +15,6 @@ Desk.app/
 
 # Inspiration images: third-party shots, never committed
 design/inspiration/
+
+# Obsidian settings (created when demo-vault is opened as a vault)
+.obsidian/
