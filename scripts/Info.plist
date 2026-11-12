@@ -14,6 +14,8 @@
     <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>Desk reads your Classes notes in Notes to import lesson summaries into tutoring/, with initials only. Nothing leaves the Mac.</string>
     <key>NSCalendarsFullAccessUsageDescription</key>
     <string>Desk shows your calendar on the Today tab and adds an event only when you click Add.</string>
 </dict>
