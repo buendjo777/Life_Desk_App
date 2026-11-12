@@ -122,7 +122,7 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(data.projects.filter { $0.status == .idea }.count, 3)
         let project = try XCTUnwrap(data.projects.first { $0.path == "projects/af-detection.md" })
         XCTAssertEqual(project.status, .active)
-        XCTAssertEqual(project.doc, "nini/af-detection.md")
+        XCTAssertEqual(project.doc, "Research/AF detection.md")
         XCTAssertEqual(project.items.count, 4)
         XCTAssertEqual(project.nextDate.map(cal.isoDay), "2026-11-12")
     }
@@ -133,11 +133,99 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(alpine.deadlineRow, "deadline-alpine-bme")
         XCTAssertEqual(alpine.items.filter(\.done).count, 3)
         XCTAssertEqual(data.masterDeadlines.count, 5)
-        let master = try XCTUnwrap(data.masterDeadlines[alpine.comparisonHeading])
+        let master = try XCTUnwrap(data.masterDeadline(for: alpine))
         XCTAssertEqual(cal.isoStamp(master.date), "2026-11-30T11:59:00+01:00")
-        let section = try XCTUnwrap(Parse.section(data.docs[VaultData.comparisonDoc] ?? "", heading: alpine.comparisonHeading))
+        // A bold programme cell still matches its uni file.
+        let harbor = try XCTUnwrap(data.unis.first { $0.path == "uni/harbor-bme.md" })
+        XCTAssertEqual(data.masterDeadline(for: harbor).map { cal.isoDay($0.date) }, "2027-01-15")
+        let comparison = data.docs[VaultData.comparisonDoc] ?? ""
+        let section = try XCTUnwrap(Parse.section(comparison, heading: alpine.comparisonHeading))
         XCTAssertTrue(section.hasPrefix("- Structure: 90 ECTS"))
         XCTAssertFalse(section.contains("Lakeside"))
+        // The wikilink in the section is plain text.
+        XCTAssertTrue(section.contains("wearable sensors; see the AF project."), section)
+        // The last programme of a group stops at the next "##" group heading.
+        let thames = try XCTUnwrap(Parse.section(comparison, heading: "Thames College London — MSc Medical AI"))
+        XCTAssertFalse(thames.contains("Section 2"))
+        XCTAssertFalse(thames.contains("Harbor"))
+    }
+
+    // MARK: Jose's docs (Masters/ and project docs)
+
+    func testProjectDocsLoadWithWikilinksAsPlainText() throws {
+        let doc = try XCTUnwrap(data.docs["Research/AF detection.md"])
+        XCTAssertTrue(doc.contains("overlap with the interpretability study."))
+        for text in data.docs.values {
+            XCTAssertFalse(text.contains("[["), "a wikilink was left in a doc")
+        }
+        // Every demo project's doc is found.
+        for project in data.projects {
+            if let path = project.doc { XCTAssertNotNil(data.docs[path], path) }
+        }
+    }
+
+    func testWikilinkForms() {
+        XCTAssertEqual(Parse.plainWikilinks("See [[Note]]."), "See Note.")
+        XCTAssertEqual(Parse.plainWikilinks("[[Masters/Deadlines 2027|the dates]]"), "the dates")
+        XCTAssertEqual(Parse.plainWikilinks("| [[Masters/Deadlines 2027\\|dates]] |"), "| dates |")
+        XCTAssertEqual(Parse.plainWikilinks("[[Masters/Deadlines 2027.md]]"), "Deadlines 2027")
+        XCTAssertEqual(Parse.plainWikilinks("[[Note#Heading]] and [[#Local]]"), "Note > Heading and Local")
+        XCTAssertEqual(Parse.plainWikilinks("[[Note#^block1]]"), "Note")
+        XCTAssertEqual(Parse.plainWikilinks("![[diagram.png]]"), "diagram.png")
+        XCTAssertEqual(Parse.plainWikilinks("[[Note|]]"), "Note")
+        XCTAssertEqual(Parse.plainWikilinks("no links, [single] brackets"), "no links, [single] brackets")
+        XCTAssertEqual(Parse.plainWikilinks("[[a]][[b]]"), "ab")
+    }
+
+    func testTrustedDocPaths() {
+        for path in ["Masters/Programme comparison.md", "Research/Aslanidi meeting.md", "ICAI/Resis retake.md", "Notes.md"] {
+            XCTAssertTrue(Parse.isTrustedDoc(path), path)
+        }
+        for path in ["agent/drafts/x.md", "Agent/snapshot.md", "../outside.md", "/etc/x.md", "Research/../agent/x.md",
+                     "Research/a.json", ".git/x.md", "Research//a.md", ""] {
+            XCTAssertFalse(Parse.isTrustedDoc(path), path)
+        }
+        // A project whose doc points into agent/ gets no Markdown: the doc is not loaded at all.
+        let reader = VaultReader(root: DemoVault.url, overlay: [
+            "projects/zz-agent-doc.md": "---\ntitle: Agent doc\nstatus: idea\nnext: x\ndoc: agent/drafts/2026-11-11-maya-chen.md\n---\n",
+        ])
+        let data = VaultData.load(reader)
+        XCTAssertNotNil(data.projects.first { $0.title == "Agent doc" })
+        XCTAssertNil(data.docs["agent/drafts/2026-11-11-maya-chen.md"])
+    }
+
+    func testRealDeadlineTableFormat() throws {
+        let text = """
+        # Application dates — 2027 entry
+
+        | Closes | Programme | Round | Opens | Decision |
+        |---|---|---|---|---|
+        | **3 Nov 2026** | Duke — MEng BME | Round 1 of 3 | open | not published |
+        | **30 Nov 2026, 11:59 CET** | ETH Zürich — MSc ITET **and** MSc BME | the only window | 1 Nov 2026 | late Jan |
+        | **16 Dec 2026** | **Georgia Tech — MS ECE, Atlanta** (recommended) | single date | not published | — |
+        | 2027-01-06 | Thames — MSc AI | Round 2 | open | — |
+        | rolling | Somewhere | — | — | — |
+        """
+        let deadlines = Parse.masterDeadlines(text, cal)
+        XCTAssertEqual(deadlines.count, 4)
+        XCTAssertEqual(deadlines[Parse.nameKey("Duke — MEng BME")].map { cal.isoDay($0.date) }, "2026-11-03")
+        let eth = try XCTUnwrap(deadlines[Parse.nameKey("ETH Zurich - MSc ITET and MSc BME")])
+        XCTAssertEqual(cal.isoStamp(eth.date), "2026-11-30T11:59:00+01:00")
+        XCTAssertTrue(eth.hasTime)
+        XCTAssertEqual(deadlines[Parse.nameKey("Thames — MSc AI")].map { cal.isoDay($0.date) }, "2027-01-06")
+        XCTAssertNil(Parse.looseDate("31 Foo 2026", cal))
+        XCTAssertNil(Parse.looseDate("32 Nov 2026", cal))
+        XCTAssertNil(Parse.looseDate("3 Nov 2026, 25:00", cal))
+        XCTAssertEqual(Parse.looseDate("12 dic 2026", cal).map { cal.isoDay($0.date) }, "2026-12-12")
+    }
+
+    func testSectionsByHeadingLevel() {
+        let text = "# Doc\n## Group A\n### One\nalpha\n#### Detail\nmore\n### Two\nbeta\n## Group B\n### Three\ngamma"
+        XCTAssertEqual(Parse.section(text, heading: "One"), "alpha\n#### Detail\nmore")
+        XCTAssertEqual(Parse.section(text, heading: "two"), "beta")
+        XCTAssertEqual(Parse.section(text, heading: "Group A")?.contains("Three"), false)
+        XCTAssertNil(Parse.section(text, heading: "Four"))
+        XCTAssertEqual(Parse.section("### **Ünï** — X\nbody", heading: "Uni - X"), "body")
     }
 
     func testBoards() {

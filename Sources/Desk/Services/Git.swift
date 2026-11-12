@@ -44,6 +44,21 @@ struct Git: Sendable {
         }
         return output
     }
+
+    /// Why git must not be touched now: another tool's merge, rebase or command is under way, or HEAD is
+    /// off a branch. Obsidian Git works in the same vault, so Desk waits instead of finishing or aborting it.
+    func busyReason() -> String? {
+        let gitDir = root.appendingPathComponent(".git")
+        let markers = [("rebase-merge", "a rebase"), ("rebase-apply", "a rebase"), ("MERGE_HEAD", "a merge"),
+                       ("CHERRY_PICK_HEAD", "a cherry-pick"), ("index.lock", "another git command")]
+        for (name, what) in markers where FileManager.default.fileExists(atPath: gitDir.appendingPathComponent(name).path) {
+            return "The vault is in the middle of \(what) (Obsidian Git or Terminal), so Desk didn't sync. Finish it there, then press ⌘R."
+        }
+        if (try? run(["symbolic-ref", "-q", "HEAD"])) == nil {
+            return "The vault's HEAD is not on a branch, so Desk didn't sync. Check out main, then press ⌘R."
+        }
+        return nil
+    }
 }
 
 /// The vault's git queue: one operation at a time, off the main thread.
@@ -56,6 +71,7 @@ actor VaultGit {
     /// If an earlier push failed, the clone is ahead of the remote and a fast-forward is impossible:
     /// then the unpushed Desk commits are rebased and pushed, as after a write.
     func pull() throws {
+        try ensureFree()
         do {
             try git.run(["pull", "--ff-only"])
         } catch {
@@ -65,7 +81,13 @@ actor VaultGit {
         }
     }
 
+    private func ensureFree() throws {
+        if let reason = git.busyReason() { throw Git.Failure(message: reason) }
+    }
+
     private func rebaseAndPush() throws {
+        // Checked again right before: Desk only ever aborts a rebase it started itself.
+        try ensureFree()
         do {
             try git.run(["pull", "--rebase", "--autostash"])
         } catch {
@@ -79,6 +101,7 @@ actor VaultGit {
     /// After a write to one of Jose's files: commit that file, `pull --rebase`, `push`.
     func commitAndSync(path: String, message: String) throws {
         precondition(VaultWriter.isCommitted(path), "Desk never commits \(path)")
+        try ensureFree()
         if try !git.run(["status", "--porcelain", "--", path]).isEmpty {
             try git.run(["add", "--", path])
             try git.run(["commit", "-m", message, "--", path])

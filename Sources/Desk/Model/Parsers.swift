@@ -144,13 +144,61 @@ enum Parse {
             .map { cells in Dictionary(zip(header, cells), uniquingKeysWith: { first, _ in first }) }
     }
 
-    /// The body under a `## heading`, up to the next `##`.
+    /// The body under a heading of any level (`##`, `###`…), up to the next heading of the same or a
+    /// higher level. Headings match by `nameKey`, so case, accents and bold markers don't matter.
     static func section(_ text: String, heading wanted: String) -> String? {
         let lines = splitLines(text)
-        guard let start = lines.firstIndex(where: { heading($0) == wanted }) else { return nil }
-        let rest = lines[(start + 1)...]
-        let end = rest.firstIndex(where: { heading($0) != nil }) ?? lines.endIndex
+        let key = nameKey(wanted)
+        guard let start = lines.firstIndex(where: { anyHeading($0).map { nameKey($0.text) == key } == true }),
+              let level = anyHeading(lines[start])?.level else { return nil }
+        let end = lines[(start + 1)...].firstIndex { (anyHeading($0)?.level ?? .max) <= level } ?? lines.endIndex
         return lines[(start + 1)..<end].joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// `### Heading` → (3, "Heading"); `nil` for any other line.
+    static func anyHeading(_ line: String) -> (level: Int, text: String)? {
+        guard let match = line.wholeMatch(of: /(#{1,6})\s+(.+?)\s*/) else { return nil }
+        return (match.1.count, String(match.2))
+    }
+
+    /// A key for names written slightly differently: no case, accents or bold markers, dashes and
+    /// middle dots as spaces, single spaces. "ETH Zürich — **MSc**" and "eth zurich - msc" match.
+    static func nameKey(_ name: String) -> String {
+        let folded = name.replacingOccurrences(of: "**", with: "")
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en")).lowercased()
+        return String(folded.map { "—–-·•".contains($0) ? " " : $0 }).split(whereSeparator: \.isWhitespace).joined(separator: " ")
+    }
+
+    /// Obsidian wikilinks as the plain text Obsidian shows: `[[Note]]` → "Note", `[[folder/Note|label]]`
+    /// → "label", `[[Note#Heading]]` → "Note > Heading", `![[embed]]` → "embed". In tables the alias bar
+    /// is written `\|`. Applied once, when Jose's docs are loaded.
+    static func plainWikilinks(_ text: String) -> String {
+        text.replacing(/!?\[\[([^\[\]\n]+?)\]\]/) { match -> String in
+            let inner = String(match.1)
+            var target = inner
+            if let bar = inner.firstIndex(of: "|") {
+                let alias = inner[inner.index(after: bar)...].trimmingCharacters(in: .whitespaces)
+                if !alias.isEmpty { return alias }
+                target = String(inner[..<bar])
+            }
+            if target.hasSuffix("\\") { target.removeLast() }
+            let parts = target.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+            var note = parts[0].split(separator: "/").last.map(String.init) ?? ""
+            if note.lowercased().hasSuffix(".md") { note.removeLast(3) }
+            note = note.trimmingCharacters(in: .whitespaces)
+            guard parts.count == 2, !parts[1].hasPrefix("^") else { return note }
+            let heading = parts[1].trimmingCharacters(in: .whitespaces)
+            return note.isEmpty ? heading : "\(note) > \(heading)"
+        }
+    }
+
+    /// A doc Desk may render as trusted Markdown: a plain relative `.md` path inside the vault, never
+    /// under `agent/` (agent-written text is untrusted and stays plain text) or `.git/`.
+    static func isTrustedDoc(_ path: String) -> Bool {
+        let parts = path.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
+        guard path.lowercased().hasSuffix(".md"), !parts.contains(where: { $0.isEmpty || $0 == "." || $0 == ".." }),
+              let first = parts.first?.lowercased() else { return false }
+        return first != "agent" && first != ".git"
     }
 
     // MARK: Jose's files
@@ -218,16 +266,39 @@ enum Parse {
         )
     }
 
-    /// `nini/masters-deadlines-2027.md`: programme → deadline. This doc is the master for programme deadlines.
+    /// `Masters/Deadlines 2027.md`: programme → deadline, keyed by `nameKey`. The date is in a "Closes"
+    /// (or "Deadline") column. This doc is the master for programme deadlines.
     static func masterDeadlines(_ text: String, _ cal: DeskCalendar) -> [String: Stamp] {
         var result: [String: Stamp] = [:]
         for row in table(text) {
-            if let programme = row["Programme"], let deadline = row["Deadline"].flatMap({ stamp($0, cal) }) {
-                result[programme] = deadline
-            }
+            guard let programme = row["Programme"], let raw = row["Closes"] ?? row["Deadline"],
+                  let deadline = looseDate(raw, cal) else { continue }
+            result[nameKey(programme)] = deadline
         }
         return result
     }
+
+    /// A date as people write it in a doc: ISO, or "3 Nov 2026" / "**30 Nov 2026, 11:59 CET**" (wall-clock
+    /// time in the vault's zone). Bold markers and trailing words are ignored.
+    static func looseDate(_ raw: String, _ cal: DeskCalendar) -> Stamp? {
+        let text = raw.replacingOccurrences(of: "**", with: "")
+        if let iso = text.firstMatch(of: /\d{4}-\d{2}-\d{2}(?:[ T]\d{1,2}:\d{2})?/), let stamp = stamp(String(iso.0), cal) {
+            return stamp
+        }
+        guard let match = text.firstMatch(of: /(\d{1,2})\s+([A-Za-z]{3})[a-z]*\.?\s+(\d{4})(?:,?\s+(\d{1,2}):(\d{2}))?/),
+              let day = Int(match.1), (1...31).contains(day), let year = Int(match.3),
+              let month = monthNumbers[match.2.lowercased()] else { return nil }
+        let hour = match.4.flatMap { Int($0) }, minute = match.5.flatMap { Int($0) }
+        guard (0...23).contains(hour ?? 0), (0...59).contains(minute ?? 0),
+              let date = cal.date(year: year, month: month, day: day, hour: hour ?? 0, minute: minute ?? 0) else { return nil }
+        return Stamp(date: date, hasTime: hour != nil)
+    }
+
+    /// English and Spanish month abbreviations.
+    static let monthNumbers: [String: Int] = [
+        "jan": 1, "ene": 1, "feb": 2, "mar": 3, "apr": 4, "abr": 4, "may": 5, "jun": 6, "jul": 7,
+        "aug": 8, "ago": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12, "dic": 12,
+    ]
 
     /// A draft: front matter `to, thread, status, created`, then the body.
     static func draft(path: String, _ text: String, _ cal: DeskCalendar) -> Draft? {

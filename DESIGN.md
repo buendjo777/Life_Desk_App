@@ -75,7 +75,7 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 ## Per tab
 - **Today:** as the mockup. Cards in two rows: Deadlines (ochre) + Today (rust), then Inbox (steel) + Health (moss). Below: Today's list and Important emails side by side. Right rail: calendar, Needs confirmation, timeline.
 - **Studying:** a hero card (ochre: countdown, overall progress ring); progress bars per topic in two columns (Theory, Problems); a plan chart (steel: papers done against the plan line); the past-papers list with score chips; today's target.
-- **Projects:** four board columns; the inspector shows the `nini/` doc and the checklist.
+- **Projects:** four board columns; the inspector shows the project's linked doc and the checklist.
 - **Internship apps:** a row of stat cards (Open, Applied, Interview, Rejected); counted tabs Apply now · All targets; the table.
 - **Uni apps:** a horizontal deadline runway with a today marker; a grid of programme cards (steel) with a progress bar and days left; the Contacts Board section below.
 - **Tutoring:** the billing layout: donut and three money cards on the left; Waiting for payment cards with Send reminder; Month end; the payments table; right rail with this week's lessons.

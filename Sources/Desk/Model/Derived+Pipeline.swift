@@ -71,7 +71,7 @@ extension Derived {
 
     var uniCards: [UniCard] {
         data.unis.map { programme in
-            let deadline = data.masterDeadlines[programme.comparisonHeading]?.date
+            let deadline = data.masterDeadline(for: programme)?.date
                 ?? data.rows.first { $0.id == programme.deadlineRow }?.when?.date
             let parts = programme.title.components(separatedBy: " · ")
             let progress = Self.progress(programme.items)
@@ -91,7 +91,7 @@ extension Derived {
         max(Self.runwayDays, (uniCards.compactMap(\.daysLeft).max() ?? 0) + 7)
     }
 
-    /// That programme's `##` section of the comparison doc (trusted Markdown from `nini/`).
+    /// That programme's section of the comparison doc (a `###` heading; trusted Markdown).
     func comparison(for programme: UniProgramme) -> String? {
         data.docs[VaultData.comparisonDoc].flatMap { Parse.section($0, heading: programme.comparisonHeading) }
     }

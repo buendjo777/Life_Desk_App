@@ -1,7 +1,7 @@
 import Foundation
 
 /// The one place that decides what Desk may write, and writes it. One writer per file:
-/// `agent/` and `nini/` belong to the agent and the Project mirror, so they are never written.
+/// `agent/` belongs to the nightly run, so it is never written (nor `nini/`, the old Project mirror).
 enum VaultWriter {
     static let tutoringFolder = "tutoring/"
 

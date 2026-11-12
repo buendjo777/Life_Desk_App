@@ -268,6 +268,52 @@ final class WriteTests: XCTestCase {
         XCTAssertLessThanOrEqual(try XCTUnwrap(d.planChart).plan.count, Derived.maxChartDays + 1)
     }
 
+    // MARK: Obsidian Git shares the vault
+
+    /// Desk never finishes or aborts another tool's rebase: with one stuck, it refuses to sync or commit,
+    /// and the vault is left exactly as it was.
+    func testDeskLeavesAnotherToolsRebaseAlone() async throws {
+        let fm = FileManager.default
+        let repo = fm.temporaryDirectory.appendingPathComponent("desk-busy-\(UUID().uuidString)")
+        defer { try? fm.removeItem(at: repo) }
+        try fm.createDirectory(at: repo, withIntermediateDirectories: true)
+        let git = Git(root: repo)
+        try git.run(["init", "--initial-branch=main"])
+        for (key, value) in [("user.name", "Desk Test"), ("user.email", "desk@example.invalid"), ("commit.gpgsign", "false")] {
+            try git.run(["config", key, value])
+        }
+        try "- [ ] a\n".write(to: repo.appendingPathComponent("TASKS.md"), atomically: true, encoding: .utf8)
+        try git.run(["add", "-A"])
+        try git.run(["commit", "-m", "Seed"])
+        XCTAssertNil(git.busyReason())
+
+        // Another tool is half-way through a rebase.
+        let marker = repo.appendingPathComponent(".git/rebase-merge")
+        try fm.createDirectory(at: marker, withIntermediateDirectories: true)
+        XCTAssertTrue(git.busyReason()?.contains("middle of a rebase") == true)
+        let head = try git.run(["rev-parse", "HEAD"])
+        try "- [x] a\n".write(to: repo.appendingPathComponent("TASKS.md"), atomically: true, encoding: .utf8)
+        let vault = VaultGit(root: repo)
+        do {
+            try await vault.commitAndSync(path: "TASKS.md", message: "Desk: tick in TASKS.md")
+            XCTFail("commitAndSync must refuse while a rebase is in progress")
+        } catch {
+            XCTAssertTrue(error.localizedDescription.contains("middle of a rebase"))
+        }
+        do {
+            try await vault.pull()
+            XCTFail("pull must refuse while a rebase is in progress")
+        } catch {}
+        XCTAssertTrue(fm.fileExists(atPath: marker.path), "the other tool's rebase was aborted")
+        XCTAssertEqual(try git.run(["rev-parse", "HEAD"]), head, "Desk committed during another tool's rebase")
+        XCTAssertEqual(try String(contentsOf: repo.appendingPathComponent("TASKS.md"), encoding: .utf8), "- [x] a\n")
+
+        // A detached HEAD is refused too.
+        try fm.removeItem(at: marker)
+        try git.run(["checkout", "-q", "--detach"])
+        XCTAssertTrue(git.busyReason()?.contains("not on a branch") == true)
+    }
+
     func testWhatsAppLinkKeepsAsciiDigitsOnly() throws {
         let link = try XCTUnwrap(Links.whatsApp(phone: "+34 ٦٠٠ 600-000 ½ 001", text: "hola"))
         XCTAssertEqual(link.absoluteString.components(separatedBy: "?")[0], "https://wa.me/34600000001")

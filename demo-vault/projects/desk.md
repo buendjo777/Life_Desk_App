@@ -2,7 +2,7 @@
 title: Desk / Life OS
 status: active
 next: Build Desk for Mac in one go
-doc: nini/desk.md
+doc: Claude/Desk.md
 ---
 - [x] Web Desk live
 - [x] Spec and design

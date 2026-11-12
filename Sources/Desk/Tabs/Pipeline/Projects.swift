@@ -82,7 +82,7 @@ struct ProjectCard: View {
     }
 }
 
-/// A project in the inspector: its next step, the checklist and the linked `nini/` doc.
+/// A project in the inspector: its next step, the checklist and its linked doc.
 struct ProjectInspector: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
@@ -109,7 +109,7 @@ struct ProjectInspector: View {
                     .padding(t.sp12)
                     .background(t.surface, in: RoundedRectangle(cornerRadius: t.radiusNav))
             } else {
-                EmptyState(line: "The linked doc is not in the mirror.", hint: doc)
+                EmptyState(line: "The linked doc is missing from the vault.", hint: doc)
             }
         }
         LinkButton(title: "Open in Obsidian", url: Links.obsidian(vault: store.vaultName, file: project.path), primary: true)

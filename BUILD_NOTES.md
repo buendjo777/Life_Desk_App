@@ -116,3 +116,10 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 ## Not verified
 - EventKit against the real Calendar, and Live sync against the real vault: never run, on purpose. The Live write path is tested against a throwaway local repository; calendar Add is tested with a fake calendar.
 - The Settings window, the Customise sheet and the timeline filter popover were drawn offscreen but not operated on screen.
+
+## 12 Nov — the vault's new layout
+- **The vault was stuck.** The Obsidian Git plugin (backup every 10 minutes, merge pulls) had stopped mid-rebase at 23:11 on 11 Nov. Jose's rename of `nini/` to `Proyecto Nini/` collided with a cloud reorganisation into topic folders, and the next auto-backup was committed on top of the half-finished rebase. Fix: backup refs to both commits, `rebase --quit`, `main` moved to the newest backup, rebased onto the 4 cloud commits (no conflicts), pushed. Nothing was lost; the `Proyecto Nini/` copies were kept for Jose to decide.
+- **Desk now leaves another tool's git work alone** (decision 66), with a test that simulates a stuck rebase.
+- **Docs moved:** `nini/` is gone. Desk reads `Masters/Deadlines 2027.md`, `Masters/Programme comparison.md` (`###` headings) and each project's `doc:` path, with wikilinks shown as plain text (decisions 62–65, 67).
+- **Agent and Strava:** the run is scheduled for 06:18 (already in the vault's settings). `scripts/desk.py` writes the sections and date format Desk parses. Strava is gone; Health shows its empty state.
+- **Checked:** 68 tests; the project inspector renders `Research/AF detection.md` with its wikilink as plain text.

@@ -6,7 +6,7 @@ My personal life manager: a native macOS app that answers "what now?" in one gla
 ![Today, dark](design/screenshots/today-dark.png)
 
 ## How it works
-Cloud agents read my inbox, calendar and Strava every night and write a brief into a private Obsidian vault, which is a git repo. Desk reads those files and my Mac calendar. This repo ships with `demo-vault/`, fully invented data, so the app runs without any of my real information.
+Cloud agents read my inbox and calendar every night and write a brief into a private Obsidian vault, which is a git repo. Desk reads those files and my Mac calendar. This repo ships with `demo-vault/`, fully invented data, so the app runs without any of my real information.
 
 ## Design choices
 These are mine; they are written down in [SPEC.md](SPEC.md) and [DESIGN.md](DESIGN.md).

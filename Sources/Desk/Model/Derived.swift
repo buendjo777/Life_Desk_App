@@ -82,7 +82,7 @@ struct Derived {
     var deadlines: [Deadline] {
         data.rows(.deadline).compactMap { row -> Deadline? in
             let uni = data.unis.first { $0.deadlineRow == row.id }
-            guard let date = uni.flatMap({ data.masterDeadlines[$0.comparisonHeading] })?.date ?? row.when?.date else { return nil }
+            guard let date = uni.flatMap(data.masterDeadline)?.date ?? row.when?.date else { return nil }
             let isExam = row.source?.hasPrefix("study/") == true
             let first = row.title.split(separator: " ").first.map(String.init) ?? row.title
             return Deadline(id: row.id, title: row.title, short: isExam ? "Exam" : first, date: date,

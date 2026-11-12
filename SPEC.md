@@ -28,7 +28,7 @@ cloud nightly agent ──writes──▶ jose-brain (private GitHub repo, separ
                                   agent/runs.jsonl          one line per run
                                   agent/drafts/*.md         reply drafts
                                   agent/exports/strava.json last 12 weeks
-                                  nini/                     read-only mirror of the Nini Project
+                                  Masters/ Research/ …      Jose's docs (Nini Project copies, Obsidian wikilinks)
                                   TASKS.md study/ projects/ uni/ internships/ contacts/ desk/   Jose's files
 Mac: git pull --ff-only ──▶ local clone of jose-brain ──read──▶ Desk.app
 Mac: macOS Calendar (Google account added) ──EventKit──▶ Desk.app
@@ -43,7 +43,7 @@ Phone: the web Desk (claude.ai) reads the same snapshot rows
 Unknown fields are ignored. A missing or malformed file gives an empty state with a one-line hint, never a crash. Dates are ISO 8601: a date (`2026-11-12`) or a datetime with an offset (`2026-11-18T12:30:00Z`). Times display in `settings.timezone`.
 
 ### `desk/settings.json`
-`name` · `timezone` · `scheduled_run_local` (`"06:30"`) · `exam {title, file, mode_starts, mode_ends}` · `tutoring_calendar` · `tutoring_locale` · `currency` · `links {internship_board, contacts_board, run_now}` · `demo_today` (demo vault only).
+`name` · `timezone` · `scheduled_run_local` (`"06:18"`, the live run) · `exam {title, file, mode_starts, mode_ends}` · `tutoring_calendar` · `tutoring_locale` · `currency` · `links {internship_board, contacts_board, run_now}` · `demo_today` (demo vault only).
 
 ### `agent/snapshot.json`
 A JSON array of rows. The web Desk reads the same file.
@@ -64,7 +64,10 @@ A JSON array of rows. The web Desk reads the same file.
 | `event` | `{title, start, end, all_day}`, optional | `add_event` and `event` rows |
 | `evidence` | string, optional | The email line behind a proposal. Untrusted |
 
-`deadline` rows are parsed by code from `nini/masters-deadlines-2027.md`; that Project doc stays the master.
+`deadline` rows are parsed by code from `Masters/Deadlines 2027.md` (a table with `Closes` and `Programme` columns); that doc stays the master.
+
+### Jose's docs
+`Masters/Deadlines 2027.md`, `Masters/Programme comparison.md` (one `###` heading per programme, grouped under `##` sections) and each project's `doc:` file are copies of the Nini Project docs. They contain Obsidian wikilinks (`[[Note]]`, `[[path|label]]`), which Desk shows as plain text (the label, or the note's name). They render as trusted Markdown; a `doc:` path under `agent/` is never loaded.
 
 ### Other agent files
 - `agent/runs.jsonl`: one JSON object per line: `started_at, finished_at, status (ok|failed|aborted), mode, agents [{name, model}], messages_scanned, drafts, usage_note, failures [string]`.
@@ -74,8 +77,8 @@ A JSON array of rows. The web Desk reads the same file.
 ### Jose's files
 - `TASKS.md`: Markdown checkboxes under `##` sections. Due date as `📅 YYYY-MM-DD` (Obsidian Tasks format).
 - The study file (path in `settings.exam.file`): front matter `exam, date, plan_per_day, plan_start`; sections `## Theory` and `## Problems` (one checkbox per topic) and `## Past papers` (`- [x] June 2025 — 2026-11-08 — 6.5/10`; unticked papers have no date or score).
-- `projects/<slug>.md`: front matter `title, status (active|waiting|frozen|idea), next, next_date?, doc?` (`doc` is a `nini/` path). Body: sub-items as checkboxes. Never restates `nini/` facts.
-- `uni/<slug>.md`: front matter `title, deadline_row` (a snapshot `deadline` id) and `comparison_heading` (a `##` heading in `nini/workbook-programme-comparison.md`). Body: the checklist (portal, CV, statement, letters, transcript, fee, submitted).
+- `projects/<slug>.md`: front matter `title, status (active|waiting|frozen|idea), next, next_date?, doc?` (`doc` is a vault path, e.g. `Research/EMG project.md`). Body: sub-items as checkboxes. Never restates the doc's facts.
+- `uni/<slug>.md`: front matter `title, deadline_row` (a snapshot `deadline` id) and `comparison_heading` (a `###` heading in `Masters/Programme comparison.md`). Body: the checklist (portal, CV, statement, letters, transcript, fee, submitted).
 - `internships/targets.json` (optional; absent until the board moves into the vault): `[{id, company, role, city, country, list (apply_now|target), status (open|applied|interview|offer|rejected|watching), graduate_ok, deadline?, next?, url?}]`.
 - `contacts/people.json` (optional, same rule): `[{id, name, programme, role, status (not_contacted|drafted|sent|replied|call_booked|no_reply), last_contact?, next?}]`.
 - `desk/decisions.jsonl`: one line per click: `{at, row, action (add|dismiss|confirm|reopen)}`. The agent reads it, so it never re-proposes and can count clean confirmations.
@@ -102,7 +105,7 @@ A custom three-part layout (floating sidebar · content · right rail or inspect
    - Right rail: the run-status chip and round buttons (sync, Run now, settings); a month calendar; **Needs confirmation** (ticks, and proposed events with Add and Dismiss; deadlines and changes to existing dates are always confirm-only); today's **timeline**.
    - Drafts and Waiting open in the inspector.
 2. **Studying.** The exam in `settings.exam`: countdown, overall progress, progress per topic for theory and problems, past papers done against the plan line (`plan_per_day` from `plan_start`), today's target. Between `mode_starts` and `mode_ends` (exam mode) it becomes the first screen, and Today hides drafts and waiting. With no exam set: an empty state.
-3. **Projects.** Board columns Active · Waiting · Frozen · Ideas; one card per project with its next step and date. The inspector renders the linked `nini/` doc (trusted Markdown) and the sub-item checklist. Open in Obsidian, Open in Claude.
+3. **Projects.** Board columns Active · Waiting · Frozen · Ideas; one card per project with its next step and date. The inspector renders the linked doc (trusted Markdown, wikilinks as plain text) and the sub-item checklist. Open in Obsidian, Open in Claude.
 4. **Internship apps.** From `internships/targets.json`: counts per status; list tabs Apply now · All targets; rows with company, role, city, status, deadline and next step. Without the file: an Open board button (`links.internship_board`).
 5. **Uni apps.** A deadline runway across all programmes; one card per `uni/*.md` with days left, checklist progress and status; the inspector shows that programme's section of the comparison doc. The Contacts Board from `contacts/people.json` (counts by status, list), or an Open board button.
 6. **Tutoring.**

@@ -54,13 +54,14 @@ struct VaultData {
     /// Demo: `calendar/events.json`. Live: filled from EventKit by the store.
     var events: [CalEvent] = []
     var tutoring = Tutoring()
-    /// Trusted Markdown from the `nini/` mirror, by path.
+    /// Trusted Markdown from Jose's own docs (the two master's docs and each project's `doc:`), by path,
+    /// with wikilinks already shown as plain text.
     var docs: [String: String] = [:]
     /// One-line hints for files that are missing or malformed, by path.
     var issues: [String: String] = [:]
 
-    static let comparisonDoc = "nini/workbook-programme-comparison.md"
-    static let deadlinesDoc = "nini/masters-deadlines-2027.md"
+    static let comparisonDoc = "Masters/Programme comparison.md"
+    static let deadlinesDoc = "Masters/Deadlines 2027.md"
     static let snapshotFile = "agent/snapshot.json"
     static let runsFile = "agent/runs.jsonl"
     static let stravaFile = "agent/exports/strava.json"
@@ -73,6 +74,12 @@ struct VaultData {
     static let studentsFile = "tutoring/students.md"
     static let paymentsFile = "tutoring/payments.csv"
     static let tutoringContactsFile = "tutoring/contacts.json"
+
+    /// The master doc's deadline for a programme, when its comparison heading or title names the same
+    /// programme. Otherwise the agent's `deadline` row has the date.
+    func masterDeadline(for programme: UniProgramme) -> Stamp? {
+        masterDeadlines[Parse.nameKey(programme.comparisonHeading)] ?? masterDeadlines[Parse.nameKey(programme.title)]
+    }
 
     func rows(_ section: RowSection) -> [SnapshotRow] {
         rows.filter { $0.section == section }.sorted { ($0.rank ?? .max) < ($1.rank ?? .max) }
@@ -124,8 +131,12 @@ extension VaultData {
         data.unis = reader.list("uni", ext: "md").compactMap { path in
             reader.text(path).flatMap { Parse.uni(path: path, $0) }
         }
-        for path in reader.list("nini", ext: "md") {
-            data.docs[path] = reader.text(path)
+        let docPaths = Set([deadlinesDoc, comparisonDoc] + data.projects.compactMap(\.doc).filter(Parse.isTrustedDoc))
+        for path in docPaths {
+            if let text = reader.text(path) { data.docs[path] = Parse.plainWikilinks(text) }
+        }
+        for path in [deadlinesDoc, comparisonDoc] where data.docs[path] == nil {
+            data.issues[path] = "\(path) is missing."
         }
         if let text = data.docs[deadlinesDoc] { data.masterDeadlines = Parse.masterDeadlines(text, cal) }
 

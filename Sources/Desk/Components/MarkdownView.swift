@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Renders trusted Markdown from the `nini/` mirror: headings, bullets, table rows and paragraphs.
+/// Renders trusted Markdown from Jose's own docs (the master's docs and project docs; wikilinks are
+/// already plain text): headings, bullets, table rows and paragraphs.
 /// This is the only file in the app that parses Markdown (a test checks it). Agent- and
 /// email-derived text never comes here; it is drawn with `Text(verbatim:)`.
 struct MarkdownView: View {
