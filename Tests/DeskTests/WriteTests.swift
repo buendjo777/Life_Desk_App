@@ -124,7 +124,7 @@ final class WriteTests: XCTestCase {
         XCTAssertEqual(TabLayout.ordered(.today, prefs: prefs.layouts[Tab.today.rawValue]).map(\.id), ids)
         XCTAssertEqual(prefs.density, .compact)
         // Every tab lists its sections once, with unique ids.
-        for tab in Tab.eight {
+        for tab in Tab.sidebar {
             let all = TabLayout.sections(for: tab).map(\.id)
             XCTAssertFalse(all.isEmpty, tab.title)
             XCTAssertEqual(Set(all).count, all.count)

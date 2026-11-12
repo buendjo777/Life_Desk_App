@@ -86,7 +86,8 @@ struct TutoringMonthList: View {
     var body: some View {
         let d = store.d
         VStack(alignment: .leading, spacing: t.sp8) {
-            SectionHeader(title: "This month", subtitle: "From the \(d.data.settings.tutoringCalendar) calendar · hours × rate")
+            SectionHeader(title: "This month", subtitle: d.lessonsFromNote ? "From the Classes note · hours × rate"
+                          : "From the \(d.data.settings.tutoringCalendar) calendar · hours × rate")
             if d.data.tutoring.students.isEmpty {
                 EmptyState(line: "No students yet.", hint: d.data.hint(VaultData.studentsFile))
             }

@@ -241,6 +241,15 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(data.events.filter { $0.calendar == "Tutoring" }.count, 36)
     }
 
+    func testLessonsCSV() {
+        let rows = Parse.lessons("month,initials,student,lessons,hours,rate,amount\n2026-10,AB,Ana Blanco,4,4.5,30,135\n2026-09,CD,Carlos,2,2,,\nnot a row\n")
+        XCTAssertEqual(rows.count, 2)
+        XCTAssertEqual(rows.first?.amount, 135)
+        XCTAssertEqual(rows.first?.student, "Ana Blanco")
+        XCTAssertNil(rows.last?.rate)
+        XCTAssertNil(rows.last?.amount)
+    }
+
     func testTutoring() throws {
         let tutoring = data.tutoring
         XCTAssertEqual(tutoring.students.map(\.initials), ["AB", "CD", "EM", "LR"])

@@ -3,7 +3,7 @@
 **The canonical spec for the app.** It lives in this repo (`buendjo777/Life_Desk_App`). A summary and the status are in the Proyecto Nini Project (`claude/desk-app.md`); the nightly agents, the vault and the safety rules are in `claude/life-os.md` there.
 
 ## What it is
-A native macOS app called **Desk**: a full window, not a menu-bar widget or a web view. Eight tabs: **Today, Studying, Projects, Internship apps, Uni apps, Tutoring, Health, System.** It reads what the nightly cloud agents write into Jose's private vault (`jose-brain`), Jose's own notes and his Mac calendar, and hands work back to Claude in one click. It ships with `demo-vault/`, invented data for every tab, which is also the portfolio showcase.
+A native macOS app called **Desk**: a full window, not a menu-bar widget or a web view. Nine tabs: **Today, Studying, Projects, Internship apps, Uni apps, Tutoring, History, Health, System.** It reads what the nightly cloud agents write into Jose's private vault (`jose-brain`), Jose's own notes and his Mac calendar, and hands work back to Claude in one click. It ships with `demo-vault/`, invented data for every tab, which is also the portfolio showcase.
 
 ## How to build it
 - **All at once.** One build session builds everything in this spec, following "Build order". No phases, no dates.
@@ -93,10 +93,10 @@ Inside the vault folder, so Obsidian sees it; listed in the vault's `.gitignore`
 - `contacts.json`: `{initials: {parent, student, phone}}`, the phone in international format. The only file with names, and it never leaves the Mac.
 - Initials everywhere else. GDPR likely applies (paid work is not a "purely personal or household activity"), so keep only what invoicing needs.
 - Messages format `{month}` in `settings.tutoring_locale` (e.g. `es_ES` → "octubre").
-- **Classes importer.** `Desk --import-classes [--dry-run]`, run through `open` so the Notes permission is Desk's. It reads every Notes folder named "Classes" and writes `notes/<initials>.md` (the student from a subfolder, else the note title; dated lines split running logs). Every known name becomes initials and emails and phone numbers are removed. It refuses unless `tutoring/` is gitignored, never overwrites a notes file it didn't create, creates `students.md` with initials only if it's missing, and reports counts and initials only.
+- **Classes importer.** Jose's tutoring log is one Notes note, "Classes": month headings, `Name (rate): (dd/mm), (dd/mm)x1.5` lines, month and family totals, and other text that is ignored. In Live mode Desk reads it through `osascript` on launch, on Sync Now and after a Settings change (never on the 15-minute timer), and writes `tutoring/`: `lessons.csv` (every month and student), `payments.csv` (this term) and `payments-archive.csv`, `students.md` and `students-archive.md`, `contacts.json` and `classes-review.md` (what to check). Rates: a number in the note, else an amount on the line, else Jose's rate in `tutoring/import.json` (before the note writes one), else an exact fit to the month's total, else the student's previous rate. A re-import keeps sent and paid dates, this month's invoices, phone numbers, parents, subjects and payment methods. It refuses unless `tutoring/` is gitignored and never runs in Demo. `Desk --import-classes [--dry-run]` runs the same import from the terminal (through `open`, so the Notes permission is Desk's) and prints counts, euros and initials only.
 
 ## Tabs
-A custom three-part layout (floating sidebar · content · right rail or inspector), not `NavigationSplitView`. See DESIGN.md and `design/mockup/`. ⌘1–⌘8 in this order.
+A custom three-part layout (floating sidebar · content · right rail or inspector), not `NavigationSplitView`. See DESIGN.md and `design/mockup/`. ⌘1–⌘9 in this order; ⌘0 opens Portfolio.
 
 1. **Today**
    - The greeting and one summary sentence built by code, e.g. "4 due today, 3 leftovers, 2 to confirm. 16 days to the exam, 19 to Alpine Tech."
@@ -110,13 +110,14 @@ A custom three-part layout (floating sidebar · content · right rail or inspect
 4. **Internship apps.** From `internships/targets.json`: counts per status; list tabs Apply now · All targets; rows with company, role, city, status, deadline and next step. Without the file: an Open board button (`links.internship_board`).
 5. **Uni apps.** A deadline runway across all programmes; one card per `uni/*.md` with days left, checklist progress and status; the inspector shows that programme's section of the comparison doc. The Contacts Board from `contacts/people.json` (counts by status, list), or an Open board button.
 6. **Tutoring.**
-   - This month: hours and amount per student from the tutoring calendar (event titles are initials; amount = hours × rate); received vs pending as a donut.
+   - This month: lessons, hours and amount per student from the Classes note (`lessons.csv`); without it, from the tutoring calendar (event titles are initials; amount = hours × rate). Received vs pending as a donut.
    - **Waiting for payment**: sent, unpaid rows, each with **Send reminder** (wa.me with `template-reminder.md`).
    - **Month end**: for a finished month not yet sent, **Send on WhatsApp** per student (wa.me with `template.md`), then Mark sent.
    - The payments table with status chips (Not sent · Sent · Paid) and Mark paid.
    - This week's lessons; the last note per student in the inspector.
-7. **Health.** From `strava.json`: this week's sessions, time and distance; a 7-day streak grid; 12-week bars; the activity list.
-8. **System.** Run history from `runs.jsonl` (time, status, duration, models, failures, usage note); a 14-day strip of runs; models used. This is the showcase panel.
+7. **History.** From `tutoring/lessons.csv`: earned this year, last year, all time and in the best month; euros per month for the last 24 months; each year (lessons, hours, students, change on the year before); each student's total, former students included, with their name.
+8. **Health.** From `strava.json`: this week's sessions, time and distance; a 7-day streak grid; 12-week bars; the activity list.
+9. **System.** Run history from `runs.jsonl` (time, status, duration, models, failures, usage note); a 14-day strip of runs; models used. This is the showcase panel.
 
 **Run-status rule** (the same as the web Desk): red when the last successful run is older than the latest scheduled run (`scheduled_run_local` in `timezone`, with 60 minutes' grace) or older than 30 hours; amber for a manual snapshot; green otherwise. Always with a word, never colour alone.
 
@@ -143,10 +144,10 @@ The Today mockup is V1 and a little dense, and Jose will keep changing the look.
 ## Verification
 - Unit tests for every parser against `demo-vault/`, plus malformed input (empty state, no crash).
 - Snapshots: `Desk --render-snapshots <dir>` renders every tab in light and dark at 1440×900 with `ImageRenderer`, then exits. Compare with `design/mockup/`. If a view can't render offscreen, use `screencapture -l<windowID>` on the running app (Jose grants Screen Recording once).
-- At the end: screenshots of all eight tabs, light and dark, in `design/screenshots/`.
+- At the end: screenshots of all nine tabs, light and dark, in `design/screenshots/`.
 
 ## Build order (one session, no stops between steps)
-1. The package, `scripts/build-app.sh`, the app shell: window (hidden title bar), floating sidebar, tab routing, ⌘1–⌘8, theme tokens from DESIGN.md, light and dark.
+1. The package, `scripts/build-app.sh`, the app shell: window (hidden title bar), floating sidebar, tab routing, ⌘1–⌘9, theme tokens from DESIGN.md, light and dark.
 2. Models and parsers for every file above, with tests. A clock service (real time, or `demo_today`). The mode switch.
 3. Today.
 4. Studying.

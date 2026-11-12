@@ -1,11 +1,11 @@
 import SwiftUI
 
-/// The eight tabs, in ⌘1–⌘8 order, plus the Portfolio screen.
+/// The nine sidebar tabs, in ⌘1–⌘9 order, plus the Portfolio screen (⌘0).
 enum Tab: String, CaseIterable, Identifiable, Codable {
-    case today, studying, projects, internships, uni, tutoring, health, system, portfolio
+    case today, studying, projects, internships, uni, tutoring, history, health, system, portfolio
 
     /// The tabs shown in the sidebar.
-    static let eight: [Tab] = [.today, .studying, .projects, .internships, .uni, .tutoring, .health, .system]
+    static let sidebar: [Tab] = [.today, .studying, .projects, .internships, .uni, .tutoring, .history, .health, .system]
 
     var id: String { rawValue }
 
@@ -17,6 +17,7 @@ enum Tab: String, CaseIterable, Identifiable, Codable {
         case .internships: "Internship apps"
         case .uni: "Uni apps"
         case .tutoring: "Tutoring"
+        case .history: "History"
         case .health: "Health"
         case .system: "System"
         case .portfolio: "Portfolio"
@@ -31,6 +32,7 @@ enum Tab: String, CaseIterable, Identifiable, Codable {
         case .internships: "briefcase"
         case .uni: "graduationcap"
         case .tutoring: "person.2"
+        case .history: "chart.bar.xaxis"
         case .health: "heart"
         case .system: "cpu"
         case .portfolio: "rectangle.on.rectangle.angled"
@@ -45,6 +47,7 @@ enum Tab: String, CaseIterable, Identifiable, Codable {
         case .internships: .ochre
         case .uni: .steel
         case .tutoring: .ochre
+        case .history: .steel
         case .health: .moss
         case .system, .portfolio: .navy
         }
@@ -58,13 +61,14 @@ enum Tab: String, CaseIterable, Identifiable, Codable {
         case .internships: .square
         case .uni: .chevron
         case .tutoring: .ring
+        case .history: .star
         case .health: .heart
         case .system, .portfolio: .cog
         }
     }
 
-    /// The ⌘ number, 1 to 9.
-    var shortcut: Int { (Tab.allCases.firstIndex(of: self) ?? 0) + 1 }
+    /// The ⌘ number: 1 to 9 in the sidebar, 0 for Portfolio.
+    var shortcut: Int { (Tab.sidebar.firstIndex(of: self) ?? -1) + 1 }
 }
 
 /// The sidebar groups (DESIGN.md, "Sidebar").
@@ -77,7 +81,7 @@ enum TabGroup: String, CaseIterable, Identifiable {
         switch self {
         case .focus: [.today, .studying]
         case .pipeline: [.projects, .internships, .uni]
-        case .life: [.tutoring, .health]
+        case .life: [.tutoring, .history, .health]
         case .machine: [.system]
         }
     }

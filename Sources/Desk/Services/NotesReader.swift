@@ -122,8 +122,8 @@ enum NotesReader {
     """#
 }
 
-/// `Desk --import-classes [--dry-run] [--note <title>] [--vault <path>]`: sorts the Classes note into
-/// `tutoring/classes-review.md`. Run it through `open` so macOS attributes the Notes access to Desk.
+/// `Desk --import-classes [--dry-run] [--note <title>] [--vault <path>]`: the same import Desk runs on launch
+/// and on Sync Now, from the command line. Run it through `open` so macOS attributes the Notes access to Desk.
 enum ImportCommand {
     @MainActor
     static func run(_ arguments: [String]) -> Int32 {
@@ -133,24 +133,11 @@ enum ImportCommand {
         let dryRun = arguments.contains("--dry-run")
         let vault = value("--vault").map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath, isDirectory: true) }
             ?? Preferences(defaults: .standard).vaultURL
-        let writeCheck = ClassesImport.refusal(for: vault)
-        if !dryRun, let writeCheck {
-            print("Not imported: \(writeCheck)")
-            return 1
-        }
-        let data = VaultData.load(VaultReader(root: vault))
+        let cal = VaultData.load(VaultReader(root: vault)).cal
         do {
-            let fetched = try NotesReader.fetch(title: value("--note"))
-            if arguments.contains("--shape") {
-                for note in fetched.notes { print(ClassesImport.shapeReport(note.body, title: note.title)) }
-                return 0
-            }
-            var log = ClassesImport.Log()
-            for note in fetched.notes { log.append(ClassesImport.parse(note.body, title: note.title)) }
-            let result = ClassesImport.sort(log, contacts: data.tutoring.contacts, today: Date(), cal: data.cal)
-            let written = dryRun ? nil : try ClassesImport.write(result, to: vault)
-            print(ClassesImport.report(result, notes: fetched.notes.count, dryRun: dryRun, writeCheck: writeCheck, written: written))
-            if fetched.locked > 0 { print("\(fetched.locked) matching notes are locked and were skipped.") }
+            let result = try ClassesImport.run(vault: vault, today: Date(), cal: cal, note: value("--note"), write: !dryRun)
+            print(ClassesImport.report(result))
+            print(dryRun ? "Dry run: nothing written." : "Written to tutoring/.")
             return 0
         } catch {
             print("Not imported: \(error.localizedDescription)")

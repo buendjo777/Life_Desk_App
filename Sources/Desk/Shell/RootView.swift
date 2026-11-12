@@ -32,8 +32,10 @@ struct RootView: View {
         .preferredColorScheme(store.isSnapshot ? nil : store.prefs.appearance.scheme)
         .task {
             // Launch, then every 15 minutes: pull the vault (Live). The clock moves every minute.
+            // The Classes note is read on launch and on Sync Now only.
             guard !store.isSnapshot else { return }
             store.sync()
+            store.importClasses(explicit: false)
             var minutes = 0
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(t.clockTick))

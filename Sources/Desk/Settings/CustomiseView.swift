@@ -24,7 +24,7 @@ struct CustomiseView: View {
                 Spacer()
                 Text(verbatim: prefs.density == .compact ? "The mockup's spacing." : "More space, fewer rows.").style(\.small, \.inkMuted)
             }
-            CountedTabs(items: Tab.eight.map { .init(id: $0, title: $0.title) }, selection: $tab)
+            CountedTabs(items: Tab.sidebar.map { .init(id: $0, title: $0.title) }, selection: $tab)
             Scroller {
                 VStack(spacing: t.sp6) {
                     ForEach(Array(sections.enumerated()), id: \.element.id) { index, section in

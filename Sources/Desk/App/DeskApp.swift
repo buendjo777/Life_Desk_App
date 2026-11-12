@@ -30,7 +30,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
-/// Menu commands: ⌘1–⌘8 switch tabs, ⌘R syncs, ⌘F searches, View → Customise….
+/// Menu commands: ⌘1–⌘9 switch tabs (⌘0 Portfolio), ⌘R syncs and reads the Classes note, ⌘F searches,
+/// View → Customise….
 struct DeskCommands: Commands {
     let store: Store
 
@@ -39,18 +40,22 @@ struct DeskCommands: Commands {
         CommandGroup(after: .sidebar) {
             Button("Customise…") { store.showCustomise = true }
             Divider()
-            Button("Sync Now") { store.sync() }.keyboardShortcut("r", modifiers: .command)
+            Button("Sync Now") {
+                store.sync()
+                store.importClasses(explicit: true)
+            }
+            .keyboardShortcut("r", modifiers: .command)
             Button("Find") { store.searchFocus += 1 }.keyboardShortcut("f", modifiers: .command)
             Divider()
         }
         CommandMenu("Go") {
-            ForEach(Tab.eight) { tab in
+            ForEach(Tab.sidebar) { tab in
                 Button(tab.title) { store.show(tab) }
                     .keyboardShortcut(KeyEquivalent(Character(String(tab.shortcut))), modifiers: .command)
             }
             Divider()
             Button(Tab.portfolio.title) { store.show(.portfolio) }
-                .keyboardShortcut("9", modifiers: .command)
+                .keyboardShortcut("0", modifiers: .command)
         }
     }
 }

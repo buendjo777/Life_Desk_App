@@ -1,309 +1,202 @@
 import Foundation
 
-/// Jose's tutoring log is one Notes note titled "Classes": a heading per month, then each student's name and
-/// the dates of their lessons (an hour each; "x0.5" or "x1.5" for 30 or 90 minutes), and the month's total
-/// under it. This turns it into a preliminary sort in `tutoring/` with initials instead of names.
-/// Only dates, durations and amounts are read: no other text is copied. `tutoring/` is gitignored.
+/// Jose's tutoring log is one Notes note, "Classes": month headings; under them each student's name, an
+/// optional rate "(50)" and the lesson dates in brackets "(05/10)", with "x1.5" for 90 minutes; totals such
+/// as "Total for October: 200€" or "TOTAL Brand: 150€"; and other text (bank details, budgets, messages) that
+/// is ignored. Desk reads it from Notes and writes `tutoring/` (gitignored, never committed):
+/// - lessons.csv: every month and student, for the History tab;
+/// - payments.csv (this term) and payments-archive.csv, keeping the sent and paid dates Desk recorded;
+/// - students.md (current students) and students-archive.md;
+/// - contacts.json: names and parents for the invoices (phone numbers already there are kept);
+/// - classes-review.md: what to check.
+/// Jose's answers (default rates, families, parents, students to ignore, months already paid) are in
+/// `tutoring/import.json`.
 enum ClassesImport {
-    // MARK: The note
+    static let settingsFile = "tutoring/import.json"
+    static let lessonsFile = VaultData.lessonsFile
+    static let paymentsArchiveFile = "tutoring/payments-archive.csv"
+    static let studentsArchiveFile = "tutoring/students-archive.md"
+    static let reviewFile = "tutoring/classes-review.md"
+
+    struct Settings: Decodable {
+        /// The rate while the note has no number for a student yet ("Nora": 40). A number in the note wins.
+        var rates: [String: Double] = [:]
+        /// Family → students, for totals like "Total for January (Vidal)".
+        var families: [String: [String]] = [:]
+        var parents: [String: String] = [:]
+        var ignore: [String] = []
+        /// Months up to this one ("2026-10") are paid.
+        var paidThrough: String?
+        /// Students with lessons in this many recent months are current; the others are archived.
+        var currentMonths = 3
+
+        enum CodingKeys: String, CodingKey {
+            case rates, families, parents, ignore, paidThrough = "paid_through", currentMonths = "current_months"
+        }
+
+        init() {}
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            rates = try c.decodeIfPresent([String: Double].self, forKey: .rates) ?? [:]
+            families = try c.decodeIfPresent([String: [String]].self, forKey: .families) ?? [:]
+            parents = try c.decodeIfPresent([String: String].self, forKey: .parents) ?? [:]
+            ignore = try c.decodeIfPresent([String].self, forKey: .ignore) ?? []
+            paidThrough = try c.decodeIfPresent(String.self, forKey: .paidThrough)
+            currentMonths = try c.decodeIfPresent(Int.self, forKey: .currentMonths) ?? 3
+        }
+
+        static func load(_ text: String?) -> Settings {
+            text.flatMap { try? JSONDecoder().decode(Settings.self, from: Data($0.utf8)) } ?? Settings()
+        }
+    }
+
+    // MARK: Reading the note
 
     struct Lesson: Equatable {
-        var day: Int?
+        var day: Int
+        var month: Int
         var hours: Double
     }
 
-    struct StudentBlock {
+    struct Entry {
         var name: String
+        var rate: Double?
+        var twoRates = false
         var lessons: [Lesson] = []
-        /// An amount written on the student's own line, if any.
+        /// "4 lessons" without dates.
+        var count = 0
+        /// "(+ 2 septiembre)": lessons from another month, counted here.
+        var extras = 0
         var amount: Double?
+        var group: String?
+        var hours: Double { lessons.map(\.hours).reduce(0, +) + Double(count + extras) }
+        var lessonCount: Int { lessons.count + count + extras }
     }
 
-    struct MonthBlock {
+    struct Total {
+        var amount: Double
+        var family: String?
+        /// How many students of the month were listed above the total: a total covers those.
+        var upto: Int
+    }
+
+    struct Block {
         var month: Int
         var year: Int?
-        var students: [StudentBlock] = []
-        var total: Double?
+        var entries: [Entry] = []
+        var totals: [Total] = []
     }
 
-    struct Log {
-        var months: [MonthBlock] = []
-        /// One letter per line, printed by the dry run instead of the text: M month, S student, D dates,
-        /// A an amount for a student, T a total, B blank, ? not understood.
-        var shape = ""
-        var unrecognised = 0
-        var outsideMonth = 0
-
-        mutating func append(_ other: Log) {
-            months += other.months
-            shape += (shape.isEmpty ? "" : " | ") + other.shape
-            unrecognised += other.unrecognised
-            outsideMonth += other.outsideMonth
-        }
-    }
-
-    static func parse(_ text: String, title: String = "") -> Log {
-        var lines = Parse.splitLines(text).map(clean)
-        if !title.isEmpty, let first = lines.first, Parse.nameKey(first) == Parse.nameKey(title) { lines.removeFirst() }
-        var log = Log()
-        for (index, line) in lines.enumerated() {
-            if line.isEmpty {
-                log.shape += "B"
-                continue
-            }
-            // A month name without a year followed by dates is a student called like a month ("Abril").
-            let next = lines[(index + 1)...].first { !$0.isEmpty }
-            if let heading = monthHeading(line), heading.year != nil || !(next.map(startsWithLessons) ?? false) {
-                log.months.append(MonthBlock(month: heading.month, year: heading.year))
-                log.shape += "M"
-                continue
-            }
-            guard let m = log.months.indices.last else {
-                log.shape += "?"
-                log.unrecognised += 1
-                continue
-            }
-            let (body, amount) = splitAmount(line)
-            if isTotal(line) {
-                if let total = amount ?? lastAmount(line) {
-                    log.months[m].total = total
-                    log.shape += "T"
-                } else {
-                    log.shape += "?"
-                    log.unrecognised += 1
-                }
-                continue
-            }
-            // A name counts when dates follow it, on its line or the next; otherwise it is free text.
-            if let student = splitName(body), !student.rest.isEmpty || amount != nil || (next.map(startsWithLessons) ?? false) {
-                let found = lessons(in: student.rest, month: log.months[m].month)
-                let key = Parse.nameKey(student.name)
-                if found.lessons.isEmpty, let amount,
-                   let s = log.months[m].students.lastIndex(where: { Parse.nameKey($0.name) == key }) {
-                    // "Álex: 175€" under the dates: that student's amount for the month.
-                    log.months[m].students[s].amount = amount
-                    log.shape += "A"
-                    continue
-                }
-                log.months[m].students.append(StudentBlock(name: student.name, lessons: found.lessons, amount: amount))
-                log.outsideMonth += found.outside
-                log.shape += "S"
-                continue
-            }
-            let found = lessons(in: body, month: log.months[m].month)
-            if !found.lessons.isEmpty, let s = log.months[m].students.indices.last {
-                log.months[m].students[s].lessons += found.lessons
-                if let amount { log.months[m].students[s].amount = amount }
-                log.outsideMonth += found.outside
-                log.shape += "D"
-            } else if let amount, !body.contains(where: \.isLetter) {
-                // A bare amount under a month is its total.
-                log.months[m].total = amount
-                log.shape += "T"
-            } else {
-                log.shape += "?"
-                log.unrecognised += 1
-            }
-        }
-        return log
-    }
-
-    /// Bullets, heading marks, bold and checkboxes off; notes in brackets dropped, except a duration "(x1.5)".
-    static func clean(_ raw: String) -> String {
-        var line = raw.replacingOccurrences(of: "**", with: "").replacingOccurrences(of: "__", with: "")
-        line = String(line.trimmingCharacters(in: .whitespaces).drop { "#>*-•· ".contains($0) })
-        if let box = line.prefixMatch(of: /\[[ xX]\]\s*/) { line = String(line[box.range.upperBound...]) }
-        line = line.replacing(/\(([^()]*)\)/) { match -> String in
-            match.1.contains(/^\s*[xX×*]\s*\d/) ? " \(match.1) " : " "
-        }
-        return line.trimmingCharacters(in: .whitespaces)
-    }
-
-    static func startsWithLessons(_ line: String) -> Bool {
-        line.first?.isNumber == true || line.prefixMatch(of: /[xX×*]\s*\d/) != nil
-    }
-
-    /// Lowercase words without accents: "Noviembre 2026:" → ["noviembre", "2026"].
-    static func words(_ text: String) -> [String] {
+    static func fold(_ text: String) -> String {
         text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en")).lowercased()
-            .split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init)
+            .trimmingCharacters(in: .whitespaces)
+    }
+
+    static func words(_ text: String) -> [String] {
+        fold(text).split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init)
     }
 
     static let monthWords: [String: Int] = [
-        "enero": 1, "january": 1, "ene": 1, "jan": 1, "febrero": 2, "february": 2, "feb": 2,
-        "marzo": 3, "march": 3, "mar": 3, "abril": 4, "april": 4, "abr": 4, "apr": 4, "mayo": 5, "may": 5,
-        "junio": 6, "june": 6, "jun": 6, "julio": 7, "july": 7, "jul": 7, "agosto": 8, "august": 8, "ago": 8, "aug": 8,
-        "septiembre": 9, "setiembre": 9, "september": 9, "sep": 9, "sept": 9, "set": 9,
-        "octubre": 10, "october": 10, "oct": 10, "noviembre": 11, "november": 11, "nov": 11,
-        "diciembre": 12, "december": 12, "dic": 12, "dec": 12,
+        "january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6, "july": 7, "august": 8,
+        "september": 9, "october": 10, "november": 11, "december": 12, "summer": 7,
+        "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
+        "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12, "verano": 7,
     ]
 
-    /// Abbreviations only count as a month with a year ("Mar 2026"), so "Mar" alone can be a name.
-    static let abbreviations: Set<String> = ["ene", "jan", "feb", "mar", "abr", "apr", "may", "jun", "jul", "ago", "aug", "sep", "sept", "set", "oct", "nov", "dic", "dec"]
+    /// Words in a level heading: "IB HL:", "Middle school:", "10th grade:".
+    static let levelWords: Set<String> = ["ib", "hl", "sl", "school", "grade", "app", "analysis", "math", "maths",
+                                          "bach", "eso", "middle", "high", "9th", "10th", "11th", "12th"]
 
-    /// "Noviembre 2026", "noviembre", "Nov 26", "noviembre de 2025", "2026-11", "11/2026".
-    static func monthHeading(_ line: String) -> (month: Int, year: Int?)? {
-        var w = words(line)
-        func year(_ number: Int) -> Int? {
-            let full = number < 100 ? 2000 + number : number
-            return (2015...2040).contains(full) ? full : nil
-        }
-        if w.count == 2, let a = Int(w[0]), let b = Int(w[1]) {
-            if a > 99, let y = year(a), (1...12).contains(b) { return (b, y) }
-            if b > 99, (1...12).contains(a), let y = year(b) { return (a, y) }
-            return nil
-        }
-        guard w.count <= 3, let first = w.first, let month = monthWords[first] else { return nil }
-        w.removeFirst()
-        if w.first == "de" { w.removeFirst() }
-        guard let rest = w.first else { return abbreviations.contains(first) ? nil : (month, nil) }
-        guard w.count == 1, let number = Int(rest), let y = year(number) else { return nil }
-        return (month, y)
-    }
-
-    static func isTotal(_ line: String) -> Bool {
-        let w = words(line)
-        return w.first == "total" || w.first == "suma" || w.contains("total") || line.hasPrefix("=")
-    }
-
-    static let number = /\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?/
-
-    /// The amount written on a line ("= 100€", "100 €", "€100"), and the line without it.
-    static func splitAmount(_ line: String) -> (body: String, amount: Double?) {
-        if let equals = line.firstIndex(of: "=") {
-            return (String(line[..<equals]).trimmingCharacters(in: .whitespaces), lastAmount(String(line[equals...])))
-        }
-        guard line.contains("€") else { return (line, nil) }
-        let after = /(\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?)\s*€/
-        let before = /€\s*(\d{1,3}(?:\.\d{3})+(?:,\d+)?|\d+(?:[.,]\d+)?)/
-        guard let match = line.firstMatch(of: after) ?? line.firstMatch(of: before) else { return (line, nil) }
-        var body = line
-        body.removeSubrange(match.range)
-        return (body.trimmingCharacters(in: .whitespaces), amount(String(match.1)))
-    }
-
-    /// The last number on a line.
-    static func lastAmount(_ line: String) -> Double? {
-        line.matches(of: number).last.flatMap { amount(String($0.0)) }
-    }
-
-    /// Spanish style when there is a comma ("1.250,50" → 1250.5); a dot before exactly three digits is a
-    /// thousands mark ("1.250" → 1250); otherwise a decimal point ("62.5").
-    static func amount(_ text: String) -> Double? {
-        if text.contains(",") { return Double(text.replacingOccurrences(of: ".", with: "").replacingOccurrences(of: ",", with: ".")) }
-        if text.wholeMatch(of: /\d{1,3}(?:\.\d{3})+/) != nil { return Double(text.replacingOccurrences(of: ".", with: "")) }
-        return Double(text)
-    }
-
-    /// A student's name, alone or before their dates: "Álex", "Álex Bermúdez: 3/11, 5/11", "Carla 4/11".
-    static func splitName(_ text: String) -> (name: String, rest: String)? {
-        guard text.first?.isLetter == true, !startsWithLessons(text) else { return nil }
-        var end = text.firstIndex { $0.isNumber || ":–—".contains($0) } ?? text.endIndex
-        if let dash = text.range(of: " - "), dash.lowerBound < end { end = dash.lowerBound }
-        guard let name = cleanName(String(text[..<end])), name.count >= 2, name.split(separator: " ").count <= 4 else { return nil }
-        let rest = String(text[end...].drop { ":-–— ".contains($0) })
-        if !rest.isEmpty, lessons(in: rest, month: 0).lessons.isEmpty { return nil }
-        return (name, rest)
-    }
-
-    /// Dates with their durations: "3/11, 5/11 x1.5, 12/11 (x0,5)", "1, 8, 15x0.5". A date is one hour;
-    /// a multiplier after it changes that lesson. `outside` counts dates written with another month.
-    static func lessons(in text: String, month: Int) -> (lessons: [Lesson], outside: Int) {
-        var lessons: [Lesson] = []
-        var outside = 0
-        let token = /(?<mult>[xX×*]\s*\d+(?:[.,]\d+)?)|(?<date>\d{1,2}(?:[\/.\-]\d{1,2})?(?:[\/.\-](?:\d{4}|\d{2}))?)/
-        for match in text.matches(of: token) {
-            if let mult = match.output.mult {
-                let value = Double(mult.drop { !$0.isNumber }.replacingOccurrences(of: ",", with: "."))
-                if let value, value > 0, value <= 4, !lessons.isEmpty { lessons[lessons.count - 1].hours = value }
-            } else if let date = match.output.date {
-                let parts = date.split(whereSeparator: { "/.-".contains($0) }).compactMap { Int($0) }
-                guard let day = parts.first, (1...31).contains(day) else { continue }
-                if parts.count >= 2 {
-                    guard (1...12).contains(parts[1]) else { continue }
-                    if month != 0, parts[1] != month { outside += 1 }
+    static func parse(_ text: String) -> (blocks: [Block], ignored: Int) {
+        var blocks: [Block] = []
+        var ignored = 0
+        var pendingYear: Int?
+        var group: String?
+        for raw in Parse.splitLines(text) {
+            let line = String(raw.trimmingCharacters(in: .whitespaces).drop { "*• ".contains($0) })
+                .trimmingCharacters(in: .whitespaces)
+            if line.isEmpty { continue }
+            let w = words(line)
+            if let year = line.wholeMatch(of: /(\d{4}):?/).flatMap({ Int($0.1) }) {
+                pendingYear = year
+                continue
+            }
+            if w.first == "iban" {
+                ignored += 1
+                continue
+            }
+            if w.first == "total" {
+                guard let amount = euroAmounts(line).last else {
+                    ignored += 1
+                    continue
                 }
-                lessons.append(Lesson(day: day, hours: 1))
-            }
-        }
-        return (lessons, outside)
-    }
-
-    /// A line's structure without its words: a word becomes "A" (capitalised) or "a", a number "9"; only
-    /// generic words show (MES for a month, DIA for a weekday, TOTAL, EUR, and "x", "h", "min").
-    /// "Álex: 3/10 x1,5" → "A: 9/9 x9,9". Used to see the note's layout without printing its text.
-    static func mask(_ line: String, token: ((_ word: String, _ original: String) -> String)? = nil) -> String {
-        let weekdays: Set<String> = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
-        var out = ""
-        var run = ""
-        var runIsLetters = false
-        func flush() {
-            guard !run.isEmpty else { return }
-            if runIsLetters, let token, !weekdays.contains(words(run).first ?? "") {
-                out += token(words(run).first ?? "", run)
-            } else if runIsLetters {
-                let word = words(run).first ?? ""
-                if monthWords[word] != nil && !abbreviations.contains(word) || ["sept", "set"].contains(word) { out += "MES" }
-                else if weekdays.contains(word) { out += "DIA" }
-                else if word == "total" || word == "suma" { out += "TOTAL" }
-                else if ["euros", "euro", "eur"].contains(word) { out += "EUR" }
-                else if ["x", "h", "min"].contains(word) { out += word }
-                else { out += run.first?.isUppercase == true ? "A" : "a" }
-            } else {
-                out += "9"
-            }
-            run = ""
-        }
-        for char in line {
-            if char.isLetter || char.isNumber {
-                if !run.isEmpty, runIsLetters != char.isLetter { flush() }
-                runIsLetters = char.isLetter
-                run.append(char)
-            } else {
-                flush()
-                // Invisible or unusual characters show as their code, e.g. U+FFFC for an inline object.
-                if char.isASCII || "€º·–—•…“”‘’".contains(char) {
-                    out.append(char == "\t" ? " " : char)
-                } else {
-                    out += char.unicodeScalars.map { String(format: "⟨U+%04X⟩", $0.value) }.joined()
+                var target = blocks.indices.last
+                var upto = target.map { blocks[$0].entries.count } ?? 0
+                if let named = w.compactMap({ monthWords[$0] }).first,
+                   let found = blocks.indices.suffix(5).last(where: { blocks[$0].month == named }) {
+                    if found != target { upto = blocks[found].entries.count }
+                    target = found
                 }
+                if let target { blocks[target].totals.append(Total(amount: amount, family: family(in: line), upto: upto)) }
+                continue
             }
+            if let heading = line.wholeMatch(of: /(\p{L}+)\s*:?/), let month = monthWords[fold(String(heading.1))] {
+                blocks.append(Block(month: month, year: pendingYear))
+                pendingYear = nil
+                group = nil
+                continue
+            }
+            if line.hasSuffix(":"), !line.contains("("), !Set(w).isDisjoint(with: levelWords) {
+                group = String(line.dropLast()).trimmingCharacters(in: .whitespaces)
+                continue
+            }
+            guard var entry = entry(from: line) else {
+                ignored += 1
+                continue
+            }
+            entry.group = group
+            if blocks.isEmpty, let first = entry.lessons.first { blocks.append(Block(month: first.month)) }
+            guard let last = blocks.indices.last else { continue }
+            blocks[last].entries.append(entry)
         }
-        flush()
-        return out.replacing(/\ {2,}/, with: " ").trimmingCharacters(in: .whitespaces)
+        return (blocks, ignored)
     }
 
-    /// Like `mask`, but each distinct word gets a stable stand-in (W1, W2…), so a word that repeats, like
-    /// a student across months, shows as the same stand-in while no word is printed. Month names show.
-    static func pseudonymise(_ lines: [String]) -> [String] {
-        let generic: Set<String> = ["total", "suma", "euros", "euro", "eur", "x", "h", "min", "de", "y", "clase", "clases"]
-        var table: [String: String] = [:]
-        return lines.map { line in
-            mask(line, token: { word, original in
-                if monthWords[word] != nil, !abbreviations.contains(word) { return word }
-                if generic.contains(word) { return word }
-                if let token = table[word] { return token }
-                let token = "W\(table.count + 1)"
-                table[word] = token
-                return token
-            })
+    /// A student line: "Hugo: (06/10), (13/10)", "Lina (30): (03/02)", "Omar: (65/70): (05/10)",
+    /// "Nora (50): 4 lessons", "Hugo Brand: 2 classes (23/09, 29/09) 50€". `nil` for anything else.
+    static func entry(from line: String) -> Entry? {
+        let text = line.replacing(/\((\d{1,2}),(\d{1,2})\)/) { "(\($0.1)/\($0.2))" }
+        let pattern = /(\p{L}[\p{L} ]*\p{L})\s*(?:\((\d{2,3})(?:\/(\d{2,3}))?\)(?=\s*:))?\s*:?\s*(?:\((\d{2,3})(?:\/(\d{2,3}))?\)\s*:)?\s*(.*)/
+        guard let m = text.wholeMatch(of: pattern), m.1.split(separator: " ").count <= 3 else { return nil }
+        let rest = String(m.6)
+        var entry = Entry(name: String(m.1).trimmingCharacters(in: .whitespaces))
+        entry.rate = (m.2 ?? m.4).flatMap { Double($0) }
+        entry.twoRates = (m.3 ?? m.5) != nil
+        for date in rest.matches(of: /(?:^|\D)(\d{1,2})\/(\d{1,2})(?!\d)/) {
+            guard let day = Int(date.1), let month = Int(date.2), (1...31).contains(day), (1...12).contains(month) else { continue }
+            let hours = rest[date.range.upperBound...].prefixMatch(of: /\)?\s*[xX]\s*(\d+(?:[.,]\d+)?)/)
+                .flatMap { Double($0.1.replacingOccurrences(of: ",", with: ".")) } ?? 1
+            entry.lessons.append(Lesson(day: day, month: month, hours: hours))
         }
+        if entry.lessons.isEmpty, let count = rest.firstMatch(of: /(\d+)\s*(?:lessons?|classes?|clases?)/.ignoresCase()) {
+            entry.count = Int(count.1) ?? 0
+        }
+        entry.extras = rest.matches(of: /\(\+\s*(\d+)\s*\p{L}+\)/).compactMap { Int($0.1) }.reduce(0, +)
+        entry.amount = euroAmounts(rest).last
+        return entry.lessonCount == 0 ? nil : entry
     }
 
-    /// The structure view printed by `--shape`: the first lines with words replaced by stand-ins, then how
-    /// often each masked pattern occurs.
-    static func shapeReport(_ text: String, title: String, lines limit: Int = 130) -> String {
-        var lines = Parse.splitLines(text)
-        if let first = lines.first, Parse.nameKey(first) == Parse.nameKey(title) { lines.removeFirst() }
-        let masked = lines.map { mask($0) }
-        let stand = pseudonymise(lines)
-        var counts: [String: Int] = [:]
-        for line in masked where !line.isEmpty { counts[line, default: 0] += 1 }
-        var out = ["Structure of the first \(min(limit, masked.count)) of \(masked.count) lines (words replaced by stand-ins):"]
-        out += stand.prefix(limit).enumerated().filter { !$0.element.isEmpty }.map { String(format: "%3d  ", $0.offset + 1) + $0.element }
-        out.append("Most common line patterns in the whole note:")
-        out += counts.sorted { $0.value > $1.value || ($0.value == $1.value && $0.key < $1.key) }.prefix(25).map { "\($0.value)×  \($0.key)" }
-        return out.joined(separator: "\n")
+    static func euroAmounts(_ text: String) -> [Double] {
+        text.matches(of: /(\d+(?:[.,]\d+)?)\s*€/).compactMap { Double($0.1.replacingOccurrences(of: ",", with: ".")) }
+    }
+
+    /// "Total for January (Vidal)" → "Vidal"; "TOTAL Brand: 150€" → "Brand"; "Total for October" → nil.
+    static func family(in line: String) -> String? {
+        if let m = line.firstMatch(of: /\(([^)]*\p{L}[^)]*)\)/) { return String(m.1).trimmingCharacters(in: .whitespaces) }
+        let rest = line.split(whereSeparator: { !$0.isLetter }).map(String.init)
+            .filter { !["total", "for", "de", "of"].contains(fold($0)) && monthWords[fold($0)] == nil }
+        return rest.isEmpty ? nil : rest.joined(separator: " ")
     }
 
     // MARK: Sorting
@@ -317,283 +210,226 @@ enum ClassesImport {
         var amount: Double? { rate.map { ($0 * hours * 100).rounded() / 100 } }
     }
 
-    struct MonthCheck: Equatable {
-        var month: String
-        var total: Double?
-        var computed: Double?
-        var fits: Bool
-    }
-
     struct Result {
         var rows: [Row] = []
-        var months: [MonthCheck] = []
         var checks: [String] = []
-        var log = Log()
-        var namesWithoutLessons = 0
-        var students: [String] { Array(Set(rows.map(\.code))).sorted() }
+        /// Initials → the name as written ("Hugo Brand").
+        var names: [String: String] = [:]
+        var levels: [String: String] = [:]
+        var current: [String] = []
+        var archived: [String] = []
+        var recaps = 0
+        var ignored = 0
+        var latestRate: [String: Double] {
+            var rates: [String: Double] = [:]
+            for row in rows { if let rate = row.rate { rates[row.code] = rate } }
+            return rates
+        }
     }
 
-    /// The rates Jose has charged, newest first.
-    static let rates: [Double] = [50, 40, 30, 25]
+    static let candidates: [Double] = [25, 30, 35, 40, 45, 50, 60, 65, 70]
 
-    static func sort(_ log: Log, contacts: [String: TutoringContact] = [:], today: Date, cal: DeskCalendar) -> Result {
-        var result = Result(log: log)
-        let years = assignYears(log.months, today: today, cal: cal)
-        // Oldest month first, so each student's previous rate is known and the earliest students get
-        // the plainest initials.
-        let order = log.months.indices.sorted { (years[$0], log.months[$0].month) < (years[$1], log.months[$1].month) }
-        let blocks = order.flatMap { log.months[$0].students }
-        result.namesWithoutLessons = blocks.filter { $0.lessons.isEmpty }.count
-        let codes = assignCodes(blocks.filter { !$0.lessons.isEmpty }.map(\.name), contacts: contacts)
-        var lastRate: [String: Double] = [:]
-        for index in order {
-            let block = log.months[index]
-            let key = String(format: "%04d-%02d", years[index], block.month)
-            var seen: [String] = []
-            var hours: [String: Double] = [:]
-            var count: [String: Int] = [:]
-            var written: [String: Double] = [:]
-            for student in block.students where !student.lessons.isEmpty {
-                guard let code = codes[Parse.nameKey(student.name)] else { continue }
-                if hours[code] == nil { seen.append(code) }
-                hours[code, default: 0] += student.lessons.map(\.hours).reduce(0, +)
-                count[code, default: 0] += student.lessons.count
-                if let amount = student.amount { written[code, default: 0] += amount }
-            }
-            guard !seen.isEmpty else { continue }
-            var rate: [String: Double] = [:]
-            for code in seen {
-                if let amount = written[code], let h = hours[code], h > 0 { rate[code] = amount / h }
-            }
-            let open = seen.filter { rate[$0] == nil }
-            var fits = false
-            if let total = block.total {
-                let fixed = seen.compactMap { code in rate[code].map { $0 * (hours[code] ?? 0) } }.reduce(0, +)
-                let fit = fitRates(hours: open.map { hours[$0] ?? 0 }, total: total - fixed, prior: open.map { lastRate[$0] })
-                for (code, value) in zip(open, fit.rates) { rate[code] = value }
-                fits = fit.exact
-                let mix = seen.map { "\($0) \(rate[$0].map(Parse.number) ?? "?")" }.joined(separator: ", ")
-                let sum = seen.compactMap { code in rate[code].map { $0 * (hours[code] ?? 0) } }.reduce(0, +)
-                if !fit.exact {
-                    result.checks.append("\(key): no mix of \(rates.map(Parse.number).joined(separator: "/")) €/h gives your total of \(Parse.number(total)) €; the closest is \(Parse.number(sum)) € (\(mix) €/h).")
-                } else if fit.ambiguous {
-                    result.checks.append("\(key): your total of \(Parse.number(total)) € fits more than one mix of rates; I used \(mix) €/h.")
-                }
-            } else {
-                for code in open { rate[code] = lastRate[code] }
-                let unknown = open.filter { rate[$0] == nil }
-                result.checks.append(unknown.isEmpty
-                    ? "\(key): no total under it, so each student's previous rate is used."
-                    : "\(key): no total under it, and no earlier rate for \(unknown.joined(separator: ", ")).")
-            }
-            var computed: Double? = 0
-            for code in seen {
-                let row = Row(month: key, code: code, lessons: count[code] ?? 0, hours: hours[code] ?? 0, rate: rate[code])
-                result.rows.append(row)
-                if let value = rate[code] { lastRate[code] = value }
-                computed = computed.flatMap { sum in row.amount.map { sum + $0 } }
-            }
-            result.months.append(MonthCheck(month: key, total: block.total, computed: computed, fits: fits))
+    static func sort(_ parsed: (blocks: [Block], ignored: Int), settings: Settings, today: Date, cal: DeskCalendar) -> Result {
+        var result = Result(ignored: parsed.ignored)
+        let ignore = Set(settings.ignore.map(fold))
+        func ignored(_ name: String) -> Bool {
+            ignore.contains(fold(name)) || ignore.contains(fold(name).split(separator: " ").first.map(String.init) ?? "")
         }
-        if log.unrecognised > 0 {
-            result.checks.append("\(log.unrecognised) lines weren't understood; they are marked ? in the shape.")
+        // Ignored students leave the month, and each total then counts only the students left above it.
+        var blocks = parsed.blocks.map { block -> Block in
+            var block = block
+            let skip = block.entries.map { ignored($0.name) }
+            for t in block.totals.indices { block.totals[t].upto = skip.prefix(block.totals[t].upto).filter { !$0 }.count }
+            block.entries = zip(block.entries, skip).filter { !$0.1 }.map { $0.0 }
+            return block
         }
-        if log.outsideMonth > 0 {
-            result.checks.append("\(log.outsideMonth) dates are written with a different month than their heading.")
-        }
-        if result.namesWithoutLessons > 0 {
-            result.checks.append("\(result.namesWithoutLessons) name lines had no dates and were left out.")
-        }
-        return result
-    }
 
-    /// One rate per student, from `rates`, whose total matches the month's: the smallest difference first,
-    /// then the fewest changes from each student's previous rate, then the fewest different rates.
-    static func fitRates(hours: [Double], total: Double, prior: [Double?]) -> (rates: [Double], exact: Bool, ambiguous: Bool) {
-        let n = hours.count
-        guard n > 0 else { return ([], abs(total) < 0.01, false) }
-        guard n <= 8 else {
-            let chosen = prior.map { $0 ?? rates[0] }
-            return (chosen, abs(zip(hours, chosen).map(*).reduce(0, +) - total) < 0.01, false)
-        }
-        var best: (rates: [Double], score: (Double, Int, Int))?
-        var ties = 0
-        var digits = [Int](repeating: 0, count: n)
-        while true {
-            let chosen = digits.map { rates[$0] }
-            let diff = (abs(zip(hours, chosen).map(*).reduce(0, +) - total) * 100).rounded() / 100
-            let changes = zip(chosen, prior).filter { $1 != nil && $0 != $1 }.count
-            let score = (diff, changes, Set(chosen).count)
-            if let current = best {
-                if score < current.score {
-                    best = (chosen, score)
-                    ties = 0
-                } else if score == current.score {
-                    ties += 1
-                }
-            } else {
-                best = (chosen, score)
-            }
-            var i = 0
-            while i < n {
-                digits[i] += 1
-                if digits[i] < rates.count { break }
-                digits[i] = 0
-                i += 1
-            }
-            if i == n { break }
-        }
-        guard let best else { return (prior.map { $0 ?? rates[0] }, false, false) }
-        let exact = best.score.0 < 0.01
-        return (best.rates, exact, exact && ties > 0)
-    }
-
-    /// Years for months written without one: the note's order (oldest or newest first) is followed from a
-    /// heading that has a year, or else the newest month is this month or the last one that has passed.
-    static func assignYears(_ months: [MonthBlock], today: Date, cal: DeskCalendar) -> [Int] {
-        guard !months.isEmpty else { return [] }
-        var forward = 0
-        var backward = 0
-        for (a, b) in zip(months, months.dropFirst()) {
-            let delta = (b.month - a.month + 12) % 12
-            if delta == 0 { continue }
-            if delta <= 6 { forward += 1 } else { backward += 1 }
-        }
-        let oldestFirst = forward >= backward
-        var position = [0]
-        for (a, b) in zip(months, months.dropFirst()) {
-            let delta = oldestFirst ? (b.month - a.month + 12) % 12 : -((a.month - b.month + 12) % 12)
-            position.append((position.last ?? 0) + delta)
-        }
-        let offset: Int
-        if let i = months.indices.first(where: { months[$0].year != nil }), let year = months[i].year {
-            offset = year * 12 + months[i].month - 1 - position[i]
-        } else {
-            let newest = position.indices.max { position[$0] < position[$1] } ?? 0
-            let nowYear = cal.calendar.component(.year, from: today)
-            let nowMonth = cal.calendar.component(.month, from: today)
-            let year = months[newest].month <= nowMonth ? nowYear : nowYear - 1
-            offset = year * 12 + months[newest].month - 1 - position[newest]
-        }
-        return months.indices.map { months[$0].year ?? (position[$0] + offset) / 12 }
-    }
-
-    /// Initials for every name, in order of first appearance: a `contacts.json` key when the first name
-    /// matches, else derived, with a digit on a clash. "Álex" and "Álex Bermúdez" are one student when only
-    /// one full name starts with "Álex".
-    static func assignCodes(_ names: [String], contacts: [String: TutoringContact]) -> [String: String] {
+        // One key per student: "Hugo" is "Hugo Brand" when only one full name starts with it.
         var keys: [String] = []
-        for key in names.map(Parse.nameKey) where !keys.contains(key) { keys.append(key) }
+        for entry in blocks.flatMap(\.entries) where !keys.contains(fold(entry.name)) { keys.append(fold(entry.name)) }
         var alias: [String: String] = [:]
         for key in keys where !key.contains(" ") {
             let longer = keys.filter { $0.hasPrefix(key + " ") }
             if longer.count == 1 { alias[key] = longer[0] }
         }
-        keys = keys.filter { alias[$0] == nil }
-        let usable = contacts.filter { isSafeCode($0.key) }.sorted { $0.key < $1.key }
-        var used = Set(usable.map(\.key))
+        func canon(_ name: String) -> String { alias[fold(name)] ?? fold(name) }
         var codes: [String: String] = [:]
-        for key in keys {
-            if let contact = usable.first(where: { sameStudent(Parse.nameKey($0.value.student), key) }) {
-                codes[key] = contact.key
-                continue
-            }
-            let base = initials(forKey: key)
-            var code = base
-            var suffix = 2
-            while used.contains(code) {
-                code = base + String(suffix)
-                suffix += 1
-            }
+        var used = Set<String>()
+        for key in keys.map({ alias[$0] ?? $0 }) where codes[key] == nil {
+            let parts = key.split(separator: " ").map { $0.uppercased() }
+            let first = parts.first ?? "XX"
+            var options = parts.count > 1 ? [String([first.first ?? "X", parts[1].first ?? "X"])] : []
+            options += first.dropFirst().filter(\.isLetter).map { String([first.first ?? "X", $0]) }
+            let code = options.first { !used.contains($0) }
+                ?? (2...99).map { String(first.prefix(2)) + String($0) }.first { !used.contains($0) } ?? key
             used.insert(code)
             codes[key] = code
         }
-        for (short, long) in alias { codes[short] = codes[long] }
-        return codes
-    }
-
-    // MARK: Names
-
-    /// Words that may come before a name: "Clase con Emma", "Martes Álex".
-    static let fillerWords: Set<String> = [
-        "clase", "clases", "class", "lesson", "sesion", "session", "tutoria", "con", "with",
-        "lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo",
-        "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
-    ]
-
-    /// Letters-only words with leading filler dropped; `nil` when nothing is left.
-    static func cleanName(_ raw: String) -> String? {
-        var parts = raw.split(whereSeparator: { !$0.isLetter }).map(String.init)
-        while let first = parts.first, fillerWords.contains(Parse.nameKey(first)) { parts.removeFirst() }
-        return parts.isEmpty ? nil : parts.joined(separator: " ")
-    }
-
-    /// "alex bermudez" → "AB"; a single name gives its first two letters: "carla" → "CA".
-    static func initials(forKey key: String) -> String {
-        let parts = key.split(separator: " ").map { $0.uppercased() }
-        guard let first = parts.first else { return "XX" }
-        if parts.count >= 2, let a = first.first, let b = parts[1].first { return String([a, b]) }
-        return String(first.prefix(2))
-    }
-
-    /// The same student when the names are equal or the first names are.
-    static func sameStudent(_ a: String, _ b: String) -> Bool {
-        a == b || (a.split(separator: " ").first != nil && a.split(separator: " ").first == b.split(separator: " ").first)
-    }
-
-    /// Initials become table cells and may become file names, so only letters and digits.
-    static func isSafeCode(_ code: String) -> Bool {
-        (1...6).contains(code.count) && code.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber) }
-    }
-
-    // MARK: Output
-
-    static let reviewFile = "tutoring/classes-review.md"
-    static let marker = "<!-- Preliminary sort by Desk of the Notes note \"Classes\". Initials only; it never leaves the Mac. The next import replaces this file. -->"
-
-    /// The review file: what to check first, then lessons, hours, rates and amounts by month and by student.
-    static func review(_ result: Result) -> String {
-        var lines = [marker, "", "# Tutoring: preliminary sort", ""]
-        lines.append("Each date is a one-hour lesson; x0.5 and x1.5 count as 30 and 90 minutes. Each month's rates are fitted to its total from \(rates.map(Parse.number).joined(separator: ", ")) €/h.")
-        lines += ["", "## To check", ""]
-        lines += result.checks.isEmpty ? ["Nothing: every month's total fits."] : result.checks.map { "- \($0)" }
-        lines += ["", "## By month", "", "| Month | Student | Lessons | Hours | €/h | Amount |", "|---|---|---|---|---|---|"]
-        for row in result.rows {
-            lines.append("| \(row.month) | \(row.code) | \(row.lessons) | \(Parse.number(row.hours)) | \(row.rate.map(Parse.number) ?? "?") | \(row.amount.map(Parse.number) ?? "?") |")
+        func code(_ name: String) -> String { codes[canon(name)] ?? "?" }
+        for entry in blocks.flatMap(\.entries) where entry.name.count > (result.names[code(entry.name)]?.count ?? 0) {
+            result.names[code(entry.name)] = entry.name
         }
-        lines += ["", "## Totals", "", "| Month | Your total | Desk's total | Fits |", "|---|---|---|---|"]
-        for month in result.months {
-            lines.append("| \(month.month) | \(month.total.map(Parse.number) ?? "—") | \(month.computed.map(Parse.number) ?? "—") | \(month.fits ? "yes" : "check") |")
+
+        // A month list that repeats lessons already counted (an invoice recap) is not counted again.
+        var window: [Set<String>] = []
+        var counted: [Block] = []
+        for block in blocks {
+            let lessons = Set(block.entries.flatMap { e in e.lessons.map { "\(code(e.name))|\($0.day)|\($0.month)" } })
+            let seen = window.suffix(8).reduce(into: Set<String>()) { $0.formUnion($1) }
+            if lessons.count >= 2, Double(lessons.intersection(seen).count) >= 2.0 / 3.0 * Double(lessons.count) {
+                result.recaps += 1
+            } else {
+                window.append(lessons)
+                counted.append(block)
+            }
         }
-        lines += ["", "## By student", "", "| Student | First month | Last month | Lessons | Hours | Amount |", "|---|---|---|---|---|---|"]
-        for code in result.students {
-            let rows = result.rows.filter { $0.code == code }
-            lines.append("| \(code) | \(rows.first?.month ?? "") | \(rows.last?.month ?? "") | \(rows.map(\.lessons).reduce(0, +)) | \(Parse.number(rows.map(\.hours).reduce(0, +))) | \(Parse.number(rows.compactMap(\.amount).reduce(0, +))) |")
+        blocks = counted
+        guard !blocks.isEmpty else { return result }
+
+        // Years: the newest month is this one or the last one passed; going back, a higher month is a year earlier.
+        let nowYear = cal.calendar.component(.year, from: today)
+        let nowMonth = cal.calendar.component(.month, from: today)
+        var year = (blocks.last?.month ?? 1) <= nowMonth ? nowYear : nowYear - 1
+        var years = [Int](repeating: 0, count: blocks.count)
+        for i in blocks.indices.reversed() {
+            if i < blocks.count - 1, blocks[i].month > blocks[i + 1].month { year -= 1 }
+            years[i] = year
+            if let written = blocks[i].year, written != year {
+                result.checks.append(String(format: "%04d-%02d: the note writes %d before this month.", year, blocks[i].month, written))
+            }
         }
-        return lines.joined(separator: "\n") + "\n"
+
+        // Rates: a number in the note > an amount on the line > Jose's default before any number > a fitting total
+        // > the student's previous rate.
+        func defaultRate(_ name: String) -> Double? {
+            let full = canon(name)
+            return settings.rates.first { fold($0.key) == full || fold($0.key) == full.split(separator: " ").first.map(String.init) }?.value
+        }
+        func inFamily(_ name: String, _ family: String?) -> Bool {
+            guard let family else { return false }
+            let full = canon(name)
+            if full.split(separator: " ").last.map(String.init) == fold(family).split(separator: " ").last.map(String.init) { return true }
+            return settings.families.first { fold($0.key) == fold(family) }?.value.contains { fold($0) == full || fold($0) == full.split(separator: " ").first.map(String.init) } == true
+        }
+        var lastRate: [String: Double] = [:]
+        var numbered = Set<String>()
+        for (i, block) in blocks.enumerated() {
+            let ym = String(format: "%04d-%02d", years[i], block.month)
+            var order: [String] = []
+            var lessons: [String: Int] = [:]
+            var hours: [String: Double] = [:]
+            var rate: [String: Double] = [:]
+            var written: [String: Double] = [:]
+            var name: [String: String] = [:]
+            for entry in block.entries {
+                let c = code(entry.name)
+                if lessons[c] == nil { order.append(c) }
+                name[c] = entry.name
+                lessons[c, default: 0] += entry.lessonCount
+                hours[c, default: 0] += entry.hours
+                if let r = entry.rate { rate[c] = r }
+                if let a = entry.amount { written[c, default: 0] += a }
+                if let g = entry.group { result.levels[c] = g }
+                if entry.extras > 0 { result.checks.append("\(ym): \(entry.name) has \"+\(entry.extras)\" lessons from another month; counted here.") }
+                if entry.twoRates, let r = entry.rate { result.checks.append("\(ym): \(entry.name) has two rates written; \(Parse.number(r)) used.") }
+            }
+            for c in order {
+                if rate[c] != nil { numbered.insert(c) }
+                if rate[c] == nil, let a = written[c], let h = hours[c], h > 0 { rate[c] = a / h }
+                if rate[c] == nil, !numbered.contains(c), let d = defaultRate(name[c] ?? "") { rate[c] = d }
+            }
+            var pooled = 0.0
+            var poolUpto = 0
+            for total in block.totals {
+                let members = order.filter { inFamily(name[$0] ?? "", total.family) }
+                if !members.isEmpty {
+                    let open = members.filter { rate[$0] == nil }
+                    let fixed = members.compactMap { c in rate[c].map { $0 * (hours[c] ?? 0) } }.reduce(0, +)
+                    if !open.isEmpty, let fit = fitRates(open.map { hours[$0] ?? 0 }, total.amount - fixed, open.map { lastRate[$0] }), fit.exact {
+                        for (c, r) in zip(open, fit.rates) { rate[c] = r }
+                    }
+                } else if let family = total.family, settings.families.keys.contains(where: { fold($0) == fold(family) }) {
+                    result.checks.append("\(ym): the \(family) total of \(Parse.number(total.amount)) € has no lessons in that month.")
+                } else {
+                    pooled += total.amount
+                    poolUpto = max(poolUpto, total.upto)
+                }
+            }
+            // A month's total covers every student listed above it, families included.
+            func above(_ upto: Int) -> [String] {
+                let codes = Set(block.entries.prefix(upto).map { code($0.name) })
+                return order.filter(codes.contains)
+            }
+            if pooled > 0 {
+                let rest = above(poolUpto)
+                let open = rest.filter { rate[$0] == nil }
+                let fixed = rest.compactMap { c in rate[c].map { $0 * (hours[c] ?? 0) } }.reduce(0, +)
+                if !open.isEmpty, let fit = fitRates(open.map { hours[$0] ?? 0 }, pooled - fixed, open.map { lastRate[$0] }) {
+                    if fit.exact { for (c, r) in zip(open, fit.rates) { rate[c] = r } }
+                    if !fit.exact {
+                        result.checks.append("\(ym): the total of \(Parse.number(pooled)) € fits no mix of rates for \(rest.compactMap { result.names[$0] }.joined(separator: ", ")); rates left unknown.")
+                    } else if fit.ambiguous {
+                        result.checks.append("\(ym): the total of \(Parse.number(pooled)) € fits more than one mix of rates.")
+                    }
+                }
+            }
+            for c in order {
+                if rate[c] == nil { rate[c] = lastRate[c] }
+            }
+            // A total the final rates don't reproduce is worth a look.
+            for total in block.totals {
+                let group = total.family == nil ? above(total.upto) : order.filter { inFamily(name[$0] ?? "", total.family) }
+                guard !group.isEmpty, group.allSatisfy({ rate[$0] != nil }) else { continue }
+                let got = group.map { (rate[$0] ?? 0) * (hours[$0] ?? 0) }.reduce(0, +)
+                if abs(got - total.amount) > 0.01 {
+                    result.checks.append("\(ym): \(total.family.map { "the \($0) total" } ?? "the total") says \(Parse.number(total.amount)) €; the rates give \(Parse.number(got)) €.")
+                }
+            }
+            for c in order {
+                result.rows.append(Row(month: ym, code: c, lessons: lessons[c] ?? 0, hours: hours[c] ?? 0, rate: rate[c]))
+                if let r = rate[c] { lastRate[c] = r }
+            }
+        }
+        for row in result.rows where row.rate == nil {
+            result.checks.append("\(row.month): no rate known for \(result.names[row.code] ?? row.code).")
+        }
+        let recent = Set(Array(Set(result.rows.map(\.month))).sorted().suffix(max(1, settings.currentMonths)))
+        var seenCodes: [String] = []
+        for row in result.rows where !seenCodes.contains(row.code) { seenCodes.append(row.code) }
+        let currentSet = Set(result.rows.filter { recent.contains($0.month) }.map(\.code))
+        result.current = seenCodes.filter(currentSet.contains)
+        result.archived = seenCodes.filter { !currentSet.contains($0) }
+        return result
     }
 
-    /// The summary printed after an import: counts, initials, months and amounts, never a name or a line of text.
-    static func report(_ result: Result, notes: Int, dryRun: Bool, writeCheck: String?, written: String?) -> String {
-        let lessons = result.rows.map(\.lessons).reduce(0, +)
-        let hours = result.rows.map(\.hours).reduce(0, +)
-        var lines = ["Classes import" + (dryRun ? " (dry run: nothing written)" : "")]
-        lines.append("Read \(notes) note\(notes == 1 ? "" : "s"): \(result.months.count) months (\(result.months.first?.month ?? "–") to \(result.months.last?.month ?? "–")), \(result.students.count) students, \(lessons) lessons, \(Parse.number(hours)) hours.")
-        lines.append("Totals: \(result.months.filter { $0.total != nil }.count) of \(result.months.count) months have one; \(result.months.filter(\.fits).count) fit the rates exactly.")
-        var latest: [String: Double] = [:]
-        for row in result.rows { if let rate = row.rate { latest[row.code] = rate } }
-        lines.append("Latest rate per student: " + (latest.isEmpty ? "none" : latest.sorted { $0.key < $1.key }.map { "\($0.key) \(Parse.number($0.value))" }.joined(separator: ", ")) + " €/h.")
-        let shape = result.log.shape
-        lines.append("Shape (a letter per line): " + (shape.count > 400 ? String(shape.prefix(400)) + "…" : shape))
-        if !result.checks.isEmpty {
-            lines.append("To check (\(result.checks.count)):")
-            lines += result.checks.prefix(15).map { "- \($0)" }
-            if result.checks.count > 15 { lines.append("- and \(result.checks.count - 15) more in the review file") }
+    /// One rate per student whose sum matches the total: the smallest difference, then the fewest changes from
+    /// each student's previous rate, then the fewest different rates. `nil` for more than five students.
+    static func fitRates(_ hours: [Double], _ total: Double, _ prior: [Double?]) -> (rates: [Double], exact: Bool, ambiguous: Bool)? {
+        let n = hours.count
+        guard n > 0, n <= 5 else { return nil }
+        var best: (rates: [Double], score: (Double, Int, Int))?
+        var exact = 0
+        var digits = [Int](repeating: 0, count: n)
+        while true {
+            let chosen = digits.map { candidates[$0] }
+            let diff = (abs(zip(hours, chosen).map(*).reduce(0, +) - total) * 100).rounded() / 100
+            if diff < 0.01 { exact += 1 }
+            let score = (diff, zip(chosen, prior).filter { $1 != nil && $0 != $1 }.count, Set(chosen).count)
+            if best == nil || score < (best?.score ?? score) { best = (chosen, score) }
+            var i = 0
+            while i < n {
+                digits[i] += 1
+                if digits[i] < candidates.count { break }
+                digits[i] = 0
+                i += 1
+            }
+            if i == n { break }
         }
-        lines.append("Write check: " + (writeCheck ?? "ok, tutoring/ is gitignored"))
-        if let written { lines.append("Wrote \(written).") }
-        return lines.joined(separator: "\n")
+        guard let best else { return nil }
+        return (best.rates, best.score.0 < 0.01, exact > 1)
     }
+
+    // MARK: Writing tutoring/
 
     /// Why the import must not write to this vault, or `nil` when it may.
     static func refusal(for vault: URL) -> String? {
@@ -602,21 +438,161 @@ enum ClassesImport {
         guard FileManager.default.fileExists(atPath: vault.appendingPathComponent(".git").path) else {
             return "\(path) is not a git vault."
         }
-        // tutoring/ must be gitignored, so nothing imported can reach GitHub.
         guard (try? Git(root: vault).run(["check-ignore", "-q", "tutoring/XX.md"])) != nil else {
             return "tutoring/ is not in the vault's .gitignore, so the import could be committed. Add it first."
         }
         return nil
     }
 
-    /// Writes the review file. A file at that path that Desk did not write is never replaced.
-    static func write(_ result: Result, to vault: URL) throws -> String {
-        let url = vault.appendingPathComponent(reviewFile)
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        if let existing = try? String(contentsOf: url, encoding: .utf8), !existing.hasPrefix(marker) {
-            throw NotesReader.Failure(message: "\(reviewFile) exists and wasn't written by Desk, so nothing was replaced.")
+    /// The month's last day, "2026-10" → "2026-10-31".
+    static func monthEnd(_ month: String, cal: DeskCalendar) -> Date? {
+        guard let first = Parse.day(month + "-01", cal) else { return nil }
+        return cal.add(days: -1, to: cal.add(months: 1, to: first))
+    }
+
+    /// Writes every file from the sort, keeping what Desk or Jose recorded there: sent and paid dates, phone
+    /// numbers, parents, subjects and how each student pays.
+    static func write(_ result: Result, settings: Settings, to vault: URL, today: Date, cal: DeskCalendar) throws {
+        let reader = VaultReader(root: vault)
+        func save(_ path: String, _ text: String) throws {
+            let url = vault.appendingPathComponent(path)
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try text.write(to: url, atomically: true, encoding: .utf8)
         }
-        try review(result).write(to: url, atomically: true, encoding: .utf8)
-        return reviewFile
+        let thisMonth = cal.monthKey(today)
+        let recent = Set(Array(Set(result.rows.map(\.month))).sorted().suffix(max(1, settings.currentMonths)))
+        let current = Set(result.current)
+
+        // lessons.csv: everything, for History.
+        var lessons = [Parse.lessonsHeader]
+        for row in result.rows {
+            let name = (result.names[row.code] ?? row.code).replacingOccurrences(of: ",", with: " ")
+            lessons.append("\(row.month),\(row.code),\(name),\(row.lessons),\(Parse.number(row.hours)),\(row.rate.map(Parse.number) ?? ""),\(row.amount.map(Parse.number) ?? "")")
+        }
+        try save(lessonsFile, lessons.joined(separator: "\n") + "\n")
+
+        // Payments for finished months; the sent and paid dates already recorded are kept.
+        let existing = (Parse.payments(reader.text(VaultData.paymentsFile) ?? "", cal) + Parse.payments(reader.text(paymentsArchiveFile) ?? "", cal))
+        let recorded = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var term: [Payment] = []
+        var archive: [Payment] = []
+        for row in result.rows where row.month < thisMonth {
+            guard let amount = row.amount else { continue }
+            let id = "\(row.month)-\(row.code)"
+            let paid = settings.paidThrough.map { row.month <= $0 } == true ? monthEnd(row.month, cal: cal) : nil
+            let payment = Payment(month: row.month, initials: row.code, lessons: row.lessons, hours: row.hours, amount: amount,
+                                  sent: recorded[id]?.sent ?? paid, paid: recorded[id]?.paid ?? paid)
+            if recent.contains(row.month), current.contains(row.code) { term.append(payment) } else { archive.append(payment) }
+        }
+        // This month's invoices belong to Desk's month-end flow until the month is over.
+        term += recorded.values.filter { $0.month >= thisMonth }.sorted { $0.id < $1.id }
+        try save(VaultData.paymentsFile, Parse.paymentsCSV(term, cal))
+        try save(paymentsArchiveFile, Parse.paymentsCSV(archive, cal))
+
+        // students.md: current students; subject, level and payment method already there are kept.
+        let known = Dictionary(Parse.students(reader.text(VaultData.studentsFile) ?? "").map { ($0.initials, $0) }, uniquingKeysWith: { first, _ in first })
+        let latest = result.latestRate
+        var students = ["| Initials | Level | Subject | Rate (€/h) | Pays by |", "|---|---|---|---|---|"]
+        for c in result.current {
+            let old = known[c]
+            let level = result.levels[c] ?? old?.level ?? ""
+            students.append("| \(c) | \(level) | \(old?.subject ?? "") | \(latest[c].map(Parse.number) ?? "") | \(old?.paysBy.isEmpty == false ? old?.paysBy ?? "" : "bank transfer") |")
+        }
+        try save(VaultData.studentsFile, students.joined(separator: "\n") + "\n")
+
+        var former = ["# Former students", "", "No lessons in the last \(settings.currentMonths) months. Written by Desk from the Classes note.", "",
+                      "| Student | Initials | Level | First month | Last month | Lessons | Last €/h |", "|---|---|---|---|---|---|---|"]
+        for c in result.archived {
+            let rows = result.rows.filter { $0.code == c }
+            former.append("| \(result.names[c] ?? c) | \(c) | \(result.levels[c] ?? "") | \(rows.first?.month ?? "") | \(rows.last?.month ?? "") | \(rows.map(\.lessons).reduce(0, +)) | \(latest[c].map(Parse.number) ?? "?") |")
+        }
+        try save(studentsArchiveFile, former.joined(separator: "\n") + "\n")
+
+        // contacts.json: names for the invoices; parents and phones already there are kept.
+        var contacts = Parse.json([String: TutoringContact].self, reader.text(VaultData.tutoringContactsFile) ?? "", cal) ?? [:]
+        for c in result.current {
+            let name = result.names[c] ?? c
+            let first = String(name.split(separator: " ").first ?? Substring(name))
+            let parent = settings.parents.first { fold($0.key) == fold(name) || fold($0.key) == fold(first) }?.value ?? ""
+            let old = contacts[c]
+            contacts[c] = TutoringContact(parent: old?.parent.isEmpty == false ? old?.parent ?? "" : parent, student: first, phone: old?.phone ?? "")
+        }
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        try save(VaultData.tutoringContactsFile, String(decoding: try encoder.encode(contacts), as: UTF8.self) + "\n")
+
+        try save(reviewFile, review(result))
+    }
+
+    /// The review: what to check, then each student and each month, with names written out.
+    static func review(_ result: Result) -> String {
+        let latest = result.latestRate
+        var lines = ["# Tutoring, sorted by Desk from the Classes note", "",
+                     "Each date is a one-hour lesson (x0.5, x1.5, x2 change its length). Rates: the number after a name when there is one; before that, the rate in import.json; otherwise one that fits the month's total; otherwise the student's previous rate.", "",
+                     "## To check", ""]
+        lines += result.checks.isEmpty ? ["Nothing."] : Array(Set(result.checks)).sorted().map { "- \($0)" }
+        if result.recaps > 0 { lines.append("- \(result.recaps) month lists repeat lessons already counted (an invoice recap) and were not counted again.") }
+        lines += ["", "## Students", "", "| Student | Level | From | To | Lessons | Hours | Earned | Latest €/h |", "|---|---|---|---|---|---|---|---|"]
+        for c in result.current + result.archived {
+            let rows = result.rows.filter { $0.code == c }
+            lines.append("| \(result.names[c] ?? c)\(result.current.contains(c) ? "" : " (former)") | \(result.levels[c] ?? "") | \(rows.first?.month ?? "") | \(rows.last?.month ?? "") | \(rows.map(\.lessons).reduce(0, +)) | \(Parse.number(rows.map(\.hours).reduce(0, +))) | \(Parse.number(rows.compactMap(\.amount).reduce(0, +))) € | \(latest[c].map(Parse.number) ?? "?") |")
+        }
+        lines += ["", "## Months", "", "| Month | Student | Lessons | Hours | €/h | Amount |", "|---|---|---|---|---|---|"]
+        for row in result.rows {
+            lines.append("| \(row.month) | \(result.names[row.code] ?? row.code) | \(row.lessons) | \(Parse.number(row.hours)) | \(row.rate.map(Parse.number) ?? "?") | \(row.amount.map { Parse.number($0) + " €" } ?? "?") |")
+        }
+        return lines.joined(separator: "\n") + "\n"
+    }
+
+    /// One line for Desk's status: counts and euros only.
+    static func summary(_ result: Result) -> String {
+        let earned = result.rows.compactMap(\.amount).reduce(0, +)
+        return "\(result.rows.map(\.lessons).reduce(0, +)) lessons, \(result.names.count) students, \(Parse.number(earned.rounded())) €; \(Set(result.checks).count) to check"
+    }
+
+    /// The command line's report: counts, euros and initials, never a name or a line of the note.
+    static func report(_ result: Result) -> String {
+        var lines = ["Classes: " + summary(result) + ".",
+                     "\(result.current.count) current, \(result.archived.count) former; \(result.recaps) recap lists skipped; \(result.ignored) other lines ignored."]
+        var years: [String: (lessons: Int, euros: Double)] = [:]
+        for row in result.rows {
+            let year = String(row.month.prefix(4))
+            years[year, default: (0, 0)].lessons += row.lessons
+            years[year, default: (0, 0)].euros += row.amount ?? 0
+        }
+        lines += years.keys.sorted().map { "\($0): \(years[$0]?.lessons ?? 0) lessons, \(Parse.number((years[$0]?.euros ?? 0).rounded())) €" }
+        let rates = (result.current + result.archived).map { c -> String in
+            var seen: [String] = []
+            for row in result.rows where row.code == c {
+                let rate = row.rate.map(Parse.number) ?? "?"
+                if seen.last != rate { seen.append(rate) }
+            }
+            return "\(c) \(seen.joined(separator: "→"))"
+        }
+        lines.append("€/h: " + rates.joined(separator: "; "))
+        lines += Array(Set(result.checks)).sorted().map { "- " + redact($0, names: result.names) }
+        return lines.joined(separator: "\n")
+    }
+
+    /// A check with student names turned into initials and other names into their first letter.
+    static func redact(_ check: String, names: [String: String]) -> String {
+        var text = check
+        for (code, name) in names.sorted(by: { $0.value.count > $1.value.count }) {
+            text = text.replacingOccurrences(of: name, with: code)
+        }
+        return text.replacing(/\b\p{Lu}\p{Ll}+/) { String($0.output.first ?? "?") + "." }
+    }
+
+    /// Reads the note from Notes, sorts it and, unless `write` is false, writes `tutoring/`.
+    static func run(vault: URL, today: Date, cal: DeskCalendar, note: String? = nil, write: Bool = true) throws -> Result {
+        if write, let refusal = refusal(for: vault) { throw NotesReader.Failure(message: refusal) }
+        let settings = Settings.load(VaultReader(root: vault).text(settingsFile))
+        let notes = try NotesReader.fetch(title: note).notes
+        // "Classes" itself wins over other notes whose titles start with the word.
+        let exact = notes.filter { ["classes", "clases"].contains(fold($0.title)) }
+        let text = (exact.isEmpty ? notes : exact).map(\.body).joined(separator: "\n")
+        let result = sort(parse(text), settings: settings, today: today, cal: cal)
+        if write { try ClassesImport.write(result, settings: settings, to: vault, today: today, cal: cal) }
+        return result
     }
 }

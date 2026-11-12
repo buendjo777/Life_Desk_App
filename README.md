@@ -1,6 +1,6 @@
 # Desk for Mac
 
-My personal life manager: a native macOS app that answers "what now?" in one glance. Eight tabs: **Today, Studying, Projects, Internship apps, Uni apps, Tutoring, Health, System.**
+My personal life manager: a native macOS app that answers "what now?" in one glance. Nine tabs: **Today, Studying, Projects, Internship apps, Uni apps, Tutoring, History, Health, System.**
 
 ![Today, light](design/screenshots/today-light.png)
 ![Today, dark](design/screenshots/today-dark.png)
@@ -38,7 +38,7 @@ This installs `Desk.app` to `~/Applications`. It starts in Demo mode. To use a r
 swift test
 ```
 
-My tutoring summaries live in Notes › Classes. This imports them into the vault's `tutoring/` folder, which never leaves the Mac, with initials instead of names (drop `--dry-run` to write):
+My tutoring log lives in one Notes note, "Classes". In Live mode Desk reads it on launch and on ⌘R and writes the vault's `tutoring/` folder, which is gitignored and never leaves the Mac. My default rates, families and the months already paid go in `tutoring/import.json`. The same import from the terminal, without writing:
 
 ```bash
 open -n -W --stdout "$(tty)" ~/Applications/Desk.app --args --import-classes --dry-run

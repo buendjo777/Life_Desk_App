@@ -114,10 +114,12 @@ final class Store {
         reload()
     }
 
-    /// After a change in Settings: pick the mode again and, in Live, pull and load the calendar at once.
+    /// After a change in Settings: pick the mode again and, in Live, pull, load the calendar and read the
+    /// Classes note at once.
     func settingsChanged() {
         resolveMode()
         sync()
+        importClasses(explicit: false)
     }
 
     private var reader: VaultReader {
@@ -353,6 +355,11 @@ final class Store {
 
     /// Changes one row of `payments.csv` in place; every other line is kept as it is.
     private func upsert(_ payment: Payment) {
+        // The import rewrites payments.csv; a click during it could be lost.
+        guard !importing else {
+            banner = "Desk is reading the Classes note. Try again in a few seconds."
+            return
+        }
         let cal = cal
         edit(VaultData.paymentsFile) { Parse.upsertPayment(payment, in: $0, cal) }
     }
@@ -367,6 +374,44 @@ final class Store {
         var payment = payment
         payment.paid = d.today
         upsert(payment)
+    }
+
+    // MARK: The Classes note (Notes → tutoring/, Live only)
+
+    /// The last read of the Classes note: when, and its one-line result or why it failed.
+    private(set) var importStatus: String?
+    @ObservationIgnored private var importing = false
+
+    /// Live: reads the Classes note through Notes and rewrites `tutoring/` (gitignored, so no git). Runs on
+    /// launch and on Sync Now, never on the 15-minute timer, because each read wakes Notes. A failure shows
+    /// the banner only when Jose asked for the sync (⌘R).
+    func importClasses(explicit: Bool) {
+        guard mode == .live, !isSnapshot, !importing else { return }
+        importing = true
+        let vault = prefs.vaultURL
+        let cal = cal
+        let queuedIn = epoch
+        Task { [weak self] in
+            let outcome = await Task.detached(priority: .utility) { () -> (checks: Int, error: String?) in
+                do {
+                    return (Set(try ClassesImport.run(vault: vault, today: Date(), cal: cal).checks).count, nil)
+                } catch {
+                    return (0, error.localizedDescription)
+                }
+            }.value
+            guard let self else { return }
+            self.importing = false
+            guard self.epoch == queuedIn, self.mode == .live else { return }
+            let time = self.cal.format(Date(), "HH:mm")
+            if let error = outcome.error {
+                self.importStatus = "Not read from Notes at \(time): \(error)"
+                if explicit { self.banner = "The Classes note was not imported. \(error)" }
+            } else {
+                self.importStatus = "Read from Notes at \(time)"
+                    + (outcome.checks > 0 ? " · \(outcome.checks) to check in \(ClassesImport.reviewFile)" : "")
+            }
+            self.reload()
+        }
     }
 
     // MARK: Sync

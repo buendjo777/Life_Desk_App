@@ -1,152 +1,198 @@
 import XCTest
 @testable import Desk
 
-/// The Classes importer on an invented note in Jose's layout: a heading per month, each student's name, the
-/// dates of their lessons (x0.5 and x1.5 for 30 and 90 minutes) and the month's total under it.
+/// The Classes importer on an invented note in Jose's layout: month headings, "Name (rate): (dd/mm)x1.5",
+/// month and family totals, an invoice recap, and lines to ignore. Every name and number here is made up.
 final class ClassesImportTests: XCTestCase {
     let cal = DeskCalendar(timeZone: "Europe/Madrid")
-    lazy var today = Parse.day("2026-11-12", cal) ?? Date()
+    lazy var today = Parse.day("2026-01-20", cal) ?? Date()
 
-    /// Invented names and numbers. September fits 30 and 25 €/h; October adds a student at 40.
+    let settingsJSON = """
+    {"rates": {"Nora": 30}, "families": {"Vidal": ["Ivo", "Eva"]}, "parents": {"Nora": "Marta"},
+     "ignore": ["Tom"], "paid_through": "2025-10", "current_months": 2}
+    """
+
     let note = """
     Classes
-    Septiembre 2025
-    Álex Bermúdez
-    3/9, 10/9 x1.5, 17/9
-    Carla
-    4/9, 11/9
-    Total: 155€
-
-    Octubre
-    Álex
-    1, 8, 15x0,5
-    Carla
-    2/10 (Bizum)
-    Abril
-    6/10, 13/10
-    Total octubre: 180 €
-
-    Noviembre
-    Álex: 5/11, 12/11
-    Carla - 6/11
-    Vacaciones de Carla
-
-    Diciembre 2025
-    Álex
-    3/12
-    Total: 47€
-
-    Enero
-    Carla
-    8/1 (x1.5)
-    Total: 1.250,00 €
+    Pablo Ruiz Gómez
+    IBAN ES00 1234 5678 9012 3456 7890
+    2025:
+    September:
+    IB HL:
+    * Lucas Moreno (50): (03/09), (10/09)x1.5
+    * Nora: ((04/09), 11/09)
+    Total for September: 185€
+    October:
+    Lucas: (01/10), (08/10), (15/10)x0.5
+    Tom: (09/10)
+    Nora (40): (02/10)
+    Ivo Vidal: (35/40): (06/10), (13/10)
+    Total for October: 235€
+    Eva: (29,10)
+    Total for October (Vidal): 105€
+    November:
+    Lucas: 3 lessons
+    Nora: (05/11), (12/11) 80€
+    Eva: (06/11)
+    TOTAL Vidal: 35€
+    December:
+    Lucas: (03/12)
+    Total: 50€
+    October:
+    Lucas: (01/10), (08/10), (15/10)x0.5
+    Nora: (02/10)
+    2026:
+    January:
+    Nora: (08/01)x1.5
+    Total for January: 60€
     """
 
     func sorted() -> ClassesImport.Result {
-        ClassesImport.sort(ClassesImport.parse(note, title: "Classes"), today: today, cal: cal)
+        ClassesImport.sort(ClassesImport.parse(note), settings: .load(settingsJSON), today: today, cal: cal)
     }
 
     func row(_ result: ClassesImport.Result, _ month: String, _ code: String) -> ClassesImport.Row? {
         result.rows.first { $0.month == month && $0.code == code }
     }
 
-    func testMonthsYearsAndShape() {
-        let log = ClassesImport.parse(note, title: "Classes")
-        XCTAssertEqual(log.months.map(\.month), [9, 10, 11, 12, 1])
-        XCTAssertEqual(ClassesImport.assignYears(log.months, today: today, cal: cal), [2025, 2025, 2025, 2025, 2026])
-        XCTAssertEqual(log.shape, "MSDSDTBMSDSDSDTBMSS?BMSDTBMSDT")
-        XCTAssertEqual(log.unrecognised, 1)
+    func testReadsTheLayout() {
+        let parsed = ClassesImport.parse(note)
+        XCTAssertEqual(parsed.blocks.map(\.month), [9, 10, 11, 12, 10, 1])
+        XCTAssertEqual(parsed.blocks.map(\.year), [2025, nil, nil, nil, nil, 2026])
+        // The title, the name line and the bank line.
+        XCTAssertEqual(parsed.ignored, 3)
+        let october = parsed.blocks[1]
+        XCTAssertEqual(october.entries.map(\.name), ["Lucas", "Tom", "Nora", "Ivo Vidal", "Eva"])
+        XCTAssertEqual(october.totals.map(\.upto), [4, 5])
+        XCTAssertEqual(october.totals.map(\.family), [nil, "Vidal"])
+        XCTAssertEqual(parsed.blocks[2].totals.first?.family, "Vidal")
+        XCTAssertEqual(parsed.blocks[0].entries.map(\.hours), [2.5, 2])
+        XCTAssertEqual(parsed.blocks[0].entries.first?.group, "IB HL")
     }
 
-    func testLessonsHoursAndInitials() throws {
+    func testOddLines() throws {
+        let two = try XCTUnwrap(ClassesImport.entry(from: "Omar: (65/70): (05/10)"))
+        XCTAssertEqual(two.rate, 65)
+        XCTAssertTrue(two.twoRates)
+        let comma = try XCTUnwrap(ClassesImport.entry(from: "Lina (30): (03/02), (10/02)x1,5"))
+        XCTAssertEqual(comma.rate, 30)
+        XCTAssertEqual(comma.hours, 2.5)
+        let counted = try XCTUnwrap(ClassesImport.entry(from: "Hugo Brand: 2 classes 50€"))
+        XCTAssertEqual(counted.lessonCount, 2)
+        XCTAssertEqual(counted.amount, 50)
+        XCTAssertEqual(ClassesImport.entry(from: "Hugo: (+ 2 septiembre)")?.extras, 2)
+        XCTAssertNil(ClassesImport.entry(from: "Hola, te escribo por lo de esta semana"))
+        XCTAssertNil(ClassesImport.entry(from: "Hugo Brand y su hermana mayor: (03/02)"), "more than three words is not a name")
+        XCTAssertEqual(ClassesImport.family(in: "Total for January (Brand)"), "Brand")
+        XCTAssertEqual(ClassesImport.family(in: "TOTAL Brand: 150€"), "Brand")
+        XCTAssertNil(ClassesImport.family(in: "Total for November+December: 300€"))
+    }
+
+    func testRatesFollowTheNoteThenTheSettingsThenTheTotals() {
         let result = sorted()
-        XCTAssertEqual(result.students, ["AB", "AB2", "CA"])
-        let september = try XCTUnwrap(row(result, "2025-09", "AB"))
-        XCTAssertEqual(september.lessons, 3)
-        XCTAssertEqual(september.hours, 3.5)
-        // "Álex" alone is the same student as "Álex Bermúdez"; "15x0,5" is half an hour.
-        XCTAssertEqual(row(result, "2025-10", "AB")?.hours, 2.5)
-        XCTAssertEqual(row(result, "2025-10", "AB2")?.lessons, 2)
-        XCTAssertEqual(row(result, "2026-01", "CA")?.hours, 1.5)
+        XCTAssertEqual(result.current, ["LM", "NO"])
+        XCTAssertEqual(result.archived, ["IV", "EV"])
+        XCTAssertEqual(result.names["LM"], "Lucas Moreno")
+        // A number in the note.
+        XCTAssertEqual(row(result, "2025-09", "LM")?.rate, 50)
+        // Jose's rate from import.json, until the note writes one.
+        XCTAssertEqual(row(result, "2025-09", "NO")?.rate, 30)
+        XCTAssertEqual(row(result, "2025-10", "NO")?.rate, 40)
+        // Fitted to the month's total, which counts every student above it.
+        XCTAssertEqual(row(result, "2025-10", "LM")?.hours, 2.5)
+        XCTAssertEqual(row(result, "2025-10", "LM")?.rate, 50)
+        // Family totals: by surname (Ivo Vidal) and by import.json (Eva).
+        XCTAssertEqual(row(result, "2025-10", "EV")?.rate, 35)
+        XCTAssertEqual(row(result, "2025-11", "EV")?.rate, 35)
+        // An amount on the line.
+        XCTAssertEqual(row(result, "2025-11", "NO")?.rate, 40)
+        // No total: the previous rate.
+        XCTAssertEqual(row(result, "2025-11", "LM")?.amount, 150)
+        XCTAssertEqual(row(result, "2026-01", "NO")?.amount, 60)
+        XCTAssertEqual(result.rows.compactMap(\.amount).reduce(0, +), 830)
+        XCTAssertEqual(result.rows.map(\.lessons).reduce(0, +), 19)
+        // The ignored student and the recap list are left out.
+        XCTAssertFalse(result.names.values.contains("Tom"))
+        XCTAssertEqual(result.recaps, 1)
+        XCTAssertEqual(result.checks, ["2025-10: Ivo Vidal has two rates written; 35 used."])
     }
 
-    func testRatesAreFittedToEachMonthsTotal() {
-        let result = sorted()
-        XCTAssertEqual(row(result, "2025-09", "AB")?.rate, 30)
-        XCTAssertEqual(row(result, "2025-09", "CA")?.rate, 25)
-        XCTAssertEqual(row(result, "2025-10", "AB2")?.rate, 40)
-        XCTAssertEqual(row(result, "2025-10", "AB")?.rate, 30)
-        XCTAssertEqual(result.months.first { $0.month == "2025-10" }?.fits, true)
-        // No total in November: last month's rates carry over.
-        XCTAssertEqual(row(result, "2025-11", "AB")?.amount, 60)
-        XCTAssertTrue(result.checks.contains { $0.hasPrefix("2025-11: no total under it") })
-        // 47 € for one hour fits no rate: flagged, with the closest.
-        XCTAssertTrue(result.checks.contains { $0.hasPrefix("2025-12: no mix") && $0.contains("closest is 50") })
-        XCTAssertEqual(result.months.first { $0.month == "2025-12" }?.fits, false)
-        XCTAssertTrue(result.checks.contains { $0.contains("1 lines weren't understood") })
+    func testYearsComeFromTheNewestMonth() {
+        let parsed = ClassesImport.parse("2023:\nSeptember:\nAna: (03/09)\nApril:\nAbril: (04/04), (05/04)")
+        XCTAssertEqual(parsed.blocks.map(\.month), [9, 4])
+        XCTAssertEqual(parsed.blocks.last?.entries.map(\.name), ["Abril"], "a student named like a month")
+        let settings = ClassesImport.Settings.load(#"{"rates": {"Ana": 40, "Abril": 40}}"#)
+        let result = ClassesImport.sort(parsed, settings: settings, today: Parse.day("2025-11-12", cal) ?? Date(), cal: cal)
+        XCTAssertEqual(result.rows.map(\.month), ["2024-09", "2025-04"])
+        XCTAssertEqual(result.checks, ["2024-09: the note writes 2023 before this month."])
     }
 
-    func testAmountsAndOddLines() {
-        XCTAssertEqual(ClassesImport.amount("1.250,50"), 1250.5)
-        XCTAssertEqual(ClassesImport.amount("1.250"), 1250)
-        XCTAssertEqual(ClassesImport.amount("62.5"), 62.5)
-        XCTAssertEqual(ClassesImport.splitAmount("Álex: 3/11, 5/11 = 100€").amount, 100)
-        XCTAssertEqual(ClassesImport.splitAmount("€450").amount, 450)
-        XCTAssertEqual(ClassesImport.lessons(in: "3/11, 5/11 x1.5, 12/11 x0,5", month: 11).lessons.map(\.hours), [1, 1.5, 0.5])
-        XCTAssertEqual(ClassesImport.lessons(in: "3/10, 5/11", month: 11).outside, 1)
-        XCTAssertNil(ClassesImport.monthHeading("Mar"))
-        XCTAssertEqual(ClassesImport.monthHeading("Mar 2026")?.month, 3)
-        XCTAssertNil(ClassesImport.monthHeading("Octubre 3"))
-        XCTAssertEqual(ClassesImport.monthHeading("2026-11")?.year, 2026)
+    func testFittingRates() throws {
+        let fit = try XCTUnwrap(ClassesImport.fitRates([2, 1], 105, [nil, nil]))
+        XCTAssertTrue(fit.exact)
+        XCTAssertTrue(fit.ambiguous)
+        XCTAssertEqual(fit.rates, [35, 35])
+        // A student's previous rate breaks the tie.
+        XCTAssertEqual(ClassesImport.fitRates([2, 1], 105, [40, nil])?.rates, [40, 25])
+        XCTAssertEqual(ClassesImport.fitRates([1], 47, [nil])?.exact, false)
+        XCTAssertNil(ClassesImport.fitRates([1, 1, 1, 1, 1, 1], 300, Array(repeating: nil, count: 6)))
     }
 
-    func testNewestFirstNotesGetTheRightYears() {
-        let log = ClassesImport.parse("Febrero\nAna\n2/2\nEnero\nAna\n5/1\nDiciembre\nAna\n1/12")
-        XCTAssertEqual(ClassesImport.assignYears(log.months, today: today, cal: cal), [2026, 2026, 2025])
-    }
-
-    func testAStudentNamedLikeAMonth() {
-        let log = ClassesImport.parse("Abril\nMarta\n3/4\nAbril\n4/4, 5/4")
-        XCTAssertEqual(log.months.count, 1)
-        XCTAssertEqual(log.months.first?.students.map(\.name), ["Marta", "Abril"])
-    }
-
-    /// Nothing written or printed carries a name or a word of the note.
-    func testNoNamesInTheReviewOrTheReport() {
-        let result = sorted()
-        let review = ClassesImport.review(result)
-        let report = ClassesImport.report(result, notes: 1, dryRun: true, writeCheck: nil, written: nil)
-        for word in ["alex", "bermudez", "carla", "abril", "vacaciones", "bizum"] {
-            XCTAssertFalse(Parse.nameKey(review).contains(word), word)
-            XCTAssertFalse(Parse.nameKey(report).contains(word), word)
+    func testTheReportHasNoNames() {
+        let report = ClassesImport.report(sorted())
+        let words = Set(ClassesImport.words(report))
+        for name in ["lucas", "moreno", "nora", "ivo", "vidal", "eva", "tom", "pablo", "marta"] {
+            XCTAssertFalse(words.contains(name), name)
         }
-        XCTAssertTrue(review.hasPrefix(ClassesImport.marker))
+        XCTAssertTrue(report.contains("2025: 18 lessons, 770 €"))
+        XCTAssertTrue(report.contains("€/h: LM 50; NO 30→40; IV 35; EV 35"))
+        XCTAssertTrue(report.contains("- 2025-10: IV has two rates written; 35 used."))
+        XCTAssertEqual(ClassesImport.redact("2023-02: the De la Cruz total of 120 €.", names: [:]), "2023-02: the D. la C. total of 120 €.")
     }
 
-    func testWriteReplacesOnlyItsOwnFile() throws {
+    func testWritesTutoringAndKeepsWhatDeskRecorded() throws {
         let fm = FileManager.default
         let vault = fm.temporaryDirectory.appendingPathComponent("desk-classes-\(UUID().uuidString)")
         defer { try? fm.removeItem(at: vault) }
-        XCTAssertEqual(try ClassesImport.write(sorted(), to: vault), ClassesImport.reviewFile)
-        XCTAssertEqual(try ClassesImport.write(sorted(), to: vault), ClassesImport.reviewFile)
-        let url = vault.appendingPathComponent(ClassesImport.reviewFile)
-        try "My own notes.\n".write(to: url, atomically: true, encoding: .utf8)
-        XCTAssertThrowsError(try ClassesImport.write(sorted(), to: vault))
-        XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), "My own notes.\n")
-    }
+        let settings = ClassesImport.Settings.load(settingsJSON)
+        func read(_ path: String) throws -> String { try String(contentsOf: vault.appendingPathComponent(path), encoding: .utf8) }
+        func save(_ path: String, _ text: String) throws { try text.write(to: vault.appendingPathComponent(path), atomically: true, encoding: .utf8) }
+        try ClassesImport.write(sorted(), settings: settings, to: vault, today: today, cal: cal)
 
-    /// The structure view hides every word and number but the generic ones.
-    func testMaskHidesNamesAndNumbers() {
-        XCTAssertEqual(ClassesImport.mask("Álex Bermúdez: 3/10, 5/10 x1,5"), "A A: 9/9, 9/9 x9,9")
-        XCTAssertEqual(ClassesImport.mask("Octubre 2023"), "MES 9")
-        XCTAssertEqual(ClassesImport.mask("Lunes 3 y martes 5"), "DIA 9 a DIA 9")
-        XCTAssertEqual(ClassesImport.mask("TOTAL: 1.250 euros"), "TOTAL: 9.9 EUR")
-        XCTAssertEqual(ClassesImport.mask("Mar le debe 20€"), "A a a 9€")
-        // Month names show by design, so "Abril" (a month as well as a name) is not checked here.
-        let report = ClassesImport.shapeReport(note, title: "Classes")
-        for word in ["alex", "bermudez", "carla", "vacaciones", "bizum"] {
-            XCTAssertFalse(Parse.nameKey(report).contains(word), word)
-        }
+        let lessons = Parse.splitLines(try read(ClassesImport.lessonsFile)).filter { !$0.isEmpty }
+        XCTAssertEqual(lessons.count, 12)
+        XCTAssertTrue(lessons.contains("2025-10,LM,Lucas Moreno,3,2.5,50,125"))
+        let term = Parse.payments(try read(VaultData.paymentsFile), cal)
+        XCTAssertEqual(term.map(\.id), ["2025-12-LM"])
+        XCTAssertNil(term.first?.paid)
+        let archive = Parse.payments(try read(ClassesImport.paymentsArchiveFile), cal)
+        XCTAssertEqual(archive.count, 9)
+        XCTAssertEqual(archive.first { $0.id == "2025-10-IV" }?.paid, Parse.day("2025-10-31", cal))
+        XCTAssertNil(archive.first { $0.id == "2025-11-NO" }?.paid)
+        let students = Parse.students(try read(VaultData.studentsFile))
+        XCTAssertEqual(students.map(\.initials), ["LM", "NO"])
+        XCTAssertEqual(students.map(\.rate), [50, 40])
+        XCTAssertEqual(students.first?.level, "IB HL")
+        XCTAssertTrue(try read(ClassesImport.studentsArchiveFile).contains("| Ivo Vidal | IV |"))
+        var contacts = try XCTUnwrap(Parse.json([String: TutoringContact].self, try read(VaultData.tutoringContactsFile), cal))
+        XCTAssertEqual(contacts["NO"], TutoringContact(parent: "Marta", student: "Nora", phone: ""))
+        XCTAssertTrue(try read(ClassesImport.reviewFile).contains("| Lucas Moreno | IB HL | 2025-09 | 2025-12 |"))
+
+        // Desk records a phone number, a payment and this month's invoice; the next import keeps all three.
+        contacts["NO"]?.phone = "+34 600 000 000"
+        try save(VaultData.tutoringContactsFile, String(decoding: try JSONEncoder().encode(contacts), as: UTF8.self))
+        var paid = archive
+        if let i = paid.firstIndex(where: { $0.id == "2025-11-NO" }) { paid[i].paid = Parse.day("2025-12-04", cal) }
+        try save(ClassesImport.paymentsArchiveFile, Parse.paymentsCSV(paid, cal))
+        let invoice = Payment(month: "2026-01", initials: "NO", lessons: 1, hours: 1.5, amount: 60, sent: today, paid: nil)
+        try save(VaultData.paymentsFile, Parse.paymentsCSV(term + [invoice], cal))
+        try ClassesImport.write(sorted(), settings: settings, to: vault, today: today, cal: cal)
+
+        let after = Parse.json([String: TutoringContact].self, try read(VaultData.tutoringContactsFile), cal)
+        XCTAssertEqual(after?["NO"]?.phone, "+34 600 000 000")
+        let archived = Parse.payments(try read(ClassesImport.paymentsArchiveFile), cal)
+        XCTAssertEqual(archived.first { $0.id == "2025-11-NO" }?.paid, Parse.day("2025-12-04", cal))
+        XCTAssertEqual(Parse.payments(try read(VaultData.paymentsFile), cal).map(\.id), ["2025-12-LM", "2026-01-NO"])
     }
 
     func testRefusesAVaultWhereTutoringIsNotIgnored() throws {

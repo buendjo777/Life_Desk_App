@@ -342,6 +342,20 @@ enum Parse {
         }
     }
 
+    static let lessonsHeader = "month,initials,student,lessons,hours,rate,amount"
+
+    /// `lessons.csv`: `month,initials,student,lessons,hours,rate,amount`; rate and amount are empty when unknown.
+    static func lessons(_ text: String) -> [LessonRow] {
+        splitLines(text).dropFirst().compactMap { line in
+            let cells = line.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            guard cells.count >= 7, cells[0].wholeMatch(of: /\d{4}-\d{2}/) != nil, !cells[1].isEmpty,
+                  let lessons = Int(cells[3]), let hours = Double(cells[4]), hours.isFinite else { return nil }
+            func value(_ cell: String) -> Double? { Double(cell).flatMap { $0.isFinite ? $0 : nil } }
+            return LessonRow(month: cells[0], initials: cells[1], student: cells[2], lessons: lessons, hours: hours,
+                             rate: value(cells[5]), amount: value(cells[6]))
+        }
+    }
+
     static func paymentsCSV(_ payments: [Payment], _ cal: DeskCalendar) -> String {
         let rows = payments.map { p in
             [p.month, p.initials, String(p.lessons), number(p.hours), number(p.amount),

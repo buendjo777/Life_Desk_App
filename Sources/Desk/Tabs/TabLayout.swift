@@ -71,6 +71,15 @@ enum TabLayout {
             DeskSection("tutoring.payments", "Payments") { PaymentsTable() },
             DeskSection("tutoring.week", "This week's lessons", slot: .rail) { WeekLessons() },
         ]
+        case .history: [
+            DeskSection("history.thisYear", "This year", width: 197) { HistoryStat(kind: .thisYear) },
+            DeskSection("history.lastYear", "Last year", width: 197) { HistoryStat(kind: .lastYear) },
+            DeskSection("history.allTime", "All time", width: 197) { HistoryStat(kind: .allTime) },
+            DeskSection("history.best", "Best month", width: 197) { HistoryStat(kind: .best) },
+            DeskSection("history.months", "Monthly earnings") { EarningsBars() },
+            DeskSection("history.years", "By year", width: 394) { YearTotals() },
+            DeskSection("history.students", "By student", width: 394) { StudentTotals() },
+        ]
         case .health: [
             DeskSection("health.sessions", "Sessions", width: 197) { HealthStat(kind: .sessions) },
             DeskSection("health.time", "Time", width: 197) { HealthStat(kind: .time) },

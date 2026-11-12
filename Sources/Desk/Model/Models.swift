@@ -288,7 +288,7 @@ struct Payment: Identifiable, Hashable {
 }
 
 /// The only record with names and a phone number. It never leaves the Mac.
-struct TutoringContact: Decodable, Hashable {
+struct TutoringContact: Codable, Hashable {
     var parent: String
     var student: String
     var phone: String
@@ -299,9 +299,21 @@ struct LessonNote: Hashable {
     var text: String
 }
 
+/// `tutoring/lessons.csv`, written by Desk from the Classes note: one row per month and student.
+struct LessonRow: Hashable {
+    var month: String
+    var initials: String
+    var student: String
+    var lessons: Int
+    var hours: Double
+    var rate: Double?
+    var amount: Double?
+}
+
 struct Tutoring {
     var students: [Student] = []
     var payments: [Payment] = []
+    var lessons: [LessonRow] = []
     var contacts: [String: TutoringContact] = [:]
     var notes: [String: [LessonNote]] = [:]
     var template = ""

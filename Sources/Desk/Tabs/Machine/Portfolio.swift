@@ -34,7 +34,7 @@ extension Derived {
     static let architecture: [(title: String, detail: String, accent: Accent)] = [
         ("Nightly agents", "Read mail, calendar and Strava in the cloud", .navy),
         ("Vault (git)", "snapshot.json · runs.jsonl · drafts · Jose's notes", .ochre),
-        ("Desk for Mac", "git pull · pure parsers · eight tabs", .rust),
+        ("Desk for Mac", "git pull · pure parsers · nine tabs", .rust),
         ("Jose", "Ticks, Add, Dismiss → decisions.jsonl", .moss),
     ]
 }
@@ -55,7 +55,7 @@ struct PortfolioIntro: View {
                 .frame(maxWidth: t.summaryWidth, alignment: .leading)
             Spacer(minLength: 0)
             HStack(alignment: .top, spacing: t.sp24) {
-                Figure(String(Tab.eight.count), caption: "Tabs")
+                Figure(String(Tab.sidebar.count), caption: "Tabs")
                 Figure(String(d.lastRun?.agents?.count ?? 0), caption: "Agents")
                 Figure(String(d.data.runs.count), caption: "Runs logged")
                 Figure("0", unit: "€", caption: "Running cost")

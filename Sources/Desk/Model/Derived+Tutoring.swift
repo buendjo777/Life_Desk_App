@@ -31,15 +31,27 @@ extension Derived {
         var id: String { student.id }
     }
 
-    /// Hours and amount per student for a month, from the tutoring calendar (event titles are initials).
+    /// True once Desk has read the Classes note into `tutoring/lessons.csv`: the note is then the record.
+    var lessonsFromNote: Bool { !data.tutoring.lessons.isEmpty }
+
+    /// Hours and amount per student for a month. From the Classes note when Desk has read it, with the
+    /// tutoring calendar adding only lessons still to come; otherwise from the calendar (event titles are initials).
     func tutoringMonth(_ key: String) -> [StudentMonth] {
         let events = tutoringEvents.filter { cal.monthKey($0.start) == key }
+        let rows = data.tutoring.lessons.filter { $0.month == key }
         return data.tutoring.students.map { student in
             let mine = events.filter { $0.title.trimmingCharacters(in: .whitespaces) == student.initials }
             let done = mine.filter { $0.end <= now }
             func hours(_ list: [CalEvent]) -> Double { list.map { $0.end.timeIntervalSince($0.start) / 3600 }.reduce(0, +) }
-            return StudentMonth(student: student, lessons: done.count, hours: hours(done),
-                                amount: hours(done) * student.rate, plannedHours: hours(mine))
+            guard lessonsFromNote else {
+                return StudentMonth(student: student, lessons: done.count, hours: hours(done),
+                                    amount: hours(done) * student.rate, plannedHours: hours(mine))
+            }
+            let row = rows.first { $0.initials == student.initials }
+            let taught = row?.hours ?? 0
+            return StudentMonth(student: student, lessons: row?.lessons ?? 0, hours: taught,
+                                amount: row?.amount ?? taught * (row?.rate ?? student.rate),
+                                plannedHours: taught + hours(mine.filter { $0.end > now }))
         }
     }
 
@@ -57,10 +69,11 @@ extension Derived {
 
     var pendingAmount: Double { waitingForPayment.map(\.amount).reduce(0, +) }
 
-    /// Finished months not yet sent: a row without a sent date, or calendar lessons with no row at all.
+    /// Finished months not yet sent: a row without a sent date, or, without the Classes note, calendar lessons
+    /// with no row at all. (Desk writes a row for every finished month in the note.)
     var monthEnd: [Payment] {
         var result = data.tutoring.payments.filter { $0.status == .notSent && $0.month < currentMonth }
-        let months = Set(tutoringEvents.map { cal.monthKey($0.start) }).filter { $0 < currentMonth }
+        let months = lessonsFromNote ? [] : Set(tutoringEvents.map { cal.monthKey($0.start) }).filter { $0 < currentMonth }
         for month in months.sorted() {
             for entry in tutoringMonth(month) where entry.lessons > 0 {
                 let id = "\(month)-\(entry.student.initials)"
@@ -68,6 +81,15 @@ extension Derived {
                     result.append(Payment(month: month, initials: entry.student.initials, lessons: entry.lessons,
                                           hours: entry.hours, amount: entry.amount, sent: nil, paid: nil))
                 }
+            }
+        }
+        // With the note: the month that just ended, until Desk's next import writes its rows.
+        if lessonsFromNote, let first = Parse.day(currentMonth + "-01", cal) {
+            let previous = cal.monthKey(cal.add(months: -1, to: first))
+            for row in data.tutoring.lessons where row.month == previous {
+                guard let student = student(row.initials), !data.tutoring.payments.contains(where: { $0.id == "\(row.month)-\(row.initials)" }) else { continue }
+                result.append(Payment(month: row.month, initials: row.initials, lessons: row.lessons, hours: row.hours,
+                                      amount: row.amount ?? row.hours * student.rate, sent: nil, paid: nil))
             }
         }
         return result.sorted { ($0.month, $0.initials) < ($1.month, $1.initials) }

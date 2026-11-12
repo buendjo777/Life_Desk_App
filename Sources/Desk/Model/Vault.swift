@@ -74,6 +74,7 @@ struct VaultData {
     static let studentsFile = "tutoring/students.md"
     static let paymentsFile = "tutoring/payments.csv"
     static let tutoringContactsFile = "tutoring/contacts.json"
+    static let lessonsFile = "tutoring/lessons.csv"
 
     /// The master doc's deadline for a programme, when its comparison heading or title names the same
     /// programme. Otherwise the agent's `deadline` row has the date.
@@ -154,6 +155,7 @@ extension VaultData {
 
         if let text = read(studentsFile) { data.tutoring.students = Parse.students(text) }
         if let text = reader.text(paymentsFile) { data.tutoring.payments = Parse.payments(text, cal) }
+        if let text = reader.text(lessonsFile) { data.tutoring.lessons = Parse.lessons(text) }
         if let text = reader.text(tutoringContactsFile) {
             data.tutoring.contacts = Parse.json([String: TutoringContact].self, text, cal) ?? [:]
         }

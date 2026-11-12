@@ -190,6 +190,34 @@ final class DerivedTests: XCTestCase {
         let december = at("2026-12-01T09:00:00+01:00")
         XCTAssertEqual(december.monthEnd.count, 4)
         XCTAssertEqual(december.monthEnd.first?.month, "2026-11")
+        // Without the Classes note, the calendar is the record.
+        var calendarOnly = data
+        calendarOnly.tutoring.lessons = []
+        let fromCalendar = Derived(data: calendarOnly, now: demoNow)
+        XCTAssertFalse(fromCalendar.lessonsFromNote)
+        XCTAssertEqual(fromCalendar.thisMonth.map(\.lessons), [3, 1, 3, 1])
+        XCTAssertEqual(Derived(data: calendarOnly, now: december.now).monthEnd.count, 4)
+    }
+
+    func testHistoryFromTheClassesNote() {
+        XCTAssertTrue(d.lessonsFromNote)
+        XCTAssertEqual(d.allTime.amount, 15903)
+        XCTAssertEqual(d.earningsByYear.map(\.key), ["2026", "2025", "2024"])
+        XCTAssertEqual(d.earningsByYear.map(\.amount), [6569, 7529.5, 1804.5])
+        XCTAssertEqual(d.earnings(inYear: "2026").lessons, 224)
+        XCTAssertEqual(d.bestMonth?.key, "2025-02")
+        XCTAssertEqual(d.historyBars.count, Derived.historyMonths)
+        XCTAssertEqual(d.historyBars.first?.key, "2024-12")
+        XCTAssertEqual(d.historyBars.last?.key, "2026-11")
+        XCTAssertEqual(d.historyBars.last?.amount, 254)
+        // August has no lessons: an empty bar, not a gap.
+        XCTAssertEqual(d.historyBars.first { $0.key == "2025-08" }?.amount, 0)
+        XCTAssertEqual(d.earningsByStudent.map(\.initials), ["EM", "AB", "CD", "NF", "PV", "IS", "LR"])
+        XCTAssertEqual(d.earningsByStudent.filter(\.current).map(\.initials), ["EM", "AB", "CD", "LR"])
+        XCTAssertEqual(d.earningsByStudent.first?.name, "Emma Martin")
+        XCTAssertEqual(Derived.change(110, from: 100), "+10%")
+        XCTAssertEqual(Derived.change(90, from: 100), "−10%")
+        XCTAssertNil(Derived.change(90, from: 0))
     }
 
     func testWhatsAppMessageUsesTheTutoringLocale() throws {

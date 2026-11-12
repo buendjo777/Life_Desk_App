@@ -130,3 +130,9 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - **The agent's first run** finished at 11:48 (ok: 1 run row, 11 deadlines, 3 focus items). It wrote and staged `agent/snapshot.json` and `runs.jsonl` but did not commit or push them; Desk leaves them alone.
 - **Live check** (`LiveVaultCheck`, decision 74): Today reads "1 due today, 0 leftovers and 0 to confirm. 15 days to the exam, 18 to ETH. Last run 11:48, all green." All 10 uni files find their comparison section, all 8 project docs load, and no wikilinks are left. The ETH duplicate on the Deadlines card is fixed (decision 75).
 - **Ticks reached GitHub:** between 11:30:39 and 11:31:19, Desk (reopened at 11:30) committed and pushed 12 ticks to `study/resis.md`, a net change of 4 checkboxes. That is the live write path working end to end; whoever was at the Mac should confirm the ticks were meant.
+
+## 12 Nov — Desk reads the Classes note; History tab
+- **Importer rewritten** around the note's real layout (decisions 76–80). A one-off script sorted the note first, so Jose could correct the rates. The Swift port reproduces that sort exactly; the only differences come from Jose's three corrections. Two lines are left to check: a family total with no lessons under it, and a student with two rates written.
+- **Desk writes `tutoring/` itself** on launch and ⌘R. A backup was compared before the first write: `payments.csv` came out identical, and the archive gained the one row whose rate was unknown before.
+- **History tab** (decision 82), with invented demo data in `demo-vault/tutoring/lessons.csv` that matches the demo payments and calendar.
+- **Checked:** 80 tests (1 opt-in skipped), plus the live-vault check; History and Tutoring rendered in light and dark.

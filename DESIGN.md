@@ -52,14 +52,14 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 
 ## Layout
 - Designed at 1440×900; minimum window 1280×800. Hidden title bar; the traffic lights sit on the sidebar.
-- **Sidebar:** floating graphite panel, inset 12 pt from the window edges, 232 pt wide, 24 pt corners. The "Desk" wordmark and a mode chip (LIVE or DEMO). Groups with small uppercase labels: **Focus** (Today, Studying) · **Pipeline** (Projects, Internship apps, Uni apps) · **Life** (Tutoring, Health) · **Machine** (System). Rows 36 pt with an SF Symbol, the label and a muted ⌘ shortcut. The selected row: a 3 pt rust bar on the left and a faint light fill. At the bottom: sync time, vault and run status.
+- **Sidebar:** floating graphite panel, inset 12 pt from the window edges, 232 pt wide, 24 pt corners. The "Desk" wordmark and a mode chip (LIVE or DEMO). Groups with small uppercase labels: **Focus** (Today, Studying) · **Pipeline** (Projects, Internship apps, Uni apps) · **Life** (Tutoring, History, Health) · **Machine** (System). Rows 36 pt with an SF Symbol, the label and a muted ⌘ shortcut. The selected row: a 3 pt rust bar on the left and a faint light fill. At the bottom: sync time, vault and run status.
 - **Content column:** a 24 pt gap after the sidebar. A search field across the top (⌘F) with scope chips; the greeting; the summary sentence; then the tab's content.
 - **Right rail** (Today, Tutoring): 336 pt, 24 pt from the right edge. Status chip and round `control` icon buttons on top.
 - **Inspector:** a raised panel that slides over the right rail when a row is selected; Esc closes it.
 - **Density:** Compact is the mockup. Comfortable multiplies spacing and padding by 1.25, makes rows 60 pt tall and shows up to two fewer rows per list. Both read their values from `Theme.swift`.
 
 ## Components
-- **Stat card.** 24 pt corners, 20 pt padding, accent background, card title, two to four figures with uppercase captions, an optional mini chart in `onAccent`. One large geometric shape in the accent's deep tone at about 55% opacity, anchored top right and clipped by the card. Shapes per card: Today → circle (a sun) · Deadlines → triangle · Inbox → eight-point star · Health → heart · Studying → triangle · Projects → hexagon · Internship apps → square rotated 15° · Uni apps → chevron · Tutoring → ring · System → twelve-tooth cog. Draw them as SwiftUI `Shape`s.
+- **Stat card.** 24 pt corners, 20 pt padding, accent background, card title, two to four figures with uppercase captions, an optional mini chart in `onAccent`. One large geometric shape in the accent's deep tone at about 55% opacity, anchored top right and clipped by the card. Shapes per card: Today → circle (a sun) · Deadlines → triangle · Inbox → eight-point star · Health → heart · Studying → triangle · Projects → hexagon · Internship apps → square rotated 15° · Uni apps → chevron · Tutoring → ring · History → eight-point star · System → twelve-tooth cog. Draw them as SwiftUI `Shape`s.
 - **List row.** `surface`, 18 pt corners, 52 pt tall: a 34 pt round icon badge (accent tint), a semibold title, a muted subtitle, a capsule chip on the right. Selected: `rust` background.
 - **Counted tabs.** Capsules such as "Focus 3 · Due 4 · Leftovers 3". Active: `primary` with `onPrimary`. Inactive: outlined.
 - **Buttons.** Primary: a `primary` capsule with `onPrimary` text. Secondary: an outlined capsule. Icon: a 44 pt `control` circle with a `panelText` symbol.
@@ -79,12 +79,13 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 - **Internship apps:** a row of stat cards (Open, Applied, Interview, Rejected); counted tabs Apply now · All targets; the table.
 - **Uni apps:** a horizontal deadline runway with a today marker; a grid of programme cards (steel) with a progress bar and days left; the Contacts Board section below.
 - **Tutoring:** the billing layout: donut and three money cards on the left; Waiting for payment cards with Send reminder; Month end; the payments table; right rail with this week's lessons.
+- **History:** four stat cards (this year and last year in steel, all time in moss, best month in ochre); 24 monthly bars (steel, this month in the deep tone, the year under each January); By year and By student lists side by side.
 - **Health:** stat cards (sessions, time, distance); the streak grid; 12-week bars (moss); the activity list.
 - **System:** navy cards with light text for the latest run and the models; the 14-day run strip; the history table with status chips.
 
 ## Motion and accessibility
 - 180 ms ease-out on selection, tab and inspector changes. Numbers don't animate. Respect Reduce Motion.
-- VoiceOver labels on every icon button. Keyboard: ⌘1–⌘8, ⌘R, ⌘F, Space ticks, Return opens, Esc closes the inspector.
+- VoiceOver labels on every icon button. Keyboard: ⌘1–⌘9, ⌘0, ⌘R, ⌘F, Space ticks, Return opens, Esc closes the inspector.
 
 ## Don't
 - Pastel pink, yellow or lavender. Glassmorphism. Gradients. Drop shadows on canvas cards (only raised panels get a soft one).

@@ -242,6 +242,7 @@ extension Derived {
         case .internships: internshipsSummary
         case .uni: uniSummary
         case .tutoring: tutoringSummary
+        case .history: historySummary
         case .health: healthSummary
         case .system: systemSummary
         case .portfolio: [Phrase(text: "The showcase.", strong: true),
@@ -255,6 +256,8 @@ extension Derived {
         case .studying where data.study == nil:
             if let exam = data.settings.exam { return ("The study file could not be read.", data.hint(exam.file)) }
             return ("No exam set — add one in desk/settings.json.", data.hint(VaultData.settingsFile))
+        case .history where data.tutoring.lessons.isEmpty:
+            return ("No lessons yet.", "Desk reads them from the Classes note in Notes when it syncs in Live mode.")
         default: return nil
         }
     }
