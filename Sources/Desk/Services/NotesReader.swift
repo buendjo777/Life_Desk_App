@@ -1,11 +1,16 @@
 import Foundation
 
-/// Reads the notes in every Notes folder named "Classes" (and its subfolders) through `osascript`.
-/// The text goes from osascript to Desk through a pipe and is never printed. Run from Desk.app, so macOS
-/// asks once whether Desk may control Notes.
+/// Reads the Notes note titled like "Classes" through `osascript`. Only the matching note's text is fetched;
+/// it goes from osascript to Desk through a pipe and is never printed. Run from Desk.app, so the Notes
+/// permission belongs to Desk.
 enum NotesReader {
+    struct Note {
+        var title: String
+        var body: String
+    }
+
     struct Fetched {
-        var notes: [ClassesImport.Note]
+        var notes: [Note]
         var locked: Int
     }
 
@@ -16,10 +21,13 @@ enum NotesReader {
 
     static let timeout: TimeInterval = 180
 
-    static func fetch(folder: String = "Classes") throws -> Fetched {
+    /// With no `title`, any note called Classes, Clases, Class or Clase (ignoring case, accents and emoji,
+    /// and allowing more words after it, like "Clases 2026") is read; with `title`, only that title.
+    /// Notes in Recently Deleted are skipped.
+    static func fetch(title: String? = nil) throws -> Fetched {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
-        process.arguments = ["-l", "JavaScript", "-e", script, folder]
+        process.arguments = ["-l", "JavaScript", "-e", script] + (title.map { [$0] } ?? [])
         let output = Pipe()
         let errors = Pipe()
         process.standardOutput = output
@@ -51,17 +59,19 @@ enum NotesReader {
         guard let payload = try? JSONDecoder().decode(Payload.self, from: data) else {
             throw Failure(message: "Notes returned data Desk could not read.")
         }
-        if payload.error == "no-folder" { throw Failure(message: "There is no folder named \(folder) in Notes.") }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if payload.error == "no-note" {
+            // Counts only: titles are note contents.
+            let looked = "Looked through \(payload.checked ?? 0) notes"
+            throw Failure(message: title.map { "\(looked); none is titled “\($0)”." }
+                ?? "\(looked); none is titled Classes or Clases. Run again with --note \"<the note's exact title>\".")
+        }
         var fetched = Fetched(notes: [], locked: 0)
         for raw in payload.notes ?? [] {
-            guard raw.locked != true, let title = raw.title, let body = raw.body,
-                  let created = raw.created.flatMap(formatter.date) else {
+            guard raw.locked != true, let title = raw.title, let body = raw.body else {
                 fetched.locked += 1
                 continue
             }
-            fetched.notes.append(ClassesImport.Note(folder: raw.folder, title: title, body: body, created: created))
+            fetched.notes.append(Note(title: title, body: body))
         }
         return fetched
     }
@@ -69,71 +79,60 @@ enum NotesReader {
     private struct Payload: Decodable {
         var error: String?
         var notes: [Raw]?
+        var checked: Int?
     }
 
     private struct Raw: Decodable {
-        var folder: String?
         var title: String?
         var body: String?
-        var created: String?
         var locked: Bool?
     }
 
-    /// JXA: finds every folder with that name in every account and returns its notes as JSON.
-    /// Locked notes come back as `{locked: true}` with no content.
+    /// JXA: reads every note's title in one request, then the text of the matching notes only.
     static let script = #"""
     function run(argv) {
       const Notes = Application('Notes');
-      const target = (argv[0] || 'Classes').toLowerCase();
+      function norm(s) {
+        return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      }
+      const exact = argv.length > 0 ? norm(argv[0]) : null;
+      const words = ['classes', 'clases', 'class', 'clase'];
+      function matches(name) {
+        const n = norm(name);
+        if (exact !== null) return n === exact;
+        return words.some(function (w) { return n === w || n.indexOf(w + ' ') === 0; });
+      }
+      const all = Notes.notes;
+      const names = all.name();
       const out = [];
-      const seen = {};
-      let found = 0;
-      function collect(folder, rel) {
-        const id = folder.id();
-        if (seen[id]) return;
-        seen[id] = true;
-        const notes = folder.notes;
-        const count = notes.length;
-        if (count > 0) {
-          const names = notes.name();
-          const created = notes.creationDate();
-          const locked = notes.passwordProtected();
-          let bodies = null;
-          try { bodies = notes.plaintext(); } catch (e) { bodies = null; }
-          for (let i = 0; i < count; i++) {
-            if (locked[i]) { out.push({ folder: rel, locked: true }); continue; }
-            let body = bodies ? bodies[i] : null;
-            if (body === null || body === undefined) {
-              try { body = notes[i].plaintext(); } catch (e) { out.push({ folder: rel, locked: true }); continue; }
-            }
-            out.push({ folder: rel, title: names[i], body: body, created: created[i].toISOString() });
-          }
-        }
-        folder.folders().forEach(function (f) { collect(f, rel ? rel + '/' + f.name() : f.name()); });
+      for (let i = 0; i < names.length; i++) {
+        if (!matches(names[i])) continue;
+        const note = all[i];
+        let folder = '';
+        try { folder = norm(note.container().name()); } catch (e) { folder = ''; }
+        if (folder.indexOf('deleted') >= 0 || folder.indexOf('eliminad') >= 0) continue;
+        let locked = false;
+        try { locked = note.passwordProtected(); } catch (e) { locked = false; }
+        if (locked) { out.push({ locked: true }); continue; }
+        try { out.push({ title: names[i], body: note.plaintext() }); } catch (e) { out.push({ locked: true }); }
       }
-      function search(folder) {
-        if (folder.name().toLowerCase() === target) { found += 1; collect(folder, null); return; }
-        folder.folders().forEach(search);
-      }
-      Notes.accounts().forEach(function (a) { a.folders().forEach(search); });
-      if (found === 0) return JSON.stringify({ error: 'no-folder' });
+      if (out.length === 0) return JSON.stringify({ error: 'no-note', checked: names.length });
       return JSON.stringify({ notes: out });
     }
     """#
 }
 
-/// `Desk --import-classes [--dry-run] [--vault <path>]`: imports the Classes notes into `tutoring/`.
-/// Run it through `open` so macOS attributes the Notes access to Desk (see README).
+/// `Desk --import-classes [--dry-run] [--note <title>] [--vault <path>]`: sorts the Classes note into
+/// `tutoring/classes-review.md`. Run it through `open` so macOS attributes the Notes access to Desk.
 enum ImportCommand {
     @MainActor
     static func run(_ arguments: [String]) -> Int32 {
-        let dryRun = arguments.contains("--dry-run")
-        let vault: URL
-        if let flag = arguments.firstIndex(of: "--vault"), arguments.count > flag + 1 {
-            vault = URL(fileURLWithPath: (arguments[flag + 1] as NSString).expandingTildeInPath, isDirectory: true)
-        } else {
-            vault = Preferences(defaults: .standard).vaultURL
+        func value(_ flag: String) -> String? {
+            arguments.firstIndex(of: flag).flatMap { $0 + 1 < arguments.count ? arguments[$0 + 1] : nil }
         }
+        let dryRun = arguments.contains("--dry-run")
+        let vault = value("--vault").map { URL(fileURLWithPath: ($0 as NSString).expandingTildeInPath, isDirectory: true) }
+            ?? Preferences(defaults: .standard).vaultURL
         let writeCheck = ClassesImport.refusal(for: vault)
         if !dryRun, let writeCheck {
             print("Not imported: \(writeCheck)")
@@ -141,10 +140,17 @@ enum ImportCommand {
         }
         let data = VaultData.load(VaultReader(root: vault))
         do {
-            let fetched = try NotesReader.fetch()
-            let result = ClassesImport.run(fetched.notes, locked: fetched.locked, contacts: data.tutoring.contacts, cal: data.cal)
-            let written = dryRun ? nil : try ClassesImport.write(result, to: vault, cal: data.cal)
-            print(ClassesImport.report(result, dryRun: dryRun, writeCheck: writeCheck, written: written, cal: data.cal))
+            let fetched = try NotesReader.fetch(title: value("--note"))
+            if arguments.contains("--shape") {
+                for note in fetched.notes { print(ClassesImport.shapeReport(note.body, title: note.title)) }
+                return 0
+            }
+            var log = ClassesImport.Log()
+            for note in fetched.notes { log.append(ClassesImport.parse(note.body, title: note.title)) }
+            let result = ClassesImport.sort(log, contacts: data.tutoring.contacts, today: Date(), cal: data.cal)
+            let written = dryRun ? nil : try ClassesImport.write(result, to: vault)
+            print(ClassesImport.report(result, notes: fetched.notes.count, dryRun: dryRun, writeCheck: writeCheck, written: written))
+            if fetched.locked > 0 { print("\(fetched.locked) matching notes are locked and were skipped.") }
             return 0
         } catch {
             print("Not imported: \(error.localizedDescription)")
