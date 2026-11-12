@@ -38,5 +38,11 @@ This installs `Desk.app` to `~/Applications`. It starts in Demo mode. To use a r
 swift test
 ```
 
+My tutoring summaries live in Notes › Classes. This imports them into the vault's `tutoring/` folder, which never leaves the Mac, with initials instead of names (drop `--dry-run` to write):
+
+```bash
+open -n -W --stdout "$(tty)" ~/Applications/Desk.app --args --import-classes --dry-run
+```
+
 ## Status
 Demo mode is complete and tested. Live mode is tested against a throwaway repo; I have not yet run it against my real vault and calendar.

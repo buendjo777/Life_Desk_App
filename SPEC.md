@@ -93,6 +93,7 @@ Inside the vault folder, so Obsidian sees it; listed in the vault's `.gitignore`
 - `contacts.json`: `{initials: {parent, student, phone}}`, the phone in international format. The only file with names, and it never leaves the Mac.
 - Initials everywhere else. GDPR likely applies (paid work is not a "purely personal or household activity"), so keep only what invoicing needs.
 - Messages format `{month}` in `settings.tutoring_locale` (e.g. `es_ES` → "octubre").
+- **Classes importer.** `Desk --import-classes [--dry-run]`, run through `open` so the Notes permission is Desk's. It reads every Notes folder named "Classes" and writes `notes/<initials>.md` (the student from a subfolder, else the note title; dated lines split running logs). Every known name becomes initials and emails and phone numbers are removed. It refuses unless `tutoring/` is gitignored, never overwrites a notes file it didn't create, creates `students.md` with initials only if it's missing, and reports counts and initials only.
 
 ## Tabs
 A custom three-part layout (floating sidebar · content · right rail or inspector), not `NavigationSplitView`. See DESIGN.md and `design/mockup/`. ⌘1–⌘8 in this order.

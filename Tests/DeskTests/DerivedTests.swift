@@ -34,6 +34,17 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(cal.time(d.deadlines[1].date), "11:59")
     }
 
+    func testOneApplicationWindowShowsOnceOnTheCard() throws {
+        // Two uni files can share one window (ETH BME and ITET): the agent writes a row for each.
+        var shared = data
+        let alpine = try XCTUnwrap(shared.rows.first { $0.id == "deadline-alpine-bme" })
+        shared.rows.append(SnapshotRow(id: "deadline-alpine-twin", section: .deadline, rank: 9, title: alpine.title,
+                                       when: alpine.when, source: alpine.source))
+        let derived = Derived(data: shared, now: demoNow)
+        XCTAssertEqual(derived.deadlines.count, 7)
+        XCTAssertEqual(derived.distinctDeadlines.prefix(3).map(\.short), ["Exam", "Alpine", "Lakeside"])
+    }
+
     func testSummarySentence() {
         XCTAssertEqual(d.greeting, "Good morning, Jose")
         XCTAssertEqual(

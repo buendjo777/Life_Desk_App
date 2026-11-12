@@ -123,3 +123,10 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - **Docs moved:** `nini/` is gone. Desk reads `Masters/Deadlines 2027.md`, `Masters/Programme comparison.md` (`###` headings) and each project's `doc:` path, with wikilinks shown as plain text (decisions 62–65, 67).
 - **Agent and Strava:** the run is scheduled for 06:18 (already in the vault's settings). `scripts/desk.py` writes the sections and date format Desk parses. Strava is gone; Health shows its empty state.
 - **Checked:** 68 tests; the project inspector renders `Research/AF detection.md` with its wikilink as plain text.
+
+## 12 Nov — Classes importer and the first live check
+- **Importer:** `Desk --import-classes [--dry-run]` (decisions 69–73), tested on invented notes. A test caught a real leak along the way: a possessive ("Bermúdez's") slipped past word-based redaction. Names are now matched as letter runs.
+- **Blocked on one click:** the dry run waits for macOS's "Desk wants access to control Notes" prompt, which only works on the Mac itself. Two runs timed out while Jose was away.
+- **The agent's first run** finished at 11:48 (ok: 1 run row, 11 deadlines, 3 focus items). It wrote and staged `agent/snapshot.json` and `runs.jsonl` but did not commit or push them; Desk leaves them alone.
+- **Live check** (`LiveVaultCheck`, decision 74): Today reads "1 due today, 0 leftovers and 0 to confirm. 15 days to the exam, 18 to ETH. Last run 11:48, all green." All 10 uni files find their comparison section, all 8 project docs load, and no wikilinks are left. The ETH duplicate on the Deadlines card is fixed (decision 75).
+- **Ticks reached GitHub:** between 11:30:39 and 11:31:19, Desk (reopened at 11:30) committed and pushed 12 ticks to `study/resis.md`, a net change of 4 checkboxes. That is the live write path working end to end; whoever was at the Mac should confirm the ticks were meant.

@@ -12,7 +12,7 @@ struct DeadlinesCard: View {
                 Text(verbatim: d.data.hint(VaultData.snapshotFile) ?? "No upcoming deadlines.").style(\.small)
             } else {
                 HStack(alignment: .top, spacing: t.sp20 + t.sp2) {
-                    ForEach(d.deadlines.prefix(3)) { deadline in
+                    ForEach(d.distinctDeadlines.prefix(3)) { deadline in
                         Figure(String(deadline.daysLeft), unit: "d", caption: "\(deadline.short)\n\(d.cal.shortDay(deadline.date))")
                     }
                 }

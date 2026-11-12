@@ -208,7 +208,7 @@ struct Derived {
             Phrase(text: Self.plural(leftovers.count, "leftover"), strong: true), Phrase(text: " and "),
             Phrase(text: "\(toConfirm.count) to confirm", strong: true), Phrase(text: ". "),
         ]
-        let nearest = deadlines.prefix(2)
+        let nearest = distinctDeadlines.prefix(2)
         if let first = nearest.first {
             let name = first.isExam ? "the exam" : first.short
             var text = "\(Self.plural(first.daysLeft, "day")) to \(name)"

@@ -2,6 +2,13 @@ import Foundation
 
 /// Values behind the Today tab's cards, calendar, timeline and search.
 extension Derived {
+    /// Deadlines with one entry per name and day: two uni files sharing one application window
+    /// (ETH's BME and ITET) show once on the Deadlines card and in the summary.
+    var distinctDeadlines: [Deadline] {
+        var seen = Set<String>()
+        return deadlines.filter { seen.insert("\($0.short)|\(cal.isoDay($0.date))").inserted }
+    }
+
     // MARK: Deadline runway
 
     static let runwayDays = 90
