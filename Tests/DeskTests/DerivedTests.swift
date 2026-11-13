@@ -268,9 +268,9 @@ final class DerivedTests: XCTestCase {
         empty.activities = []
         let none = Derived(data: empty, now: demoNow)
         XCTAssertFalse(none.hasHealthData)
-        XCTAssertFalse(none.shows("today.health"))
-        XCTAssertTrue(none.shows("today.list"))
-        XCTAssertTrue(d.shows("today.health"))
+        XCTAssertFalse(none.shows(SectionID.todayHealth))
+        XCTAssertTrue(none.shows(SectionID.todayList))
+        XCTAssertTrue(d.shows(SectionID.todayHealth))
     }
 
     func testHistoryFromTheClassesNote() {

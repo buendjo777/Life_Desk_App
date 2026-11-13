@@ -20,6 +20,12 @@ struct DeskSection: Identifiable {
     }
 }
 
+/// Ids of sections that code outside `TabLayout` refers to. They are saved in user preferences: never change a value.
+enum SectionID {
+    static let todayHealth = "today.health"
+    static let todayList = "today.list"
+}
+
 /// Every tab's cards and sections, listed once. Adding, removing or reordering one is a one-line change.
 /// Customise (View → Customise…) stores a per-tab order and hidden set on top of these defaults.
 enum TabLayout {
@@ -32,8 +38,8 @@ enum TabLayout {
             DeskSection("today.deadlines", "Deadlines", width: 300) { DeadlinesCard() },
             DeskSection("today.today", "Today", width: 472) { TodayCard() },
             DeskSection("today.inbox", "Inbox", width: 420) { InboxCard() },
-            DeskSection("today.health", "Health", width: 352) { HealthCard() },
-            DeskSection("today.list", "Today's list", width: 386) { TodayList() },
+            DeskSection(SectionID.todayHealth, "Health", width: 352) { HealthCard() },
+            DeskSection(SectionID.todayList, "Today's list", width: 386) { TodayList() },
             DeskSection("today.emails", "Important emails", width: 386) { EmailList() },
             DeskSection("today.drafts", "Drafts", width: 386) { DraftList() },
             DeskSection("today.waiting", "Waiting", width: 386) { WaitingList() },
