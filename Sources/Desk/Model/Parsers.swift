@@ -428,7 +428,7 @@ enum Parse {
             }
             return nil
         }
-        func target(_ doc: [String: Any], index: Int, list: String) -> Target? {
+        func target(_ doc: [String: Any], index: Int, list: TargetList) -> Target? {
             guard let company = string(doc, ["company", "name", "organisation", "organization", "org", "lab"]) else { return nil }
             let raw = string(doc, ["status"])
             let notes = string(doc, ["notes", "note"])
@@ -436,9 +436,9 @@ enum Parse {
             let role = string(doc, ["title", "role", "position"])
                 ?? [string(doc, ["track"]), string(doc, ["kind"])].compactMap { $0 }.joined(separator: " · ").nilIfEmpty
             return Target(
-                id: "\(list)-\(string(doc, ["id"]) ?? String(index))", company: company,
+                id: "\(list.rawValue)-\(string(doc, ["id"]) ?? String(index))", company: company,
                 role: role, city: string(doc, ["location", "place", "city"]), country: string(doc, ["country"]),
-                list: list, status: boardStatus(raw ?? ""), graduateOk: string(doc, ["eligType", "elig_type"]).map { $0.lowercased() == "graduate" },
+                list: list, status: TargetStatus(boardWord: raw ?? ""), graduateOk: string(doc, ["eligType", "elig_type"]).map { $0.lowercased() == "graduate" },
                 deadline: string(doc, ["deadline", "closes"]).flatMap { looseDate($0, cal) },
                 next: notes.map { String($0.split(separator: "\n").first ?? "") }, url: string(doc, ["url", "link", "careers", "website"]),
                 statusLabel: raw, start: string(doc, ["start"]), duration: string(doc, ["duration"]), language: string(doc, ["language"]),
@@ -447,9 +447,9 @@ enum Parse {
                 sourceID: string(doc, ["id"]), added: string(doc, ["added"]).flatMap { day($0, cal) }
             )
         }
-        let openings = docs("openings").enumerated().compactMap { target($0.element, index: $0.offset, list: "apply_now") }
+        let openings = docs("openings").enumerated().compactMap { target($0.element, index: $0.offset, list: .applyNow) }
             .sorted { ($0.order ?? 0) < ($1.order ?? 0) }
-        let targets = docs("targets").enumerated().compactMap { target($0.element, index: $0.offset, list: "target") }
+        let targets = docs("targets").enumerated().compactMap { target($0.element, index: $0.offset, list: .target) }
         return openings + targets
     }
 
@@ -498,33 +498,12 @@ enum Parse {
             let order = string(doc, "progOrder").flatMap(Double.init) ?? 100 + (string(doc, "uniOrder").flatMap(Double.init) ?? Double(index))
             return Person(
                 id: id, name: name, programme: string(doc, "prog") ?? string(doc, "uni"), role: string(doc, "role"),
-                status: personStatus(words), lastContact: nil, next: notes.map { String($0.split(separator: "\n").first ?? "") },
+                status: PersonStatus(boardWord: words), lastContact: nil, next: notes.map { String($0.split(separator: "\n").first ?? "") },
                 statusLabel: words, university: string(doc, "uni"), lab: string(doc, "lab"), why: string(doc, "why"),
                 paper: string(doc, "paper"), contactRoute: string(doc, "contact"), notes: notes, url: string(doc, "url"),
                 priority: string(doc, "priority"), order: order, sourceID: id
             )
         }
-    }
-
-    /// The contacts board's status words in Desk's keys.
-    static func personStatus(_ words: String) -> String {
-        switch words.lowercased() {
-        case let text where text.contains("drafted"): "drafted"
-        case let text where text.contains("sent"): "sent"
-        case let text where text.contains("replied"): "replied"
-        case let text where text.contains("call"): "call_booked"
-        case let text where text.contains("no reply"): "no_reply"
-        default: "not_contacted"
-        }
-    }
-
-    /// The board's status words in Desk's four: rejected or closed, an interview or a call, applied, else open.
-    static func boardStatus(_ raw: String) -> String {
-        let text = raw.lowercased()
-        if ["reject", "closed", "declin", "no longer"].contains(where: text.contains) { return "rejected" }
-        if ["interview", "call", "offer"].contains(where: text.contains) { return "interview" }
-        if ["applied", "submitted", "sent"].contains(where: text.contains) { return "applied" }
-        return "open"
     }
 
     static func lessonDates(_ text: String, _ cal: DeskCalendar) -> [LessonDate] {

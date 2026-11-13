@@ -55,8 +55,8 @@ enum TabLayout {
             DeskSection("projects.\(status.rawValue)", status.title, width: 197) { ProjectColumn(status: status) }
         }
         case .internships: Derived.targetStatuses.map { status in
-            DeskSection("internships.\(status)", Derived.label(status), width: 197) { TargetCountCard(status: status) }
-        } + [DeskSection("internships.targets", "Targets") { TargetList() }]
+            DeskSection("internships.\(status.rawValue)", status.label, width: 197) { TargetCountCard(status: status) }
+        } + [DeskSection("internships.targets", "Targets") { TargetsTable() }]
         case .uni: [
             DeskSection("uni.runway", "Deadline runway") { UniRunway() },
             DeskSection("uni.programmes", "Programmes") { UniGrid() },

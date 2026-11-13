@@ -51,10 +51,10 @@ final class WriteTests: XCTestCase {
         XCTAssertEqual(store.d.student("AB")?.subject, "Maths II and Physics")
         XCTAssertEqual(store.d.student("AB")?.rate, 25, "the rate is kept")
         // An internship status is set from Desk, in memory in Demo.
-        let opening = try XCTUnwrap(store.d.applyNow.first { $0.status == "open" })
+        let opening = try XCTUnwrap(store.d.applyNow.first { $0.status == .open })
         store.setTargetStatus(opening, to: "Applied")
         XCTAssertEqual(store.data.targets?.first { $0.id == opening.id }?.statusLabel, "Applied")
-        XCTAssertEqual(store.d.targets(status: "applied").count, 3)
+        XCTAssertEqual(store.d.targets(status: .applied).count, 3)
         // A list item in the study file ticks like a topic.
         let list = try XCTUnwrap(store.d.openLists.first)
         let item = try XCTUnwrap(list.open.first)

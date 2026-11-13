@@ -34,7 +34,7 @@ final class LiveVaultCheck: XCTestCase {
         print("LIVE tutoring money: received \(Parse.number(d.receivedThisMonth)) €, pending \(Parse.number(d.pendingAmount)) €, month end \(d.monthEnd.count), payments \(data.tutoring.payments.count), week lessons \(d.weekLessons.count), events \(d.tutoringEvents.count)")
         print("LIVE tutoring students: \(data.tutoring.students.map { "\($0.initials) level '\($0.level)' subject '\($0.subject)' \(Parse.number($0.rate)) \($0.paysBy)" })")
         print("LIVE tutoring contacts: \(data.tutoring.contacts.count), with parent \(data.tutoring.contacts.values.filter { !$0.parent.isEmpty }.count), with phone \(data.tutoring.contacts.values.filter { !$0.phone.isEmpty }.count); notes \(data.tutoring.notes.count); lessons rows \(data.tutoring.lessons.count)")
-        print("LIVE internships: \(d.applyNow.count) openings (\(d.applyNow.filter { $0.status != "rejected" }.count) live, \(d.applyNow.filter { $0.url != nil }.count) with a link), \(d.allTargets.count) targets; cards \(Derived.targetStatuses.map { "\($0) \(d.targets(status: $0).count)" })")
+        print("LIVE internships: \(d.applyNow.count) openings (\(d.applyNow.filter { $0.status != .rejected }.count) live, \(d.applyNow.filter { $0.url != nil }.count) with a link), \(d.allTargets.count) targets; cards \(Derived.targetStatuses.map { "\($0) \(d.targets(status: $0).count)" })")
         print("LIVE internships summary: \(d.internshipsSummary.map(\.text).joined())")
         print("LIVE missing or unreadable: \(data.issues.keys.sorted())")
         // What one tick costs on the main thread: re-reading the vault and deriving the Studying tab.

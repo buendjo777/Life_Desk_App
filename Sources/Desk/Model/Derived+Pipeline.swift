@@ -31,10 +31,7 @@ extension Derived {
         return text.prefix(1).uppercased() + text.dropFirst()
     }
 
-    static let targetStatuses = ["open", "applied", "interview", "rejected"]
-
-    /// The status words Jose picks from in Desk; they are the board's own.
-    static let boardStatuses = ["Not started", "Researching", "Applied", "Interviewing", "Offer", "Rejected / closed"]
+    static let targetStatuses: [TargetStatus] = [.open, .applied, .interview, .rejected]
 
     /// Added by the scan in the last week.
     func isNew(_ target: Target) -> Bool {
@@ -42,23 +39,22 @@ extension Derived {
     }
 
     /// The status cards count applications: the openings when there are any, else every target.
-    func targets(status: String) -> [Target] {
-        let openings = (data.targets ?? []).filter { $0.list == "apply_now" }
+    func targets(status: TargetStatus) -> [Target] {
+        let openings = (data.targets ?? []).filter { $0.list == .applyNow }
         return (openings.isEmpty ? data.targets ?? [] : openings).filter { $0.status == status }
     }
 
     /// Openings to apply to first, nearest deadline first; then interviews and applications; closed ones last.
     /// Ties keep the board's own order.
     var applyNow: [Target] {
-        let rank = ["open": 0, "interview": 1, "offer": 1, "applied": 2, "rejected": 3]
-        return (data.targets ?? []).filter { $0.list == "apply_now" }.sorted {
-            (rank[$0.status] ?? 0, $0.deadline?.date ?? .distantFuture, $0.order ?? 0, $0.company)
-                < (rank[$1.status] ?? 0, $1.deadline?.date ?? .distantFuture, $1.order ?? 0, $1.company)
+        (data.targets ?? []).filter { $0.list == .applyNow }.sorted {
+            ($0.status.sortRank, $0.deadline?.date ?? .distantFuture, $0.order ?? 0, $0.company)
+                < ($1.status.sortRank, $1.deadline?.date ?? .distantFuture, $1.order ?? 0, $1.company)
         }
     }
 
     /// The rows behind a status card, in the Apply now order.
-    func filteredTargets(status: String) -> [Target] {
+    func filteredTargets(status: TargetStatus) -> [Target] {
         let picked = Set(targets(status: status).map(\.id))
         let openings = applyNow.filter { picked.contains($0.id) }
         return openings.isEmpty ? allTargets.filter { picked.contains($0.id) } : openings
@@ -66,7 +62,7 @@ extension Derived {
 
     /// The board's targets (companies and labs), priority A first, then by place; without the board, every target.
     var allTargets: [Target] {
-        let targets = (data.targets ?? []).filter { $0.list != "apply_now" }
+        let targets = (data.targets ?? []).filter { $0.list != .applyNow }
         guard !targets.isEmpty, targets.contains(where: { $0.priority != nil }) else { return sortedTargets(data.targets ?? []) }
         return targets.sorted { ($0.priority ?? "Z", $0.order ?? 0, $0.company) < ($1.priority ?? "Z", $1.order ?? 0, $1.company) }
     }
@@ -79,10 +75,10 @@ extension Derived {
 
     var internshipsSummary: [Phrase] {
         guard let targets = data.targets else { return [] }
-        let live = applyNow.filter { $0.status != "rejected" }.count
+        let live = applyNow.filter { $0.status != .rejected }.count
         var phrases = [Phrase(text: "\(live) openings to apply to", strong: true),
                        Phrase(text: ", across \(Self.plural(allTargets.count, "target")). ")]
-        if let next = sortedTargets(targets.filter { $0.status == "open" && (daysLeft($0.deadline) ?? -1) >= 0 }).first, let days = daysLeft(next.deadline) {
+        if let next = sortedTargets(targets.filter { $0.status == .open && (daysLeft($0.deadline) ?? -1) >= 0 }).first, let days = daysLeft(next.deadline) {
             phrases.append(Phrase(text: "Nearest open deadline: \(next.company) in \(Self.plural(days, "day"))."))
         }
         return phrases
@@ -108,9 +104,9 @@ extension Derived {
             if let index = marks.firstIndex(where: { $0.title == title && $0.daysLeft == days }) {
                 // Shared mark: submitted only when every programme behind it is.
                 marks[index] = RunwayMark(title: title, daysLeft: days, deadline: marks[index].deadline,
-                                          submitted: marks[index].submitted && card.status == "Submitted")
+                                          submitted: marks[index].submitted && card.isSubmitted)
             } else {
-                marks.append(RunwayMark(title: title, daysLeft: days, deadline: card.deadline, submitted: card.status == "Submitted"))
+                marks.append(RunwayMark(title: title, daysLeft: days, deadline: card.deadline, submitted: card.isSubmitted))
             }
         }
         return marks
@@ -143,6 +139,7 @@ extension Derived {
         let status: String
         let next: String?
         var id: String { programme.id }
+        var isSubmitted: Bool { programme.isSubmitted }
     }
 
     var uniCards: [UniCard] {
@@ -151,11 +148,10 @@ extension Derived {
                 ?? data.rows.first { $0.id == programme.deadlineRow }?.when?.date
             let parts = programme.title.components(separatedBy: " · ")
             let progress = Self.progress(programme.items)
-            let submitted = programme.items.contains { $0.done && $0.title.lowercased().hasPrefix("submitted") }
             return UniCard(
                 programme: programme, school: parts[0], degree: parts.dropFirst().joined(separator: " · "),
                 deadline: deadline, daysLeft: deadline.map { cal.days(from: today, to: $0) }, progress: progress,
-                status: submitted ? "Submitted" : progress.done == 0 ? "Not started" : "In progress",
+                status: programme.isSubmitted ? "Submitted" : progress.done == 0 ? "Not started" : "In progress",
                 next: programme.items.first { !$0.done }?.title
             )
         }
@@ -172,24 +168,19 @@ extension Derived {
         data.docs[VaultData.comparisonDoc].flatMap { Parse.section($0, heading: programme.comparisonHeading) }
     }
 
-    static let personStatuses = ["not_contacted", "drafted", "sent", "replied", "call_booked", "no_reply"]
-
-    /// The status words Jose picks from for a contact; they are the board's own.
-    static let personStatusWords = ["Not contacted", "Email drafted", "Email sent", "Replied", "Call booked", "No reply"]
-
     /// Contacts in the board's order: programme by programme, then everyone else.
     var sortedPeople: [Person] {
         (data.people ?? []).enumerated().sorted { ($0.element.order ?? Double($0.offset), $0.element.name) < ($1.element.order ?? Double($1.offset), $1.element.name) }
             .map(\.element)
     }
 
-    func people(status: String) -> [Person] { sortedPeople.filter { $0.status == status } }
+    func people(status: PersonStatus) -> [Person] { sortedPeople.filter { $0.status == status } }
 
     var uniSummary: [Phrase] {
         let cards = uniCards
         var phrases = [Phrase(text: "\(cards.count) programmes", strong: true),
-                       Phrase(text: ", \(cards.filter { $0.status == "Submitted" }.count) submitted. ")]
-        if let first = cards.first(where: { ($0.daysLeft ?? -1) >= 0 && $0.status != "Submitted" }), let days = first.daysLeft {
+                       Phrase(text: ", \(cards.filter(\.isSubmitted).count) submitted. ")]
+        if let first = cards.first(where: { ($0.daysLeft ?? -1) >= 0 && !$0.isSubmitted }), let days = first.daysLeft {
             phrases += [Phrase(text: "\(Self.plural(days, "day")) to \(first.school)", strong: true),
                         Phrase(text: first.next.map { ": next, \($0.lowercased())." } ?? ".")]
         }
