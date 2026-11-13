@@ -30,17 +30,20 @@ struct Theme {
     var primary: Color { pick(c.deep, c.bright) }
     var onPrimary: Color { pick(0xFFFFFF, c.field[0]) }
     var control: Color { isDark ? Color(hex: c.field[2]).opacity(solid ? 1 : raisedGlass) : Color(hex: c.deep) }
+    /// A selected row: lighter in light mode, where a strong wash would read as an error.
+    private var selectionStrength: Double { isDark ? selectionWash : selectionWash * 0.6 }
     var panelText: Color { Color(hex: c.ink) }
     var panelMuted: Color { Color(hex: c.muted).opacity(captionOpacity) }
     /// Glass: a card or row over the backdrop.
     var surface: Color {
         if solid { return pick(0xFFFFFF, c.field[1]) }
-        return isDark ? Color.white.opacity(surfaceGlassDark) : Color.white.opacity(surfaceGlassLight)
+        // Dark glass is smoked, not frosted: it keeps text legible where the glow sits behind a card.
+        return isDark ? Color(hex: c.field[0]).opacity(surfaceGlassDark) : Color.white.opacity(surfaceGlassLight)
     }
     /// Brighter glass: search field, event cards, hover.
     var raised: Color {
         if solid { return pick(0xFFFFFF, c.field[2]) }
-        return isDark ? Color.white.opacity(raisedGlass) : Color.white.opacity(raisedGlassLight)
+        return isDark ? Color(hex: c.field[1].mixed(with: c.field[2], 0.6)).opacity(raisedGlass) : Color.white.opacity(raisedGlassLight)
     }
     /// Opaque: panels that float over other content (the inspector, search results, popovers).
     var floating: Color { pick(0xFFFFFF, c.field[1].mixed(with: c.field[2], 0.5)) }
@@ -57,7 +60,7 @@ struct Theme {
     /// Text on a solid `focus` fill.
     var onFocus: Color { pick(0xFFFFFF, c.field[0]) }
     /// A selected row: glass washed with the accent.
-    var selection: Color { focus.opacity(selectionWash) }
+    var selection: Color { focus.opacity(selectionStrength) }
     var caution: Color { signal(c.caution) }
     var cautionDeep: Color { signal(c.caution, shade: deepShade) }
     var info: Color { signal(c.info) }
@@ -109,6 +112,11 @@ struct Theme {
         accent == .neutral ? [.clear, .clear] : [fill(accent).opacity(isDark ? washStrongDark : washStrong), fill(accent).opacity(washFaint)]
     }
 
+    /// The big shape in a stat card: a hint of the accent, never a block of colour.
+    func shape(_ accent: Accent) -> Color {
+        fill(accent == .neutral ? .info : accent).opacity(isDark ? shapeWashDark : shapeWash)
+    }
+
     // MARK: Backdrop (Shell/Backdrop.swift)
 
     var fieldStops: [Color] { (isDark ? c.field : c.fieldLight).map { Color(hex: $0) } }
@@ -131,21 +139,22 @@ struct Theme {
 
     // MARK: Glass
 
-    let surfaceGlassDark = 0.075
-    let surfaceGlassLight = 0.56
-    let raisedGlass = 0.14
-    let raisedGlassLight = 0.84
+    let surfaceGlassDark = 0.50
+    let surfaceGlassLight = 0.66
+    let raisedGlass = 0.72
+    let raisedGlassLight = 0.88
     let panelGlassDark = 0.55
     let panelGlassLight = 0.94
     let lineGlass = 0.13
     let edgeGlassDark = 0.24
     let edgeGlassLight = 0.95
     let selectionWash = 0.20
-    let washStrong = 0.34
+    let washStrong = 0.20
     /// Bright accents over a dark field turn muddy when strong, so the wash is lighter there.
-    let washStrongDark = 0.20
-    let washFaint = 0.07
-    let shapeWash = 0.26
+    let washStrongDark = 0.13
+    let washFaint = 0.03
+    let shapeWash = 0.16
+    let shapeWashDark = 0.11
     let deepShade = 0.78
     let tideFloor = 0.55
     let tideGain = 0.30
@@ -155,7 +164,7 @@ struct Theme {
 
     let tintOpacity = 0.32
     let shapeOpacity = 0.55
-    let pastOpacity = 0.45
+    let pastOpacity = 0.6
     let captionOpacity = 0.72
     let outOfMonthOpacity = 0.32
     let navIdleOpacity = 0.74

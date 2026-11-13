@@ -27,7 +27,7 @@ You are building **Desk for Mac**, a native SwiftUI app, on Jose's Mac. Everythi
 - Add third-party Swift packages.
 
 ## Done means
-- All eight tabs match DESIGN.md and render fully from `demo-vault/`, in light and dark.
+- All nine tabs match DESIGN.md and render fully from `demo-vault/`, in light and dark.
 - `scripts/build-app.sh` installs `Desk.app` to `~/Applications`, and it launches from the Dock.
 - Screenshots of every tab, light and dark, in `design/screenshots/`.
 - README explains how to build, and how to switch to the live vault once `jose-brain` exists.

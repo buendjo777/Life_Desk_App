@@ -79,8 +79,8 @@ A JSON array of rows. The web Desk reads the same file.
 - The study file (path in `settings.exam.file`): front matter `exam, date, plan_per_day, plan_start`; sections `## Theory` and `## Problems` (one checkbox per topic) and `## Past papers` (`- [x] June 2025 — 2026-11-08 — 6.5/10`; unticked papers have no date or score).
 - `projects/<slug>.md`: front matter `title, status (active|waiting|frozen|idea), next, next_date?, doc?` (`doc` is a vault path, e.g. `Research/EMG project.md`). Body: sub-items as checkboxes. Never restates the doc's facts.
 - `uni/<slug>.md`: front matter `title, deadline_row` (a snapshot `deadline` id) and `comparison_heading` (a `###` heading in `Masters/Programme comparison.md`). Body: the checklist (portal, CV, statement, letters, transcript, fee, submitted).
-- `internships/targets.json` (optional; absent until the board moves into the vault): `[{id, company, role, city, country, list (apply_now|target), status (open|applied|interview|offer|rejected|watching), graduate_ok, deadline?, next?, url?}]`.
-- `contacts/people.json` (optional, same rule): `[{id, name, programme, role, status (not_contacted|drafted|sent|replied|call_booked|no_reply), last_contact?, next?}]`.
+- `internships/board.json` (Jose's, edited from Desk): `{openings: [{id, order, company, title, location, start, duration, language, eligType (graduate|convenio), eligibility, fit, url, status, notes, added}], targets: [{id, name, kind, track, place, placeOrder, priority, status, url, why, notes}]}`. Status words: Not started, Researching, Applied, Interviewing, Offer, Rejected / closed.
+- `contacts/board.json` (Jose's, edited from Desk): `{contacts: [{id, name, prog, progOrder, uni, lab, role, why, paper, contact, url, priority, status, notes}]}`. Status words: Not contacted, Email drafted, Email sent, Replied, Call booked, No reply.
 - `desk/decisions.jsonl`: one line per click: `{at, row, action (add|dismiss|confirm|reopen)}`. The agent reads it, so it never re-proposes and can count clean confirmations.
 - `calendar/events.json` (**demo vault only**): `[{id, calendar, title, start, end, all_day, location?}]`. Stands in for EventKit in Demo mode.
 
@@ -117,7 +117,7 @@ A custom three-part layout (floating sidebar · content · right rail or inspect
    - The payments table, archive included, with status chips (Not sent · Sent · Paid) and Mark paid.
    - This week's lessons: the ones logged in the Classes note (`lesson-dates.csv`), then the calendar's still to come. The inspector shows the last note and the student's history.
 7. **History.** From `tutoring/lessons.csv`: earned this year, last year, all time and in the best month; euros per month for the last 24 months; each year (lessons, hours, students, change on the year before); each student's total, former students included, with their name.
-8. **Health.** From `strava.json`: this week's sessions, time and distance; a 7-day streak grid; 12-week bars; the activity list.
+8. **Health.** Hidden while there is no activity data. From an optional `agent/exports/strava.json` (no agent writes it today): this week's sessions, time and distance; a 7-day streak grid; 12-week bars; the activity list.
 9. **System.** Run history from `runs.jsonl` (time, status, duration, models, failures, usage note); a 14-day strip of runs; models used. This is the showcase panel.
 
 **Run-status rule** (the same as the web Desk): red when the last successful run is older than the latest scheduled run (`scheduled_run_local` in `timezone`, with 60 minutes' grace) or older than 30 hours; amber for a manual snapshot; green otherwise. Always with a word, never colour alone.
@@ -132,7 +132,7 @@ The Today mockup is V1 and a little dense, and Jose will keep changing the look.
 ## Integrations: what is possible and what is not
 - **WhatsApp: never read.** Reading a personal account needs an unofficial tool, and WhatsApp's terms forbid access "through automated or other means" and allow suspending the account (https://www.whatsapp.com/legal/terms-of-service-eea). Sending uses the official click-to-chat link with prefilled text (https://whatsapp.com/faq/en/general/26000030); Jose presses send.
 - **Calendar.** Live: EventKit with full access (`NSCalendarsFullAccessUsageDescription`; Apple TN3152). Google's own "Show events from Gmail" adds flights, trains, hotels, restaurants and tickets; it is off by default in the EEA (https://support.google.com/calendar/answer/6084018). Anything else arrives as an `add_event` proposal. Agents never write the calendar.
-- **Strava** through the nightly run; Garmin only through Strava's own sync. Not live.
+- **Activities**: not connected. Health reads `agent/exports/strava.json` if a future source writes it.
 - **Boards.** The email-reading run never gets a tool that can edit the artifact boards. Their data reaches the app by moving into the vault.
 
 ## Hand-offs

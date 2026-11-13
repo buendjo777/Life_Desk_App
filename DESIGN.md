@@ -11,30 +11,19 @@
 - **Calm density.** An 8-point grid, generous padding, one line per row.
 
 ## Palette
-Define once in `Theme.swift` as semantic tokens. Text on accent cards is always `onAccent` in both modes.
+Two strong colours and one bright accent, in three colourways (Customise → Colours). Hex values live in `Theme/Palette.swift`; views read tokens from `Theme.swift` and never hold a colour.
 
-| Token | Light | Dark | Use |
+| Colourway | Field (strong 1) | Glow (strong 2) | Bright accent |
 |---|---|---|---|
-| `canvas` | `#ECE8E1` | `#101215` | Window background |
-| `panel` | `#16181C` | `#08090B` | Sidebar (in dark mode with a 1 pt `line` border) |
-| `primary` / `onPrimary` | `#16181C` / `#ECE8E1` | `#ECE8E1` / `#101215` | Primary buttons, active tabs and chips (inverted in dark mode) |
-| `control` | `#16181C` | `#23272D` + 1 pt `line` border | Round icon buttons |
-| `panelText` | `#ECE8E1` | `#ECE8E1` | Text on the panel |
-| `panelMuted` | `#8C8A84` | `#77756F` | Section labels and hints on the panel |
-| `surface` | `#E2DDD4` | `#1A1D22` | List rows, neutral cards |
-| `raised` | `#F7F4EF` | `#23272D` | Search field, inspector, popovers, timeline and confirm cards |
-| `line` | `#D2CCC1` | `#2E333A` | Borders, tracks, dividers |
-| `ink` | `#16181C` | `#ECE8E1` | Primary text on canvas and surfaces |
-| `inkMuted` | `#5F5D57` | `#9C9990` | Secondary text |
-| `onAccent` | `#16181C` | `#16181C` | Text on accent cards |
-| `ochre` / `ochreDeep` | `#D4A23F` / `#B4842A` | same | Deadlines, Studying |
-| `rust` / `rustDeep` | `#C8763C` / `#A35A2A` | same | Today, selection, "now" |
-| `steel` / `steelDeep` | `#8EA6BE` / `#6C88A5` | same | Inbox, Uni apps |
-| `moss` / `mossDeep` | `#8A9A5B` / `#6B7A41` | same | Health, done, paid |
-| `navy` | `#1F2C3B` | `#2A3B4F` | System cards, dark chips |
-| `alert` | `#A8432F` | `#C9573F` | Failures and overdue items, always with a label |
+| **Midnight Ember** (default) | indigo `#14124A` | coral `#FF5A3C` | lime `#E8FF6A` |
+| **Oxblood Marigold** | burgundy `#6E1230` | crimson `#C8324A` | marigold `#FFC21A` |
+| **Ink Saffron** | deep teal `#0E4D4F` | burnt orange `#E8742A` | saffron `#FF9E1B` |
 
-Contrast of `onAccent` text: ochre 7.6:1, steel 7.1:1, rust 5.2:1, moss 5.8:1. `ink` on `canvas`: 14.6:1. `inkMuted` on `surface`: 4.9:1.
+- **Backdrop.** The field runs dark at the top to the glow at the bottom, under vertical fluted-glass ribs. Light mode uses a pale version of the same two colours.
+- **Glass.** Cards and rows are smoked glass in dark mode (the field colour at 50%) and white glass in light mode (66%), with a hairline edge lit from above. Panels that float over content (inspector, search results) are opaque.
+- **Accent.** `focus` is the bright accent in dark mode and the hot strong colour in light mode, where lime would not read. It marks one thing at a time: today, the selection, the primary button.
+- **Signals.** `good`, `caution`, `info`, `alert`, each with a darker light-mode tone. They appear as chips, dots and a faint wash on stat cards, never as a block of colour.
+- **Accessibility.** Reduce Transparency or Increase Contrast makes every surface opaque. Text on glass must reach 4.5:1 where the glow is brightest.
 
 ## Type
 SF Pro (the system font). The mockup uses Inter as a stand-in.
@@ -84,7 +73,14 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 - **System:** navy cards with light text for the latest run and the models; the 14-day run strip; the history table with status chips.
 
 ## Motion and accessibility
-- 180 ms ease-out on selection, tab and inspector changes. Numbers don't animate. Respect Reduce Motion.
+All motion is off with Reduce Motion, in Low Power Mode, in snapshots, and when Motion is switched off in Customise. The backdrop also stops while Desk is not the active app.
+- **The day's tide.** The glow at the bottom of the window is a meter, not decoration: it rises and brightens as today's work gets done (today's study share plus the tasks due today), and a bright core appears on the horizon. The same number is written under the greeting on Today.
+- **The time of day.** A soft column of light sits on the ribs where the day stands, 07:00 at the left edge and 22:00 at the right, as on the day strip.
+- **Drift.** Two colour fields move slowly (20 frames a second, no blur). They move faster when a deadline is within two days.
+- **Depth.** A card rises 2 pt under the pointer with a shadow; the shape inside a stat card drifts towards the pointer; rows brighten.
+- **Entrance.** Opening a tab, sections fade up one after another (360 ms, 45 ms apart).
+- **Numbers.** Digits roll when a figure changes; bars and rings fill when they appear.
+- **A tick.** The checkmark bounces and eight sparks fly out.
 - VoiceOver labels on every icon button. Keyboard: ⌘1–⌘9, ⌘0, ⌘R, ⌘F, Space ticks, Return opens, Esc closes the inspector.
 
 ## Don't

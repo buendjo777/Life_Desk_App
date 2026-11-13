@@ -58,7 +58,7 @@ struct EarningsBars: View {
                                 Text(verbatim: bar.amount > 0 ? Parse.number(bar.amount.rounded()) : " ")
                                     .style(\.micro, current ? \.ink : \.inkMuted).lineLimit(1).minimumScaleFactor(t.tightScale)
                                 RoundedRectangle(cornerRadius: t.radiusSmall)
-                                    .fill(current ? t.deep(.info) : t.fill(.info))
+                                    .fill(current ? t.focus : t.fill(.info).opacity(t.onAccentBlock))
                                     .frame(height: bar.amount > 0 ? max(t.sp2, CGFloat(bar.amount / top) * room) : t.hairline)
                                 Text(verbatim: d.monthName(bar.key, pattern: "LLLLL")).style(\.micro, current ? \.ink : \.inkMuted)
                                 // The year under each January, and under the first bar.

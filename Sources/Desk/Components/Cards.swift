@@ -31,7 +31,7 @@ struct StatCard<Content: View>: View {
         .padding(t.sp20)
         .frame(maxWidth: .infinity, minHeight: tall ? t.cardTall : t.cardShort, maxHeight: .infinity, alignment: .topLeading)
         .background(alignment: placement.anchor) {
-            CardShapeView(shape: shape, color: t.fill(accent == .neutral ? .info : accent).opacity(t.shapeWash))
+            CardShapeView(shape: shape, color: t.shape(accent))
                 .frame(width: placement.size.width, height: placement.size.height)
                 .rotationEffect(.degrees(placement.degrees))
                 .offset(placement.offset)

@@ -43,17 +43,17 @@ enum Palette: String, CaseIterable, Codable, Identifiable {
         case .ember:
             Colors(field: [0x06051A, 0x0D0B38, 0x1B1668], fieldLight: [0xF3F1FF, 0xE4DEFF, 0xFFE0D6],
                    deep: 0x14124A, glow: 0xFF5A3C, glowLight: 0xFFAE99, bright: 0xE8FF6A, focusLight: 0xE8432A,
-                   ink: 0xFFFFFF, muted: 0xC9C6EE, inkLight: 0x14124A, mutedLight: 0x4A4780,
+                   ink: 0xFFFFFF, muted: 0xDAD7F6, inkLight: 0x14124A, mutedLight: 0x4A4780,
                    good: (0x6EE7B7, 0x1F9D6B), caution: (0xFFD166, 0xB87D0A), alert: (0xFF7A7A, 0xD43D3D), info: (0x9CB8FF, 0x4B6FD6))
         case .oxblood:
             Colors(field: [0x0B0709, 0x1E0811, 0x4A0E22], fieldLight: [0xF6EEE8, 0xEFDDD6, 0xEBC7BF],
                    deep: 0x6E1230, glow: 0xC8324A, glowLight: 0xE9A0A0, bright: 0xFFC21A, focusLight: 0x9E1B3F,
-                   ink: 0xFFF7F0, muted: 0xD9C3BE, inkLight: 0x1E0B12, mutedLight: 0x5A3A44,
+                   ink: 0xFFF7F0, muted: 0xE6D5D0, inkLight: 0x1E0B12, mutedLight: 0x5A3A44,
                    good: (0x7FD6A0, 0x2B8F5A), caution: (0xFFA94D, 0xB86A0A), alert: (0xFF6B6B, 0xC93434), info: (0x8EC5FF, 0x3A78C2))
         case .saffron:
             Colors(field: [0x080A0C, 0x0A2A2C, 0x0E4D4F], fieldLight: [0xEEF3F0, 0xD9E9E3, 0xF7E3C0],
                    deep: 0x0E4D4F, glow: 0xE8742A, glowLight: 0xF7C56B, bright: 0xFF9E1B, focusLight: 0xC76A00,
-                   ink: 0xF2FAF7, muted: 0xB7CFC8, inkLight: 0x0A1F20, mutedLight: 0x3F5C5A,
+                   ink: 0xF2FAF7, muted: 0xCBDFD9, inkLight: 0x0A1F20, mutedLight: 0x3F5C5A,
                    good: (0x5EEAD4, 0x0F8F7C), caution: (0xFFD166, 0xA87408), alert: (0xFF6B6B, 0xC93434), info: (0x93C5FD, 0x3B73C4))
         }
     }

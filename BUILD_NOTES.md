@@ -160,3 +160,9 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - Internships (decision 99): 199 openings and 89 targets moved into `internships/board.json`. A new Monday scan routine replaces the Cowork one, and the morning skill no longer exports the board, so the injection eval was re-run for the new skill version.
 - Student details, the timed Classes import and hidden Health: decisions 100–102. `finance/` is gitignored, ready for a Revolut statement export.
 - **Checked:** 88 tests (1 opt-in skipped).
+
+## 14 Nov — Refactor, a living backdrop, three palettes
+- **How it was decided:** three reviewers ran first, on cheaper models: a design voice (palettes and motion), a risk voice (eight ways it could go wrong) and a code audit (25 refactor items). A fourth reviewed the first screenshots and judged them "not premium yet"; its main fix (darker glass, lighter tints) is in. Decisions 103–109.
+- **Refactor:** done on a separate branch by a helper while the visual work went on, then merged with no conflicts. 88 tests before and after.
+- **Not done:** `Store.swift` is still one file (decision 108). The "show 30 more" pattern is still repeated in eight lists.
+- **Checked:** 88 tests (1 opt-in skipped); every tab rendered in light and dark; the installed app idles at 0% CPU when it is not the active window.
