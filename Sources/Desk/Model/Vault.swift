@@ -80,6 +80,13 @@ struct VaultData {
     static let lessonsFile = "tutoring/lessons.csv"
     static let lessonDatesFile = "tutoring/lesson-dates.csv"
     static let paymentsArchiveFile = "tutoring/payments-archive.csv"
+    static let templateFile = "tutoring/template.md"
+    static let reminderTemplateFile = "tutoring/template-reminder.md"
+    /// The demo vault's optional numbers for the Portfolio tab.
+    static let portfolioFile = "desk/portfolio.json"
+
+    /// One student's lesson notes.
+    static func notesFile(_ initials: String) -> String { "tutoring/notes/\(initials).md" }
 
     /// The master doc's deadline for a programme, when its comparison heading or title names the same
     /// programme. Otherwise the agent's `deadline` row has the date.
@@ -162,12 +169,12 @@ extension VaultData {
             data.tutoring.contacts = Parse.json([String: TutoringContact].self, text, cal) ?? [:]
         }
         for student in data.tutoring.students {
-            if let text = reader.text("tutoring/notes/\(student.initials).md") {
+            if let text = reader.text(notesFile(student.initials)) {
                 data.tutoring.notes[student.initials] = Parse.notes(text, cal)
             }
         }
-        data.tutoring.template = reader.text("tutoring/template.md")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        data.tutoring.reminderTemplate = reader.text("tutoring/template-reminder.md")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        data.tutoring.template = reader.text(templateFile)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        data.tutoring.reminderTemplate = reader.text(reminderTemplateFile)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return data
     }
 

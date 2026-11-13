@@ -212,7 +212,7 @@ struct ContactsBoard: View {
                 }
             } else {
                 SectionHeader(title: "Contacts")
-                EmptyState(line: "The contacts board has not moved into the vault yet.", hint: "It appears here once contacts/board.json exists.")
+                EmptyState(line: "The contacts board has not moved into the vault yet.", hint: "It appears here once \(VaultData.contactsBoardFile) exists.")
                 LinkButton(title: "Open board", url: Links.web(d.data.settings.links.contactsBoard), primary: true)
             }
         }
@@ -273,6 +273,6 @@ struct PersonInspector: View {
             InspectorField(label: "Last contact", value: "\(d.cal.weekdayDay(last)) · \(Derived.plural(d.cal.days(from: last, to: d.today), "day")) ago")
         }
         if person.notes == nil, let next = person.next { InspectorField(label: "Next step", value: next) }
-        LinkButton(title: "Open in Claude", url: Links.safeID(person.id).flatMap { Links.claude(seed: "Help me plan my next message to contact \($0) in contacts/board.json in my vault.") }, primary: true)
+        LinkButton(title: "Open in Claude", url: Links.safeID(person.id).flatMap { Links.claude(seed: "Help me plan my next message to contact \($0) in \(VaultData.contactsBoardFile) in my vault.") }, primary: true)
     }
 }
