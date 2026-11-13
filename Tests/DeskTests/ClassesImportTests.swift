@@ -194,6 +194,17 @@ final class ClassesImportTests: XCTestCase {
         try save(VaultData.paymentsFile, Parse.paymentsCSV(term + [invoice], cal))
         try ClassesImport.write(sorted(), settings: settings, to: vault, today: today, cal: cal)
 
+        // Months before last month are settled: a different reading of the note does not rewrite them.
+        var changed = sorted()
+        changed.rows[0].lessons = 99
+        changed.rows[changed.rows.count - 1].lessons = 7
+        try ClassesImport.write(changed, settings: settings, to: vault, today: today, cal: cal)
+        let again = Parse.splitLines(try read(ClassesImport.lessonsFile)).filter { !$0.isEmpty }
+        XCTAssertEqual(again.count, 12)
+        XCTAssertTrue(again.contains("2025-09,LM,Lucas Moreno,2,2.5,50,125"), "September stays as first written")
+        XCTAssertTrue(again.contains("2026-01,NO,Nora,7,1.5,40,60"), "this month follows the note")
+        XCTAssertEqual(Parse.splitLines(try read(ClassesImport.lessonDatesFile)).filter { !$0.isEmpty }.count, 17)
+
         let after = Parse.json([String: TutoringContact].self, try read(VaultData.tutoringContactsFile), cal)
         XCTAssertEqual(after?["NO"]?.phone, "+34 600 000 000")
         let archived = Parse.payments(try read(ClassesImport.paymentsArchiveFile), cal)

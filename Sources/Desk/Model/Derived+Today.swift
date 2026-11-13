@@ -92,7 +92,7 @@ extension Derived {
 
     /// Whether a section is shown, by its id: Health's card waits for its data.
     func shows(_ sectionID: String) -> Bool {
-        sectionID != "today.health" || hasHealthData
+        sectionID != SectionID.todayHealth || hasHealthData
     }
 
     static func durationText(_ seconds: Int) -> String {

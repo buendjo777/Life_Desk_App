@@ -30,9 +30,11 @@ enum ClassesImport {
         var paidThrough: String?
         /// Students with lessons in this many recent months are current; the others are archived.
         var currentMonths = 3
+        /// How many months, counting this one, follow the note. Older months stay as Desk first wrote them.
+        var refreshMonths = 2
 
         enum CodingKeys: String, CodingKey {
-            case rates, families, parents, ignore, paidThrough = "paid_through", currentMonths = "current_months"
+            case rates, families, parents, ignore, paidThrough = "paid_through", currentMonths = "current_months", refreshMonths = "refresh_months"
         }
 
         init() {}
@@ -45,6 +47,7 @@ enum ClassesImport {
             ignore = try c.decodeIfPresent([String].self, forKey: .ignore) ?? []
             paidThrough = try c.decodeIfPresent(String.self, forKey: .paidThrough)
             currentMonths = try c.decodeIfPresent(Int.self, forKey: .currentMonths) ?? 3
+            refreshMonths = max(1, try c.decodeIfPresent(Int.self, forKey: .refreshMonths) ?? 2)
         }
 
         static func load(_ text: String?) -> Settings {

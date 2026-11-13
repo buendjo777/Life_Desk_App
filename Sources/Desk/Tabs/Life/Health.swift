@@ -117,7 +117,7 @@ struct ActivityList: View {
         let rows = d.activityList
         let shown = expanded ? rows.count : min(rows.count, t.listRows - 1)
         VStack(alignment: .leading, spacing: t.sp8) {
-            SectionHeader(title: "Activities", subtitle: "Strava · last 12 weeks")
+            SectionHeader(title: "Activities", subtitle: "Last \(Derived.healthWeeks) weeks")
             if rows.isEmpty { EmptyState(line: "No activities exported yet.", hint: d.data.hint(VaultData.stravaFile)) }
             ForEach(rows.prefix(shown)) { activity in
                 ListRow(leading: .symbol(Derived.activitySymbol(activity.type), .good), title: activity.name, subtitle: d.activityDetail(activity)) { _ in

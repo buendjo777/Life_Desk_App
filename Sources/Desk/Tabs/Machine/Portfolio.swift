@@ -32,7 +32,7 @@ extension Derived {
     }
 
     static let architecture: [(title: String, detail: String, accent: Accent)] = [
-        ("Nightly agents", "Read mail, calendar and Strava in the cloud", .deep),
+        ("Nightly agents", "Read mail and calendar in the cloud", .deep),
         ("Vault (git)", "snapshot.json · runs.jsonl · drafts · Jose's notes", .caution),
         ("Desk for Mac", "git pull · pure parsers · nine tabs", .focus),
         ("Jose", "Ticks, Add, Dismiss → decisions.jsonl", .good),
@@ -47,7 +47,7 @@ struct PortfolioIntro: View {
     var body: some View {
         let d = store.showcase
         StatCard(title: "Desk: a life desk run by nightly agents", accent: .deep, shape: .cog, tall: true) {
-            Text(verbatim: "Cloud agents read the inbox, the calendar and Strava every night and write a brief into a private git vault. "
+            Text(verbatim: "Cloud agents read the inbox and the calendar every night and write a brief into a private git vault. "
                 + "Desk is the native Mac app that reads it: what is due, what needs a reply, what to confirm. "
                 + "It holds no credentials, renders untrusted text as plain text, and changes nothing without a click.")
                 .style(\.body).lineSpacing(t.sp4).opacity(t.onAccentBlock)

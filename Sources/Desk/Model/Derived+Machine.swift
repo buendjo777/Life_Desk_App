@@ -79,7 +79,7 @@ extension Derived {
             let days = cal.days(from: last.date.date, to: today)
             phrases.append(Phrase(text: "Last: \(last.name), \(days == 0 ? "today" : days == 1 ? "yesterday" : "\(days) days ago"). "))
         }
-        phrases.append(Phrase(text: "From Strava as of the last run, not live."))
+        phrases.append(Phrase(text: "As of the last run, not live."))
         return phrases
     }
 

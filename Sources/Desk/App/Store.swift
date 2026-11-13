@@ -102,7 +102,7 @@ final class Store {
         return Derived(data: data, now: Parse.day(data.settings.demoToday, data.cal) ?? Date())
     }()
     @ObservationIgnored private(set) lazy var portfolio: PortfolioInfo? = {
-        VaultReader(root: demoVault).text("desk/portfolio.json").flatMap { Parse.json(PortfolioInfo.self, $0, showcase.cal) }
+        VaultReader(root: demoVault).text(VaultData.portfolioFile).flatMap { Parse.json(PortfolioInfo.self, $0, showcase.cal) }
     }()
 
     var data: VaultData { d.data }

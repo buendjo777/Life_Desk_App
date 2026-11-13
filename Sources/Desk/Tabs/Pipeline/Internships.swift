@@ -112,29 +112,8 @@ struct TargetStatusMenu: View {
     var onAccent = false
 
     var body: some View {
-        let chip = Chip(text: target.statusLabel ?? target.status.label, accent: target.status.accent, onAccent: onAccent)
-        if store.isSnapshot || target.sourceID == nil {
-            chip
-        } else {
-            Menu {
-                ForEach(TargetStatus.pickerWords, id: \.self) { status in
-                    Button {
-                        store.setTargetStatus(target, to: status)
-                    } label: {
-                        if status == target.statusLabel { Label(status, systemImage: "checkmark") } else { Text(status) }
-                    }
-                }
-            } label: {
-                chip
-            }
-            // The button style keeps the chip drawn as the menu's face; borderless would flatten it to text.
-            .menuStyle(.button)
-            .buttonStyle(.plain)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .help("Set the status")
-            .accessibilityLabel(Text(verbatim: "Status: \(target.statusLabel ?? target.status.label). Change it"))
-        }
+        StatusMenu(label: target.statusLabel ?? target.status.label, accent: target.status.accent, words: TargetStatus.pickerWords,
+                   editable: target.sourceID != nil, onAccent: onAccent) { store.setTargetStatus(target, to: $0) }
     }
 }
 

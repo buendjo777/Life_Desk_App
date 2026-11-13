@@ -317,3 +317,40 @@ struct PhraseText: View {
         .font(t[keyPath: style].font)
     }
 }
+
+/// A status chip that opens a menu of the board's own status words. Not editable: the chip alone.
+struct StatusMenu: View {
+    @Environment(Store.self) private var store
+    let label: String
+    let accent: Accent
+    let words: [String]
+    let editable: Bool
+    var onAccent = false
+    let set: (String) -> Void
+
+    var body: some View {
+        let chip = Chip(text: label, accent: accent, onAccent: onAccent)
+        if store.isSnapshot || !editable {
+            chip
+        } else {
+            Menu {
+                ForEach(words, id: \.self) { word in
+                    Button {
+                        set(word)
+                    } label: {
+                        if word == label { Label(word, systemImage: "checkmark") } else { Text(word) }
+                    }
+                }
+            } label: {
+                chip
+            }
+            // The button style keeps the chip drawn as the menu's face; borderless would flatten it to text.
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Set the status")
+            .accessibilityLabel(Text(verbatim: "Status: \(label). Change it"))
+        }
+    }
+}

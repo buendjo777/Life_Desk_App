@@ -227,28 +227,8 @@ struct PersonStatusMenu: View {
     var onAccent = false
 
     var body: some View {
-        let chip = Chip(text: person.statusLabel ?? person.status.label, accent: person.status.accent, onAccent: onAccent)
-        if store.isSnapshot || person.sourceID == nil {
-            chip
-        } else {
-            Menu {
-                ForEach(PersonStatus.allCases.map(\.boardWord), id: \.self) { status in
-                    Button {
-                        store.setPersonStatus(person, to: status)
-                    } label: {
-                        if status == person.statusLabel { Label(status, systemImage: "checkmark") } else { Text(status) }
-                    }
-                }
-            } label: {
-                chip
-            }
-            .menuStyle(.button)
-            .buttonStyle(.plain)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .help("Set the status")
-            .accessibilityLabel(Text(verbatim: "Status: \(person.statusLabel ?? person.status.label). Change it"))
-        }
+        StatusMenu(label: person.statusLabel ?? person.status.label, accent: person.status.accent, words: PersonStatus.allCases.map(\.boardWord),
+                   editable: person.sourceID != nil, onAccent: onAccent) { store.setPersonStatus(person, to: $0) }
     }
 }
 

@@ -35,9 +35,18 @@ extension ClassesImport {
         let recent = Set(Array(Set(result.rows.map(\.month))).sorted().suffix(max(1, settings.currentMonths)))
         let current = Set(result.current)
 
-        // lessons.csv: everything, for History.
-        var lessons = [Parse.lessonsHeader]
-        for row in result.rows {
+        // Months before `firstOpen` are settled: once written they are kept as they are, so a change far up the note
+        // never rewrites history. Only the last `refreshMonths` months follow the note. The first import writes all.
+        let firstOpen = Parse.day(thisMonth + "-01", cal).map { cal.monthKey(cal.add(months: 1 - settings.refreshMonths, to: $0)) } ?? thisMonth
+        func settled(_ path: String) -> [String] {
+            Parse.splitLines(reader.text(path) ?? "").dropFirst().filter { !$0.isEmpty && String($0.prefix(firstOpen.count)) < firstOpen }
+        }
+        let settledLessons = settled(lessonsFile)
+        let rewriteAll = settledLessons.isEmpty
+
+        // lessons.csv: every month, for History.
+        var lessons = [Parse.lessonsHeader] + settledLessons
+        for row in result.rows where rewriteAll || row.month >= firstOpen {
             let name = (result.names[row.code] ?? row.code).replacingOccurrences(of: ",", with: " ")
             lessons.append("\(row.month),\(row.code),\(name),\(row.lessons),\(Parse.number(row.hours)),\(row.rate.map(Parse.number) ?? ""),\(row.amount.map(Parse.number) ?? "")")
         }
@@ -52,8 +61,10 @@ extension ClassesImport {
             guard let amount = row.amount else { continue }
             let id = "\(row.month)-\(row.code)"
             let paid = settings.paidThrough.map { row.month <= $0 } == true ? monthEnd(row.month, cal: cal) : nil
-            let payment = Payment(month: row.month, initials: row.code, lessons: row.lessons, hours: row.hours, amount: amount,
-                                  sent: recorded[id]?.sent ?? paid, paid: recorded[id]?.paid ?? paid)
+            // A settled month keeps the invoice Desk already has.
+            let payment = (rewriteAll || row.month >= firstOpen ? nil : recorded[id])
+                ?? Payment(month: row.month, initials: row.code, lessons: row.lessons, hours: row.hours, amount: amount,
+                           sent: recorded[id]?.sent ?? paid, paid: recorded[id]?.paid ?? paid)
             if recent.contains(row.month), current.contains(row.code) { term.append(payment) } else { archive.append(payment) }
         }
         // This month's invoices belong to Desk's month-end flow until the month is over.
@@ -94,7 +105,8 @@ extension ClassesImport {
 
         let dates = result.dates.sorted { ($0.date, $0.code) < ($1.date, $1.code) }
             .map { "\($0.date),\($0.code),\(Parse.number($0.hours))" }
-        try save(lessonDatesFile, ([Parse.lessonDatesHeader] + dates).joined(separator: "\n") + "\n")
+            .filter { rewriteAll || String($0.prefix(firstOpen.count)) >= firstOpen }
+        try save(lessonDatesFile, ([Parse.lessonDatesHeader] + (rewriteAll ? [] : settled(lessonDatesFile)) + dates).joined(separator: "\n") + "\n")
 
         try save(reviewFile, review(result))
     }
