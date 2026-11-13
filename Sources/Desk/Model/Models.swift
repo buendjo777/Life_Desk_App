@@ -220,7 +220,7 @@ struct UniProgramme: Identifiable, Hashable {
     var isSubmitted: Bool { items.contains { $0.done && $0.title.lowercased().hasPrefix("submitted") } }
 }
 
-struct Target: Decodable, Identifiable, Hashable {
+struct Target: Identifiable, Hashable {
     var id: String
     var company: String
     var role: String?
@@ -248,7 +248,7 @@ struct Target: Decodable, Identifiable, Hashable {
     var added: Date?
 }
 
-struct Person: Decodable, Identifiable, Hashable {
+struct Person: Identifiable, Hashable {
     var id: String
     var name: String
     var programme: String?

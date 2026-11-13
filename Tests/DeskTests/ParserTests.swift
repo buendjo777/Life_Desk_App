@@ -232,7 +232,8 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(data.targets?.count, 12)
         XCTAssertEqual(data.targets?.filter { $0.list == .applyNow }.count, 7)
         XCTAssertEqual(data.people?.count, 10)
-        XCTAssertEqual(data.people?.first?.lastContact.map { cal.isoDay($0.date) }, "2026-11-10")
+        XCTAssertEqual(data.people?.first?.status, .replied)
+        XCTAssertEqual(data.people?.first?.statusLabel, "Replied")
     }
 
     func testDecisionsAndEvents() {

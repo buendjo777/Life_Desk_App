@@ -195,7 +195,7 @@ struct ContactsBoard: View {
                         selection: $status)
                 }
                 .padding(.bottom, t.sp2)
-                if rows.isEmpty { EmptyState(line: "Nobody with this status.", hint: d.data.hint(VaultData.peopleFile)) }
+                if rows.isEmpty { EmptyState(line: "Nobody with this status.", hint: d.data.hint(VaultData.contactsBoardFile)) }
                 ForEach(rows.prefix(shown)) { person in
                     ListRow(leading: .initials(initials(of: person.name), .info), title: person.name,
                             subtitle: [person.role, person.programme].compactMap { $0 }.joined(separator: " · "),

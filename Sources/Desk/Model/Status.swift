@@ -7,7 +7,7 @@ private func spaced(_ raw: String) -> String {
 }
 
 /// An internship target's status, in Desk's words. The board has its own (`boardWord`).
-enum TargetStatus: String, CaseIterable, Hashable, Decodable {
+enum TargetStatus: String, CaseIterable, Hashable {
     case open, applied, interview, offer, rejected
 
     var label: String { spaced(rawValue) }
@@ -56,7 +56,7 @@ enum TargetStatus: String, CaseIterable, Hashable, Decodable {
 }
 
 /// Which list of the internship board a target sits in.
-enum TargetList: String, CaseIterable, Hashable, Decodable {
+enum TargetList: String, CaseIterable, Hashable {
     case applyNow = "apply_now"
     case target
 
@@ -65,7 +65,7 @@ enum TargetList: String, CaseIterable, Hashable, Decodable {
 }
 
 /// A contact's status, in Desk's words. The board has its own (`boardWord`).
-enum PersonStatus: String, CaseIterable, Hashable, Decodable {
+enum PersonStatus: String, CaseIterable, Hashable {
     case notContacted = "not_contacted"
     case drafted, sent, replied
     case callBooked = "call_booked"

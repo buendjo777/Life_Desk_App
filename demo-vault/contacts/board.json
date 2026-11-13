@@ -1,0 +1,80 @@
+{
+  "contacts": [
+    {
+      "id": "p1",
+      "name": "Prof. Hanna Weber",
+      "prog": "Referees",
+      "role": "Thesis supervisor",
+      "status": "Replied",
+      "notes": "Send the programme list by Friday"
+    },
+    {
+      "id": "p2",
+      "name": "Dr. Paul Lemaire",
+      "prog": "Referees",
+      "role": "Research institute",
+      "status": "Email sent",
+      "notes": "Wait for his yes"
+    },
+    {
+      "id": "p3",
+      "name": "Dr. Felix Brandt",
+      "prog": "Alpine Institute of Technology",
+      "role": "Postdoc, cardiac signals",
+      "status": "Email drafted",
+      "notes": "Send after the lab meeting"
+    },
+    {
+      "id": "p4",
+      "name": "Dr. Luis Ortega",
+      "prog": "Lakeside Polytechnic",
+      "role": "Lab head, wearable systems",
+      "status": "Email sent",
+      "notes": "Follow up 16–18 Nov"
+    },
+    {
+      "id": "p5",
+      "name": "Prof. Amara Okafor",
+      "prog": "Thames College London",
+      "role": "Programme director",
+      "status": "Not contacted"
+    },
+    {
+      "id": "p6",
+      "name": "Prof. Ines Duarte",
+      "prog": "Harbor University",
+      "role": "Admissions chair",
+      "status": "No reply"
+    },
+    {
+      "id": "p7",
+      "name": "Dr. Kenji Sato",
+      "prog": "Northbridge Tech",
+      "role": "Assistant professor, medical AI",
+      "status": "Call booked",
+      "notes": "Call 19 Nov, 15:00"
+    },
+    {
+      "id": "p8",
+      "name": "Dr. Sofia Lindqvist",
+      "prog": "Alpine Institute of Technology",
+      "role": "Programme coordinator",
+      "status": "Not contacted"
+    },
+    {
+      "id": "p9",
+      "name": "Prof. Marco Bellini",
+      "prog": "Lakeside Polytechnic",
+      "role": "Embedded systems lab",
+      "status": "Not contacted"
+    },
+    {
+      "id": "p10",
+      "name": "Dr. Grace Mensah",
+      "prog": "Harbor University",
+      "role": "Imaging lab",
+      "status": "Email drafted",
+      "notes": "Send in December"
+    }
+  ]
+}
