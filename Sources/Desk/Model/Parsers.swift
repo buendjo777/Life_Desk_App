@@ -481,6 +481,43 @@ enum Parse {
         return lines.joined(separator: "\n")
     }
 
+    /// The contacts board (`contacts/board.json`): one person per entry, grouped by programme (or university).
+    static func contactsBoard(_ text: String, _ cal: DeskCalendar) -> [Person]? {
+        guard let root = (try? JSONSerialization.jsonObject(with: Data(text.utf8))) as? [String: Any],
+              let docs = root["contacts"] as? [[String: Any]] else { return nil }
+        func string(_ doc: [String: Any], _ key: String) -> String? {
+            if let value = doc[key] as? String, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return value.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            return (doc[key] as? NSNumber)?.stringValue
+        }
+        return docs.enumerated().compactMap { index, doc -> Person? in
+            guard let id = string(doc, "id"), let name = string(doc, "name") else { return nil }
+            let words = string(doc, "status") ?? "Not contacted"
+            let notes = string(doc, "notes")
+            let order = string(doc, "progOrder").flatMap(Double.init) ?? 100 + (string(doc, "uniOrder").flatMap(Double.init) ?? Double(index))
+            return Person(
+                id: id, name: name, programme: string(doc, "prog") ?? string(doc, "uni"), role: string(doc, "role"),
+                status: personStatus(words), lastContact: nil, next: notes.map { String($0.split(separator: "\n").first ?? "") },
+                statusLabel: words, university: string(doc, "uni"), lab: string(doc, "lab"), why: string(doc, "why"),
+                paper: string(doc, "paper"), contactRoute: string(doc, "contact"), notes: notes, url: string(doc, "url"),
+                priority: string(doc, "priority"), order: order, sourceID: id
+            )
+        }
+    }
+
+    /// The contacts board's status words in Desk's keys.
+    static func personStatus(_ words: String) -> String {
+        switch words.lowercased() {
+        case let text where text.contains("drafted"): "drafted"
+        case let text where text.contains("sent"): "sent"
+        case let text where text.contains("replied"): "replied"
+        case let text where text.contains("call"): "call_booked"
+        case let text where text.contains("no reply"): "no_reply"
+        default: "not_contacted"
+        }
+    }
+
     /// The board's status words in Desk's four: rejected or closed, an interview or a call, applied, else open.
     static func boardStatus(_ raw: String) -> String {
         let text = raw.lowercased()

@@ -11,7 +11,7 @@ enum VaultWriter {
         let parts = path.split(separator: "/", omittingEmptySubsequences: false).map(String.init)
         // A plain relative path: no "", "." or ".." parts, so it cannot be spelled around the checks below.
         guard !isProtected(path), !parts.contains(where: { $0.isEmpty || $0 == "." || $0 == ".." }) else { return false }
-        if [VaultData.tasksFile, VaultData.decisionsFile, VaultData.paymentsFile, VaultData.boardFile,
+        if [VaultData.tasksFile, VaultData.decisionsFile, VaultData.paymentsFile, VaultData.boardFile, VaultData.contactsBoardFile,
             VaultData.studentsFile, VaultData.tutoringContactsFile].contains(path) { return true }
         if let studyFile, path == studyFile, path.hasSuffix(".md") { return true }
         return parts.count == 2 && parts[0] == "uni" && path.hasSuffix(".md")

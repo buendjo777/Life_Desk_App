@@ -187,7 +187,7 @@ struct ContactsBoard: View {
         let d = store.d
         VStack(alignment: .leading, spacing: t.sp8) {
             if let people = d.data.people {
-                let rows = status.map(d.people) ?? people
+                let rows = status.map(d.people) ?? d.sortedPeople
                 let shown = expanded ? rows.count : min(rows.count, t.listRows - 2)
                 SectionHeader(title: "Contacts") {
                     CountedTabs(items: [.init(id: String?.none, title: "All", count: people.count)]
@@ -204,7 +204,7 @@ struct ContactsBoard: View {
                             Text(verbatim: next).style(\.small, selected ? \.onAccent : \.inkMuted).lineLimit(1)
                                 .frame(maxWidth: t.railWidth, alignment: .trailing)
                         }
-                        Chip(text: Derived.label(person.status), accent: Self.accent(person.status), onAccent: selected)
+                        PersonStatusMenu(person: person, onAccent: selected)
                     }
                 }
                 if rows.count > shown {
@@ -212,7 +212,7 @@ struct ContactsBoard: View {
                 }
             } else {
                 SectionHeader(title: "Contacts")
-                EmptyState(line: "The contacts board has not moved into the vault yet.", hint: "It appears here once contacts/people.json exists.")
+                EmptyState(line: "The contacts board has not moved into the vault yet.", hint: "It appears here once contacts/board.json exists.")
                 LinkButton(title: "Open board", url: Links.web(d.data.settings.links.contactsBoard), primary: true)
             }
         }
@@ -229,6 +229,38 @@ struct ContactsBoard: View {
     }
 }
 
+/// A contact's status chip; clicking it sets the status, in the board's own words.
+struct PersonStatusMenu: View {
+    @Environment(Store.self) private var store
+    let person: Person
+    var onAccent = false
+
+    var body: some View {
+        let chip = Chip(text: person.statusLabel ?? Derived.label(person.status), accent: ContactsBoard.accent(person.status), onAccent: onAccent)
+        if store.isSnapshot || person.sourceID == nil {
+            chip
+        } else {
+            Menu {
+                ForEach(Derived.personStatusWords, id: \.self) { status in
+                    Button {
+                        store.setPersonStatus(person, to: status)
+                    } label: {
+                        if status == person.statusLabel { Label(status, systemImage: "checkmark") } else { Text(status) }
+                    }
+                }
+            } label: {
+                chip
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Set the status")
+            .accessibilityLabel(Text(verbatim: "Status: \(person.statusLabel ?? Derived.label(person.status)). Change it"))
+        }
+    }
+}
+
 struct PersonInspector: View {
     @Environment(Store.self) private var store
     let person: Person
@@ -236,14 +268,20 @@ struct PersonInspector: View {
     var body: some View {
         let d = store.d
         InspectorTitle(text: person.name)
-        Chip(text: Derived.label(person.status), accent: ContactsBoard.accent(person.status))
+        PersonStatusMenu(person: person)
         if let role = person.role { InspectorField(label: "Role", value: role) }
         if let programme = person.programme { InspectorField(label: "Programme", value: programme) }
+        let place = [person.lab, person.university].compactMap { $0 }.joined(separator: " · ")
+        if !place.isEmpty { InspectorField(label: "Where", value: place) }
+        if let why = person.why { InspectorField(label: "Why", value: why) }
+        if let paper = person.paper { InspectorField(label: "Paper", value: paper) }
+        if let route = person.contactRoute { InspectorField(label: "How to reach", value: route) }
+        if let notes = person.notes { InspectorField(label: "Notes", value: notes) }
+        if let url = Links.web(person.url) { LinkButton(title: "Open profile", url: url) }
         if let last = person.lastContact?.date {
             InspectorField(label: "Last contact", value: "\(d.cal.weekdayDay(last)) · \(Derived.plural(d.cal.days(from: last, to: d.today), "day")) ago")
         }
-        if let next = person.next { InspectorField(label: "Next step", value: next) }
-        LinkButton(title: "Open board", url: Links.web(d.data.settings.links.contactsBoard))
-        LinkButton(title: "Open in Claude", url: Links.safeID(person.id).flatMap { Links.claude(seed: "Help me plan my next message to contact \($0) in contacts/people.json in my vault.") }, primary: true)
+        if person.notes == nil, let next = person.next { InspectorField(label: "Next step", value: next) }
+        LinkButton(title: "Open in Claude", url: Links.safeID(person.id).flatMap { Links.claude(seed: "Help me plan my next message to contact \($0) in contacts/board.json in my vault.") }, primary: true)
     }
 }

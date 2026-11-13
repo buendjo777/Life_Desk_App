@@ -254,6 +254,18 @@ struct Person: Decodable, Identifiable, Hashable {
     var status: String
     var lastContact: Stamp?
     var next: String?
+    /// From the contacts board (`contacts/board.json`): its status words and the details behind each person.
+    var statusLabel: String?
+    var university: String?
+    var lab: String?
+    var why: String?
+    var paper: String?
+    var contactRoute: String?
+    var notes: String?
+    var url: String?
+    var priority: String?
+    var order: Double?
+    var sourceID: String?
 }
 
 /// One click, appended to `desk/decisions.jsonl`.

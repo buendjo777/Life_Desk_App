@@ -174,7 +174,16 @@ extension Derived {
 
     static let personStatuses = ["not_contacted", "drafted", "sent", "replied", "call_booked", "no_reply"]
 
-    func people(status: String) -> [Person] { (data.people ?? []).filter { $0.status == status } }
+    /// The status words Jose picks from for a contact; they are the board's own.
+    static let personStatusWords = ["Not contacted", "Email drafted", "Email sent", "Replied", "Call booked", "No reply"]
+
+    /// Contacts in the board's order: programme by programme, then everyone else.
+    var sortedPeople: [Person] {
+        (data.people ?? []).enumerated().sorted { ($0.element.order ?? Double($0.offset), $0.element.name) < ($1.element.order ?? Double($1.offset), $1.element.name) }
+            .map(\.element)
+    }
+
+    func people(status: String) -> [Person] { sortedPeople.filter { $0.status == status } }
 
     var uniSummary: [Phrase] {
         let cards = uniCards

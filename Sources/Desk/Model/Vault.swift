@@ -75,6 +75,8 @@ struct VaultData {
     static let boardFile = "internships/board.json"
     static let agentBoardFile = "agent/board.json"
     static let peopleFile = "contacts/people.json"
+    /// The master's contacts board in the vault; Desk sets statuses in it. Wins over people.json.
+    static let contactsBoardFile = "contacts/board.json"
     static let studentsFile = "tutoring/students.md"
     static let paymentsFile = "tutoring/payments.csv"
     static let tutoringContactsFile = "tutoring/contacts.json"
@@ -155,7 +157,10 @@ extension VaultData {
             data.targets = Parse.array(Target.self, text, cal) ?? []
             if Parse.array(Target.self, text, cal) == nil { malformed(targetsFile) }
         }
-        if let text = reader.text(peopleFile) {
+        if let text = reader.text(contactsBoardFile) {
+            data.people = Parse.contactsBoard(text, cal)
+            if data.people == nil { malformed(contactsBoardFile) }
+        } else if let text = reader.text(peopleFile) {
             data.people = Parse.array(Person.self, text, cal) ?? []
             if Parse.array(Person.self, text, cal) == nil { malformed(peopleFile) }
         }
@@ -194,6 +199,8 @@ extension VaultData {
             study = parsed
         } else if path == Self.boardFile, let text, let board = Parse.board(text, cal) {
             targets = board
+        } else if path == Self.contactsBoardFile, let text, let board = Parse.contactsBoard(text, cal) {
+            people = board
         } else if let index = unis.firstIndex(where: { $0.path == path }), let text, let uni = Parse.uni(path: path, text) {
             unis[index] = uni
         } else {

@@ -436,6 +436,15 @@ final class Store {
         lastDecided = nil
     }
 
+    /// Sets a contact's status in `contacts/board.json`, in the board's own words.
+    func setPersonStatus(_ person: Person, to status: String) {
+        guard let id = person.sourceID else {
+            banner = "This contact is not in contacts/board.json, so its status cannot be set here."
+            return
+        }
+        edit(VaultData.contactsBoardFile) { Parse.setBoardStatus($0, id: id, status: status) }
+    }
+
     // MARK: Student details (tutoring/, local, never committed)
 
     /// Sets a student's parent or phone in `contacts.json`, the only file with names and numbers.
