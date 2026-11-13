@@ -40,7 +40,12 @@ struct RootView: View {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(t.clockTick))
                 minutes += 1
-                if minutes % t.syncMinutes == 0 { store.sync() } else { store.tick() }
+                if minutes % t.syncMinutes == 0 {
+                    store.sync()
+                    store.importClassesIfDue()
+                } else {
+                    store.tick()
+                }
             }
         }
         .focusable()
@@ -71,8 +76,8 @@ struct TabHost: View {
 
     var body: some View {
         let prefs = store.prefs.layouts[store.tab.rawValue]
-        let main = TabLayout.arranged(store.tab, .main, prefs: prefs)
-        let rail = TabLayout.arranged(store.tab, .rail, prefs: prefs)
+        let main = TabLayout.arranged(store.tab, .main, prefs: prefs).filter { store.d.shows($0.id) }
+        let rail = TabLayout.arranged(store.tab, .rail, prefs: prefs).filter { store.d.shows($0.id) }
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: t.columnGap) {
                 SearchBar()

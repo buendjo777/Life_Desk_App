@@ -120,6 +120,40 @@ struct InspectorField: View {
     }
 }
 
+/// A field Jose can edit: saved on Return or when he clicks away. In snapshots, the value as text.
+struct EditableField: View {
+    @Environment(Store.self) private var store
+    @Environment(\.theme) private var t
+    let label: String
+    let value: String
+    var prompt = ""
+    let save: (String) -> Void
+    @State private var text = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: t.sp2) {
+            Text(verbatim: label).style(\.caption, \.inkMuted)
+            if store.isSnapshot {
+                Text(verbatim: value.isEmpty ? "—" : value).style(\.body, value.isEmpty ? \.inkMuted : \.ink)
+            } else {
+                TextField(text: $text, prompt: Text(verbatim: prompt)) { Text(verbatim: label) }
+                    .textFieldStyle(.roundedBorder)
+                    .focused($focused)
+                    .onSubmit(commit)
+                    .onChange(of: focused) { if !focused { commit() } }
+                    .onAppear { text = value }
+                    .onChange(of: value) { text = value }
+            }
+        }
+    }
+
+    private func commit() {
+        guard text != value else { return }
+        save(text)
+    }
+}
+
 /// A hand-off button that opens a link built by code.
 struct LinkButton: View {
     let title: String

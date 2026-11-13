@@ -87,6 +87,14 @@ extension Derived {
         return (minutes / 60, minutes % 60)
     }
 
+    /// Health has something to show: an activity export. Without one its tab and card are hidden.
+    var hasHealthData: Bool { !data.activities.isEmpty }
+
+    /// Whether a section is shown, by its id: Health's card waits for its data.
+    func shows(_ sectionID: String) -> Bool {
+        sectionID != "today.health" || hasHealthData
+    }
+
     static func durationText(_ seconds: Int) -> String {
         let (hours, minutes) = hoursMinutes(seconds)
         return hours > 0 ? "\(hours) h \(String(format: "%02d", minutes))" : "\(minutes) min"

@@ -290,10 +290,16 @@ struct StudentInspector: View {
     var body: some View {
         let d = store.d
         let notes = d.data.tutoring.notes[student.initials] ?? []
+        let contact = d.data.tutoring.contacts[student.initials]
         InspectorTitle(text: ([d.studentName(student.initials), student.subject].filter { !$0.isEmpty }).joined(separator: " · "))
-        if !student.level.isEmpty { InspectorField(label: "Level", value: student.level) }
-        InspectorField(label: "Rate", value: "\(d.money(student.rate))/h · pays by \(student.paysBy)")
+        InspectorField(label: "Rate", value: "\(d.money(student.rate))/h")
         if let history = d.studentHistory(student.initials) { InspectorField(label: "History", value: history) }
+        // Details for the invoices; they stay in tutoring/ on this Mac.
+        EditableField(label: "Parent", value: contact?.parent ?? "", prompt: "Who gets the WhatsApp") { store.updateContact(student.initials, parent: $0) }
+        EditableField(label: "Phone", value: contact?.phone ?? "", prompt: "+34 600 000 000") { store.updateContact(student.initials, phone: $0) }
+        EditableField(label: "Subject", value: student.subject, prompt: "Maths AA HL") { store.updateStudent(student.initials, subject: $0) }
+        EditableField(label: "Level", value: student.level, prompt: "IB Diploma") { store.updateStudent(student.initials, level: $0) }
+        EditableField(label: "Pays by", value: student.paysBy, prompt: "bank transfer") { store.updateStudent(student.initials, paysBy: $0) }
         if let note = notes.last {
             Text(verbatim: "Last note · \(d.cal.weekdayDay(note.date))").style(\.caption, \.inkMuted)
             Text(verbatim: note.text)

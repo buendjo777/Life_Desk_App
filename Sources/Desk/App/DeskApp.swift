@@ -49,7 +49,7 @@ struct DeskCommands: Commands {
             Divider()
         }
         CommandMenu("Go") {
-            ForEach(Tab.sidebar) { tab in
+            ForEach(Tab.sidebar.filter { $0 != .health || store.d.hasHealthData }) { tab in
                 Button(tab.title) { store.show(tab) }
                     .keyboardShortcut(KeyEquivalent(Character(String(tab.shortcut))), modifiers: .command)
             }

@@ -241,6 +241,9 @@ struct Target: Decodable, Identifiable, Hashable {
     /// The board's priority for a target ("A", "B", "C") and its order (an opening's, or a target's place).
     var priority: String?
     var order: Double?
+    /// The entry's id in internships/board.json, for writing its status back; and the day the scan added it.
+    var sourceID: String?
+    var added: Date?
 }
 
 struct Person: Decodable, Identifiable, Hashable {

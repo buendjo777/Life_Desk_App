@@ -154,3 +154,9 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - Decisions 94–97. Checked live: Today shows today's 7 study items; the Rejected card lists the two rejected applications with their links; the Uni runway shows ten deadlines with no label on top of another.
 - **Email:** the morning run moved from a Cowork task, which never loads the vault's `.claude/` (its deny rules, hook and agents), to a cloud routine that clones jose-brain. In the cloud routine the deny rules load, and the injection eval passed: 61 checks, 0 failed.
 - **Checked:** 85 tests (1 opt-in skipped).
+
+## 13 Nov — Self-contained internships, student details, past papers
+- Past papers: the 16 May and June sittings (2017–2025) are listed newest first in the study file. From Monday, today's papers can be ticked on Studying and Today (decision 98).
+- Internships (decision 99): 199 openings and 89 targets moved into `internships/board.json`. A new Monday scan routine replaces the Cowork one, and the morning skill no longer exports the board, so the injection eval was re-run for the new skill version.
+- Student details, the timed Classes import and hidden Health: decisions 100–102. `finance/` is gitignored, ready for a Revolut statement export.
+- **Checked:** 88 tests (1 opt-in skipped).

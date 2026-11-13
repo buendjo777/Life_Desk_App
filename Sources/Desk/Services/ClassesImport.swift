@@ -515,7 +515,8 @@ enum ClassesImport {
         var students = ["| Initials | Level | Subject | Rate (€/h) | Pays by |", "|---|---|---|---|---|"]
         for c in result.current {
             let old = known[c]
-            let level = result.levels[c] ?? old?.level ?? ""
+            // A level Jose set in Desk wins over the note's group heading.
+            let level = old?.level.isEmpty == false ? old?.level ?? "" : result.levels[c] ?? ""
             students.append("| \(c) | \(level) | \(old?.subject ?? "") | \(latest[c].map(Parse.number) ?? "") | \(old?.paysBy.isEmpty == false ? old?.paysBy ?? "" : "bank transfer") |")
         }
         try save(VaultData.studentsFile, students.joined(separator: "\n") + "\n")
@@ -537,9 +538,7 @@ enum ClassesImport {
             let old = contacts[c]
             contacts[c] = TutoringContact(parent: old?.parent.isEmpty == false ? old?.parent ?? "" : parent, student: first, phone: old?.phone ?? "")
         }
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-        try save(VaultData.tutoringContactsFile, String(decoding: try encoder.encode(contacts), as: UTF8.self) + "\n")
+        try save(VaultData.tutoringContactsFile, Parse.contactsJSON(contacts))
 
         let dates = result.dates.sorted { ($0.date, $0.code) < ($1.date, $1.code) }
             .map { "\($0.date),\($0.code),\(Parse.number($0.hours))" }

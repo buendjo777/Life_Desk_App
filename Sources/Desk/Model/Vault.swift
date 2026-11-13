@@ -70,9 +70,10 @@ struct VaultData {
     static let decisionsFile = "desk/decisions.jsonl"
     static let eventsFile = "calendar/events.json"
     static let targetsFile = "internships/targets.json"
-    /// The Internship Target Board's own export, "openings" and "targets" as the board stores them, written each
-    /// morning by the agent (it writes only `agent/`). Wins over targets.json.
-    static let boardFile = "agent/board.json"
+    /// Jose's internship board: "openings" (postings) and "targets" (companies and labs). Desk sets statuses in it;
+    /// the Monday scan adds postings. Wins over the older `agent/board.json` export and targets.json.
+    static let boardFile = "internships/board.json"
+    static let agentBoardFile = "agent/board.json"
     static let peopleFile = "contacts/people.json"
     static let studentsFile = "tutoring/students.md"
     static let paymentsFile = "tutoring/payments.csv"
@@ -147,9 +148,9 @@ extension VaultData {
         if let text = data.docs[deadlinesDoc] { data.masterDeadlines = ParseCache.masterDeadlines(text, cal) }
 
         // Optional boards: absent until they move into the vault.
-        if let text = reader.text(boardFile) {
+        if let file = [boardFile, agentBoardFile].first(where: { reader.text($0) != nil }), let text = reader.text(file) {
             data.targets = Parse.board(text, cal)
-            if data.targets == nil { malformed(boardFile) }
+            if data.targets == nil { malformed(file) }
         } else if let text = reader.text(targetsFile) {
             data.targets = Parse.array(Target.self, text, cal) ?? []
             if Parse.array(Target.self, text, cal) == nil { malformed(targetsFile) }
@@ -191,6 +192,8 @@ extension VaultData {
             tutoring.payments = text.map { Parse.payments($0, cal) } ?? []
         } else if path == settings.exam?.file, let text, let parsed = Parse.study(text, cal) {
             study = parsed
+        } else if path == Self.boardFile, let text, let board = Parse.board(text, cal) {
+            targets = board
         } else if let index = unis.firstIndex(where: { $0.path == path }), let text, let uni = Parse.uni(path: path, text) {
             unis[index] = uni
         } else {

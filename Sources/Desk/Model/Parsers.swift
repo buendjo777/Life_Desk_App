@@ -388,6 +388,25 @@ enum Parse {
     static let lessonsHeader = "month,initials,student,lessons,hours,rate,amount"
     static let lessonDatesHeader = "date,initials,hours"
 
+    /// `contacts.json` as Desk and the import write it.
+    static func contactsJSON(_ contacts: [String: TutoringContact]) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        return ((try? encoder.encode(contacts)).map { String(decoding: $0, as: UTF8.self) } ?? "{}") + "\n"
+    }
+
+    /// Changes a student's level, subject or payment method in `students.md`, keeping the rate and every other row.
+    static func updateStudentRow(_ text: String, initials: String, level: String? = nil, subject: String? = nil, paysBy: String? = nil) -> String? {
+        var lines = splitLines(text)
+        guard let index = lines.firstIndex(where: { $0.trimmingCharacters(in: .whitespaces).hasPrefix("| \(initials) |") }) else { return nil }
+        let cells = lines[index].split(separator: "|", omittingEmptySubsequences: false).map { $0.trimmingCharacters(in: .whitespaces) }
+        guard cells.count >= 7 else { return nil }
+        func clean(_ value: String) -> String { value.replacingOccurrences(of: "|", with: "/").trimmingCharacters(in: .whitespacesAndNewlines) }
+        let row = [cells[1], level.map(clean) ?? cells[2], subject.map(clean) ?? cells[3], cells[4], paysBy.map(clean) ?? cells[5]]
+        lines[index] = "| " + row.joined(separator: " | ") + " |"
+        return lines.joined(separator: "\n")
+    }
+
     /// `lesson-dates.csv`: `date,initials,hours`, one row per dated lesson in the Classes note.
     /// The Internship Target Board's own export (`internships/board.json`): its "openings" (live postings) become
     /// Apply now and its "targets" (companies and labs) the rest of the list. Field names follow the board's
@@ -424,13 +443,42 @@ enum Parse {
                 next: notes.map { String($0.split(separator: "\n").first ?? "") }, url: string(doc, ["url", "link", "careers", "website"]),
                 statusLabel: raw, start: string(doc, ["start"]), duration: string(doc, ["duration"]), language: string(doc, ["language"]),
                 eligibility: string(doc, ["eligibility"]), fit: string(doc, ["fit", "why"]), notes: notes,
-                priority: string(doc, ["priority"]), order: string(doc, ["order", "placeOrder"]).flatMap(Double.init) ?? Double(index)
+                priority: string(doc, ["priority"]), order: string(doc, ["order", "placeOrder"]).flatMap(Double.init) ?? Double(index),
+                sourceID: string(doc, ["id"]), added: string(doc, ["added"]).flatMap { day($0, cal) }
             )
         }
         let openings = docs("openings").enumerated().compactMap { target($0.element, index: $0.offset, list: "apply_now") }
             .sorted { ($0.order ?? 0) < ($1.order ?? 0) }
         let targets = docs("targets").enumerated().compactMap { target($0.element, index: $0.offset, list: "target") }
         return openings + targets
+    }
+
+    /// Sets one entry's status in `internships/board.json` by rewriting only its `"status"` line, so the file keeps
+    /// its layout and Desk's edit merges cleanly with the Monday scan's additions. `nil` when the entry is not found.
+    static func setBoardStatus(_ text: String, id: String, status: String) -> String? {
+        func quoted(_ value: String) -> String {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .withoutEscapingSlashes
+            return (try? encoder.encode(value)).map { String(decoding: $0, as: UTF8.self) } ?? "\"\""
+        }
+        var lines = splitLines(text)
+        let idKey = "\"id\": \(quoted(id))"
+        guard let start = lines.firstIndex(where: { line in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            return trimmed == idKey || trimmed == idKey + ","
+        }) else { return nil }
+        let indent = lines[start].prefix { $0 == " " }.count
+        // The entry's keys sit at its indent; a shallower line closes it. Look both ways from the id.
+        var range: [Int] = []
+        var up = start - 1
+        while up >= 0, lines[up].prefix(while: { $0 == " " }).count >= indent { range.append(up); up -= 1 }
+        var down = start + 1
+        while down < lines.count, lines[down].prefix(while: { $0 == " " }).count >= indent { range.append(down); down += 1 }
+        guard let line = range.first(where: { lines[$0].prefix(while: { $0 == " " }).count == indent
+                                         && lines[$0].trimmingCharacters(in: .whitespaces).hasPrefix("\"status\":") }) else { return nil }
+        let comma = lines[line].trimmingCharacters(in: .whitespaces).hasSuffix(",") ? "," : ""
+        lines[line] = String(repeating: " ", count: indent) + "\"status\": \(quoted(status))" + comma
+        return lines.joined(separator: "\n")
     }
 
     /// The board's status words in Desk's four: rejected or closed, an interview or a call, applied, else open.

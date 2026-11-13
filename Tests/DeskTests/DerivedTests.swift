@@ -262,6 +262,17 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(Derived(data: calendarOnly, now: december.now).monthEnd.count, 4)
     }
 
+    func testHealthHidesWithoutData() {
+        XCTAssertTrue(d.hasHealthData)
+        var empty = data
+        empty.activities = []
+        let none = Derived(data: empty, now: demoNow)
+        XCTAssertFalse(none.hasHealthData)
+        XCTAssertFalse(none.shows("today.health"))
+        XCTAssertTrue(none.shows("today.list"))
+        XCTAssertTrue(d.shows("today.health"))
+    }
+
     func testHistoryFromTheClassesNote() {
         XCTAssertTrue(d.lessonsFromNote)
         XCTAssertEqual(d.allTime.amount, 15903)

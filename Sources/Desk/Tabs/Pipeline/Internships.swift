@@ -47,7 +47,7 @@ struct TargetList: View {
         VStack(alignment: .leading, spacing: t.sp8) {
             if d.data.targets == nil {
                 SectionHeader(title: "Targets")
-                EmptyState(line: "The internship board has not moved into the vault yet.", hint: "The morning run exports it to agent/board.json.")
+                EmptyState(line: "The internship board has not moved into the vault yet.", hint: "It appears here once internships/board.json exists.")
                 LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard), primary: true)
             } else {
                 let filter = store.targetFilter
@@ -105,11 +105,43 @@ struct TargetRow: View {
             if let days = d.daysLeft(target.deadline) {
                 Chip(text: days < 0 ? "Closed" : "\(days) d", accent: days < 0 ? .alert : .ochre, onAccent: selected)
             }
-            Chip(text: target.statusLabel ?? Derived.label(target.status), accent: TargetCountCard.accent(target.status), onAccent: selected)
+            if d.isNew(target) { Chip(text: "New", accent: .rust, onAccent: selected) }
+            TargetStatusMenu(target: target, onAccent: selected)
             if let url = Links.web(target.url) {
                 Button(target.list == "apply_now" && target.status == "open" ? "Apply" : "Open") { Links.open(url) }.buttonStyle(.deskSecondary)
                     .help(target.url ?? "")
             }
+        }
+    }
+}
+
+/// The status chip; clicking it sets the status, in the board's own words.
+struct TargetStatusMenu: View {
+    @Environment(Store.self) private var store
+    let target: Target
+    var onAccent = false
+
+    var body: some View {
+        let chip = Chip(text: target.statusLabel ?? Derived.label(target.status), accent: TargetCountCard.accent(target.status), onAccent: onAccent)
+        if store.isSnapshot || target.sourceID == nil {
+            chip
+        } else {
+            Menu {
+                ForEach(Derived.boardStatuses, id: \.self) { status in
+                    Button {
+                        store.setTargetStatus(target, to: status)
+                    } label: {
+                        if status == target.statusLabel { Label(status, systemImage: "checkmark") } else { Text(status) }
+                    }
+                }
+            } label: {
+                chip
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("Set the status")
+            .accessibilityLabel(Text(verbatim: "Status: \(target.statusLabel ?? Derived.label(target.status)). Change it"))
         }
     }
 }
@@ -121,7 +153,7 @@ struct TargetInspector: View {
     var body: some View {
         let d = store.d
         InspectorTitle(text: target.company)
-        Chip(text: target.statusLabel ?? Derived.label(target.status), accent: TargetCountCard.accent(target.status))
+        TargetStatusMenu(target: target)
         if let role = target.role { InspectorField(label: "Role", value: role) }
         InspectorField(label: "Where", value: [target.city, target.country].compactMap { $0 }.joined(separator: ", "))
         InspectorField(label: "List", value: target.list == "apply_now" ? "Apply now" : "Target")
@@ -137,6 +169,6 @@ struct TargetInspector: View {
         if let notes = target.notes { InspectorField(label: "Notes", value: notes) } else if let next = target.next { InspectorField(label: "Next step", value: next) }
         LinkButton(title: target.list == "apply_now" ? "Apply" : "Open posting", url: Links.web(target.url), primary: true)
         LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard))
-        LinkButton(title: "Open in Claude", url: Links.safeID(target.id).flatMap { Links.claude(seed: "Help me with internship target \($0) in agent/board.json in my vault.") })
+        LinkButton(title: "Open in Claude", url: Links.safeID(target.id).flatMap { Links.claude(seed: "Help me with internship target \($0) in internships/board.json in my vault.") })
     }
 }

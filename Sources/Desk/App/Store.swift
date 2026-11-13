@@ -436,6 +436,38 @@ final class Store {
         lastDecided = nil
     }
 
+    // MARK: Student details (tutoring/, local, never committed)
+
+    /// Sets a student's parent or phone in `contacts.json`, the only file with names and numbers.
+    func updateContact(_ initials: String, parent: String? = nil, phone: String? = nil) {
+        let cal = cal
+        let first = String(d.studentName(initials).split(separator: " ").first ?? Substring(initials))
+        edit(VaultData.tutoringContactsFile) { text in
+            var contacts = Parse.json([String: TutoringContact].self, text, cal) ?? [:]
+            var contact = contacts[initials] ?? TutoringContact(parent: "", student: first, phone: "")
+            if let parent { contact.parent = parent.trimmingCharacters(in: .whitespacesAndNewlines) }
+            if let phone { contact.phone = phone.trimmingCharacters(in: .whitespacesAndNewlines) }
+            contacts[initials] = contact
+            return Parse.contactsJSON(contacts)
+        }
+    }
+
+    /// Sets a student's level, subject or payment method in `students.md`.
+    func updateStudent(_ initials: String, level: String? = nil, subject: String? = nil, paysBy: String? = nil) {
+        edit(VaultData.studentsFile) { Parse.updateStudentRow($0, initials: initials, level: level, subject: subject, paysBy: paysBy) }
+    }
+
+    // MARK: Internships (internships/board.json)
+
+    /// Sets a posting's or target's status in the board, in the board's own words.
+    func setTargetStatus(_ target: Target, to status: String) {
+        guard let id = target.sourceID else {
+            banner = "This list is not in internships/board.json, so its statuses cannot be set here."
+            return
+        }
+        edit(VaultData.boardFile) { Parse.setBoardStatus($0, id: id, status: status) }
+    }
+
     // MARK: Tutoring (tutoring/payments.csv: local, never committed)
 
     /// Changes one row of `payments.csv` in place; every other line is kept as it is.
@@ -466,6 +498,15 @@ final class Store {
     /// The last read of the Classes note: when, and its one-line result or why it failed.
     private(set) var importStatus: String?
     @ObservationIgnored private var importing = false
+    @ObservationIgnored private var lastImport: Date?
+    /// How often the 15-minute sync reads the note again; each read wakes Notes.
+    static let importInterval: TimeInterval = 3 * 3600
+
+    /// On the periodic sync: reads the note again once `importInterval` has passed since the last read.
+    func importClassesIfDue() {
+        guard let last = lastImport, Date().timeIntervalSince(last) >= Self.importInterval else { return }
+        importClasses(explicit: false)
+    }
 
     /// Live: reads the Classes note through Notes and rewrites `tutoring/` (gitignored, so no git). Runs on
     /// launch and on Sync Now, never on the 15-minute timer, because each read wakes Notes. A failure shows
@@ -488,6 +529,7 @@ final class Store {
             self.importing = false
             guard self.epoch == queuedIn, self.mode == .live else { return }
             let time = self.cal.format(Date(), "HH:mm")
+            self.lastImport = Date()
             if let error = outcome.error {
                 self.importStatus = "Not read from Notes at \(time): \(error)"
                 if explicit { self.banner = "The Classes note was not imported. \(error)" }

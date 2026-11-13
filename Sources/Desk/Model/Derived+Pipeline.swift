@@ -33,6 +33,14 @@ extension Derived {
 
     static let targetStatuses = ["open", "applied", "interview", "rejected"]
 
+    /// The status words Jose picks from in Desk; they are the board's own.
+    static let boardStatuses = ["Not started", "Researching", "Applied", "Interviewing", "Offer", "Rejected / closed"]
+
+    /// Added by the scan in the last week.
+    func isNew(_ target: Target) -> Bool {
+        target.added.map { cal.days(from: $0, to: today) < 7 } == true
+    }
+
     /// The status cards count applications: the openings when there are any, else every target.
     func targets(status: String) -> [Target] {
         let openings = (data.targets ?? []).filter { $0.list == "apply_now" }

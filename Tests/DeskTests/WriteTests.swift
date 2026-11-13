@@ -5,15 +5,17 @@ import XCTest
 final class WriteTests: XCTestCase {
     func testOnlyJosesFilesAreWritable() {
         let study = "study/strength-of-materials.md"
-        for path in ["TASKS.md", "desk/decisions.jsonl", "tutoring/payments.csv", study, "uni/alpine-bme.md"] {
+        for path in ["TASKS.md", "desk/decisions.jsonl", "tutoring/payments.csv", study, "uni/alpine-bme.md", "internships/board.json",
+                     "tutoring/contacts.json", "tutoring/students.md"] {
             XCTAssertTrue(VaultWriter.isWritable(path, studyFile: study), path)
         }
         for path in ["agent/snapshot.json", "agent/drafts/x.md", "nini/desk.md", "projects/desk.md", "uni/../agent/snapshot.json",
-                     "/etc/hosts", "desk/settings.json", "tutoring/contacts.json", "uni/a/b.md", "contacts/people.json"] {
+                     "/etc/hosts", "desk/settings.json", "tutoring/lessons.csv", "uni/a/b.md", "contacts/people.json"] {
             XCTAssertFalse(VaultWriter.isWritable(path, studyFile: study), path)
         }
         XCTAssertFalse(VaultWriter.isWritable("agent/snapshot.json", studyFile: "agent/snapshot.json"))
         XCTAssertFalse(VaultWriter.isCommitted("tutoring/payments.csv"))
+        XCTAssertFalse(VaultWriter.isCommitted("tutoring/contacts.json"))
         XCTAssertTrue(VaultWriter.isCommitted("TASKS.md"))
     }
 
@@ -41,6 +43,18 @@ final class WriteTests: XCTestCase {
         XCTAssertEqual(store.d.toConfirm.count, 0)
         XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), before)
         XCTAssertEqual(try String(contentsOf: DemoVault.url.appendingPathComponent(VaultData.decisionsFile), encoding: .utf8), decisions)
+        // A student's parent, phone and subject are set from Desk, in memory in Demo.
+        store.updateContact("AB", parent: "Marta López", phone: "+34 600 111 222")
+        store.updateStudent("AB", subject: "Maths II and Physics")
+        XCTAssertEqual(store.data.tutoring.contacts["AB"]?.parent, "Marta López")
+        XCTAssertEqual(store.data.tutoring.contacts["AB"]?.phone, "+34 600 111 222")
+        XCTAssertEqual(store.d.student("AB")?.subject, "Maths II and Physics")
+        XCTAssertEqual(store.d.student("AB")?.rate, 25, "the rate is kept")
+        // An internship status is set from Desk, in memory in Demo.
+        let opening = try XCTUnwrap(store.d.applyNow.first { $0.status == "open" })
+        store.setTargetStatus(opening, to: "Applied")
+        XCTAssertEqual(store.data.targets?.first { $0.id == opening.id }?.statusLabel, "Applied")
+        XCTAssertEqual(store.d.targets(status: "applied").count, 3)
         // A list item in the study file ticks like a topic.
         let list = try XCTUnwrap(store.d.openLists.first)
         let item = try XCTUnwrap(list.open.first)

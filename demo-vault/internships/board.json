@@ -1,0 +1,121 @@
+{
+  "openings": [
+    {
+      "company": "Corvid MedTech",
+      "eligType": "graduate",
+      "id": "t1",
+      "location": "Zürich, CH",
+      "notes": "Confirm Thursday 15:00",
+      "order": 1,
+      "status": "Interviewing",
+      "title": "ML Engineering Intern",
+      "url": "https://example.com/demo/corvid"
+    },
+    {
+      "company": "Helix Diagnostics",
+      "eligType": "graduate",
+      "id": "t2",
+      "location": "Basel, CH",
+      "notes": "Reply expected within three weeks",
+      "order": 2,
+      "status": "Applied",
+      "title": "Data Science Intern"
+    },
+    {
+      "company": "Pulsewave",
+      "eligType": "graduate",
+      "id": "t3",
+      "location": "Madrid, ES",
+      "notes": "CV sent 10 Nov",
+      "order": 3,
+      "status": "Applied",
+      "title": "Biosignals Intern"
+    },
+    {
+      "company": "Meridian Health AI",
+      "deadline": "2026-11-30",
+      "eligType": "graduate",
+      "id": "t4",
+      "location": "Lausanne, CH",
+      "notes": "Tailor the CV",
+      "order": 4,
+      "status": "Not started",
+      "title": "Research Intern, Imaging"
+    },
+    {
+      "company": "Atlas Biosignals",
+      "deadline": "2026-12-05",
+      "eligType": "convenio",
+      "id": "t5",
+      "location": "Brussels, BE",
+      "notes": "Check the contract route",
+      "order": 5,
+      "status": "Not started",
+      "title": "Embedded ML Intern"
+    },
+    {
+      "company": "Granite Medical",
+      "deadline": "2026-12-12",
+      "eligType": "graduate",
+      "id": "t6",
+      "location": "Zürich, CH",
+      "notes": "Ask Prof. Weber for a contact",
+      "order": 6,
+      "status": "Not started",
+      "title": "Algorithm Intern"
+    },
+    {
+      "company": "Northwind Devices",
+      "eligType": "graduate",
+      "id": "t7",
+      "location": "Basel, CH",
+      "order": 7,
+      "status": "Rejected / closed",
+      "title": "Verification Intern"
+    }
+  ],
+  "targets": [
+    {
+      "id": "t8",
+      "name": "Kestrel Imaging",
+      "notes": "Message an engineer on LinkedIn",
+      "place": "Zürich, CH",
+      "placeOrder": 8,
+      "role": "",
+      "status": "Not started"
+    },
+    {
+      "id": "t9",
+      "name": "Solace Cardio",
+      "notes": "Find a contact",
+      "place": "Madrid, ES",
+      "placeOrder": 9,
+      "role": "",
+      "status": "Not started"
+    },
+    {
+      "id": "t10",
+      "name": "Brightline Neuro",
+      "place": "Geneva, CH",
+      "placeOrder": 10,
+      "role": "",
+      "status": "Not started"
+    },
+    {
+      "id": "t11",
+      "name": "Tidewater Labs",
+      "place": "Madrid, ES",
+      "placeOrder": 11,
+      "role": "",
+      "status": "Not started"
+    },
+    {
+      "id": "t12",
+      "name": "Orchid Wearables",
+      "place": "Lausanne, CH",
+      "placeOrder": 12,
+      "role": "",
+      "status": "Not started"
+    }
+  ]
+}

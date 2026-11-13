@@ -15,7 +15,8 @@ struct Sidebar: View {
                     .padding(.leading, t.sp12)
                     .padding(.top, t.sp20 + t.sp2)
                     .padding(.bottom, t.sp6)
-                ForEach(group.tabs) { tab in
+                // Health waits for its data (an activity export).
+                ForEach(group.tabs.filter { $0 != .health || store.d.hasHealthData }) { tab in
                     NavRow(tab: tab)
                 }
             }

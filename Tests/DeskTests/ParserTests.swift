@@ -304,6 +304,46 @@ final class ParserTests: XCTestCase {
         XCTAssertNil(Parse.board("[1, 2]", cal))
     }
 
+    func testSettingABoardStatusChangesOneLine() throws {
+        let text = """
+        {
+          "openings": [
+            {
+              "company": "Helix Diagnostics",
+              "id": "o1",
+              "status": "Not started",
+              "url": "https://example.com/helix"
+            },
+            {
+              "company": "Pulsewave",
+              "id": "o10",
+              "status": "Applied"
+            }
+          ]
+        }
+        """
+        let changed = try XCTUnwrap(Parse.setBoardStatus(text, id: "o1", status: "Interviewing"))
+        let before = Parse.splitLines(text), after = Parse.splitLines(changed)
+        XCTAssertEqual(zip(before, after).filter { $0 != $1 }.count, 1, "only the status line changes")
+        XCTAssertTrue(changed.contains("\"status\": \"Interviewing\","))
+        // "o1" is not "o10"; a status that is the object's last key keeps its missing comma.
+        let last = try XCTUnwrap(Parse.setBoardStatus(text, id: "o10", status: "Rejected / closed"))
+        XCTAssertTrue(last.contains("\"status\": \"Rejected / closed\"\n"))
+        XCTAssertTrue(last.contains("\"status\": \"Not started\","))
+        XCTAssertNil(Parse.setBoardStatus(text, id: "o2", status: "Applied"))
+        XCTAssertEqual(Parse.board(changed, DeskCalendar(timeZone: "Europe/Madrid"))?.first?.status, "interview")
+    }
+
+    func testStudentRowAndContactsWrites() throws {
+        let table = "| Initials | Level | Subject | Rate (€/h) | Pays by |\n|---|---|---|---|---|\n| AB | 2º Bach |  | 25 | Bizum |\n| CD | ESO | Physics | 22 | cash |\n"
+        let changed = try XCTUnwrap(Parse.updateStudentRow(table, initials: "AB", subject: "Maths | Physics", paysBy: "bank transfer"))
+        XCTAssertTrue(changed.contains("| AB | 2º Bach | Maths / Physics | 25 | bank transfer |"))
+        XCTAssertTrue(changed.contains("| CD | ESO | Physics | 22 | cash |"))
+        XCTAssertNil(Parse.updateStudentRow(table, initials: "ZZ", subject: "x"))
+        let json = Parse.contactsJSON(["AB": TutoringContact(parent: "Ana", student: "Álex", phone: "+34 600")])
+        XCTAssertEqual(Parse.json([String: TutoringContact].self, json, DeskCalendar(timeZone: "UTC"))?["AB"]?.phone, "+34 600")
+    }
+
     func testLessonsCSV() {
         let rows = Parse.lessons("month,initials,student,lessons,hours,rate,amount\n2026-10,AB,Ana Blanco,4,4.5,30,135\n2026-09,CD,Carlos,2,2,,\nnot a row\n")
         XCTAssertEqual(rows.count, 2)
@@ -411,13 +451,13 @@ final class ParserTests: XCTestCase {
 
     func testMalformedFilesAreReported() {
         let reader = VaultReader(root: DemoVault.url, overlay: [
-            VaultData.snapshotFile: "<html>", VaultData.settingsFile: "{", VaultData.targetsFile: "nope",
+            VaultData.snapshotFile: "<html>", VaultData.settingsFile: "{", VaultData.boardFile: "nope",
         ])
         let data = VaultData.load(reader)
         XCTAssertEqual(data.rows, [])
-        XCTAssertEqual(data.targets, [])
+        XCTAssertNil(data.targets)
         XCTAssertEqual(data.hint(VaultData.snapshotFile), "agent/snapshot.json could not be read.")
         XCTAssertEqual(data.hint(VaultData.settingsFile), "desk/settings.json could not be read.")
-        XCTAssertEqual(data.hint(VaultData.targetsFile), "internships/targets.json could not be read.")
+        XCTAssertEqual(data.hint(VaultData.boardFile), "internships/board.json could not be read.")
     }
 }
