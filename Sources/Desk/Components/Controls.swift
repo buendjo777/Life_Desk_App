@@ -155,9 +155,11 @@ struct ProgressBar: View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 Capsule().fill(onCard ? t.onAccent.opacity(t.onAccentWash + t.onAccentWash) : t.line)
-                Capsule()
-                    .fill(onCard ? t.onAccent.opacity(t.onAccentBlock) : t.fill(accent))
-                    .frame(width: max(0, min(1, value)) * proxy.size.width)
+                FilledIn(max(0, min(1, value))) { shown in
+                    Capsule()
+                        .fill(onCard ? t.onAccent.opacity(t.onAccentBlock) : t.fill(accent))
+                        .frame(width: shown * proxy.size.width)
+                }
             }
         }
         .frame(height: t.track)
@@ -266,9 +268,10 @@ struct RaisedPanel: ViewModifier {
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius ?? t.radiusPanel)
+        // A panel with a shadow floats over other content, so it is opaque; the rest are glass.
         content
-            .background(t.raised, in: shape)
-            .overlay(shape.strokeBorder(t.line, lineWidth: t.hairline))
+            .background(shadow ? t.floating : t.raised, in: shape)
+            .overlay(shape.strokeBorder(LinearGradient(colors: [t.glassEdge, t.line], startPoint: .top, endPoint: .bottom), lineWidth: t.hairline))
             .shadow(color: .black.opacity(shadow ? t.shadowOpacity : 0), radius: shadow ? t.shadowRadius : 0, y: shadow ? t.shadowY : 0)
     }
 }

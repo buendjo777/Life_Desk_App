@@ -43,7 +43,7 @@ final class ClickTests: XCTestCase {
         defer { window.close() }
         XCTAssertFalse(store.inspectorOpen)
         // The first row of "Important emails" in the 1440×900 design.
-        click(window, x: 857, y: 666)
+        click(window, x: 857, y: 695)
         XCTAssertEqual(store.selection, .row("email-1"))
         XCTAssertTrue(store.inspectorOpen)
     }

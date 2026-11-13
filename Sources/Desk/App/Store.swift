@@ -157,21 +157,41 @@ final class Store {
             data.events = liveEvents
         }
         let pinned = mode == .demo ? Parse.day(data.settings.demoToday, data.cal) : nil
-        d = Derived(data: data, now: pinned ?? Date())
+        d = derive(data, now: pinned ?? Date())
         if mode == .demo { lastSync = d.now.addingTimeInterval(-120) }
     }
+
+    /// Everything derived from the vault at `now`, with the day's starting point for the tide: the first look
+    /// of the day records what is open; later looks count today's ticks against it.
+    private func derive(_ data: VaultData, now: Date) -> Derived {
+        var derived = Derived(data: data, now: now)
+        let day = derived.cal.isoDay(now)
+        var start = prefs.dayStart
+        if start?.day != day {
+            start = DayStart(day: day, key: derived.paceNow.key, open: derived.paceNow.open)
+        } else if let known = start, derived.open(forPace: known.key) > known.open {
+            // Items were added during the day: the day's start grows with them.
+            start?.open = derived.open(forPace: known.key)
+        }
+        if start != prefs.dayStart { prefs.dayStart = start }
+        derived.dayStart = start.map { Derived.Pace(key: $0.key, open: $0.open) }
+        return derived
+    }
+
+    /// Movement is on: not in snapshots, and not when switched off in Customise.
+    var motion: Bool { !isSnapshot && prefs.motion }
 
     /// After Desk changed one file: re-parse just that file when it feeds one part of the model, else everything.
     private func reload(changed path: String) {
         var data = d.data
         guard data.refresh(path, from: reader) else { return reload() }
-        d = Derived(data: data, now: mode == .demo ? d.now : Date())
+        d = derive(data, now: mode == .demo ? d.now : Date())
     }
 
     /// Live only: moves the clock forward. The demo clock stays pinned.
     func tick() {
         guard mode == .live else { return }
-        d = Derived(data: d.data, now: Date())
+        d = derive(d.data, now: Date())
     }
 
     // MARK: Selection

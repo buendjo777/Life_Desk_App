@@ -117,7 +117,7 @@ struct DayStrip: View {
                             .offset(x: fraction * width - t.hairline, y: pillHeight - t.sp4)
                         Text(verbatim: d.cal.time(d.now))
                             .style(\.micro)
-                            .foregroundStyle(t.panelText)
+                            .foregroundStyle(t.canvas)
                             .frame(width: t.timeColumn, height: pillHeight)
                             .background(t.onAccent, in: Capsule())
                             .frame(width: t.timeColumn)

@@ -72,7 +72,8 @@ struct ProjectCard: View {
         .padding(t.sp12 + t.sp2)
         .frame(maxWidth: .infinity, minHeight: t.boardCardMin, alignment: .topLeading)
         .fixedSize(horizontal: false, vertical: true)
-        .background(selected ? t.focus : t.surface, in: RoundedRectangle(cornerRadius: t.radiusRow))
+        .background(selected ? t.selection : t.surface, in: RoundedRectangle(cornerRadius: t.radiusRow))
+        .overlay(RoundedRectangle(cornerRadius: t.radiusRow).strokeBorder(selected ? t.focus : .clear, lineWidth: t.hairline))
         .contentShape(RoundedRectangle(cornerRadius: t.radiusRow))
         .onTapGesture { store.open(.project(project.path)) }
         .accessibilityAction { store.open(.project(project.path)) }

@@ -174,10 +174,11 @@ struct SectionFlow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: t.sp16) {
-            ForEach(Array(TabLayout.rows(sections).enumerated()), id: \.offset) { _, row in
+            ForEach(Array(TabLayout.rows(sections).enumerated()), id: \.offset) { index, row in
                 WeightedRow(weights: row.map(\.width), spacing: t.sp16) {
                     ForEach(row) { $0.view }
                 }
+                .entrance(index + 1)
             }
         }
     }

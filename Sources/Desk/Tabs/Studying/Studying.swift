@@ -45,10 +45,12 @@ struct ProgressRing: View {
     var body: some View {
         ZStack {
             Circle().stroke(t.onAccent.opacity(t.onAccentWash + t.onAccentWash), lineWidth: t.ringLine)
-            Circle()
-                .trim(from: 0, to: max(0, min(1, value)))
-                .stroke(t.onAccent, style: StrokeStyle(lineWidth: t.ringLine, lineCap: .round))
-                .rotationEffect(.degrees(-90))
+            FilledIn(max(0, min(1, value))) { shown in
+                Circle()
+                    .trim(from: 0, to: shown)
+                    .stroke(t.focus, style: StrokeStyle(lineWidth: t.ringLine, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
             VStack(spacing: 0) {
                 Text(verbatim: label).style(\.figure)
                 Text(verbatim: caption).style(\.caption).opacity(t.captionOpacity)
@@ -189,6 +191,9 @@ struct TopicColumn: View {
 struct CheckLine: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Bumped on each tick: the sparks play once.
+    @State private var ticks = 0
     let path: String
     let check: Check
 
@@ -198,11 +203,14 @@ struct CheckLine: View {
         HStack(spacing: t.sp8) {
             Button {
                 store.selection = item
+                if !check.done, store.motion, !reduceMotion { ticks += 1 }
                 store.toggleCheck(path: path, line: check.line)
             } label: {
                 Image(systemName: check.done ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: t.symbol, weight: .medium))
-                    .foregroundStyle(check.done ? t.goodDeep : t.inkMuted)
+                    .foregroundStyle(check.done ? t.good : t.inkMuted)
+                    .symbolEffect(.bounce, value: ticks)
+                    .background(Sparks(trigger: ticks))
             }
             .buttonStyle(.plain)
             .disabled(!store.canWrite(path))
@@ -216,7 +224,7 @@ struct CheckLine: View {
         }
         .padding(.vertical, t.sp2)
         .padding(.horizontal, t.sp6)
-        .background(selected ? t.tint(.focus) : .clear, in: RoundedRectangle(cornerRadius: t.radiusSmall))
+        .background(selected ? t.selection : .clear, in: RoundedRectangle(cornerRadius: t.radiusSmall))
         .contentShape(Rectangle())
         .onTapGesture { store.selection = item }
         .accessibilityAction { store.selection = item }

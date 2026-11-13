@@ -13,6 +13,13 @@ enum Appearance: String, CaseIterable, Identifiable, Codable {
     }
 }
 
+/// What was open in the study plan when the day began: today's ticks are counted against it.
+struct DayStart: Codable, Equatable {
+    var day: String
+    var key: String
+    var open: Int
+}
+
 /// A tab's saved layout: section order and the hidden ones.
 struct TabPrefs: Codable, Equatable {
     var order: [String] = []
@@ -33,6 +40,10 @@ final class Preferences {
     var wantsLive: Bool { didSet { defaults?.set(wantsLive, forKey: "wantsLive") } }
     var density: Density { didSet { defaults?.set(density.rawValue, forKey: "density") } }
     var appearance: Appearance { didSet { defaults?.set(appearance.rawValue, forKey: "appearance") } }
+    var palette: Palette { didSet { defaults?.set(palette.rawValue, forKey: "palette") } }
+    /// The living backdrop, hover lift, entrances and sparks. Reduce Motion switches them off as well.
+    var motion: Bool { didSet { defaults?.set(motion, forKey: "motion") } }
+    var dayStart: DayStart? { didSet { defaults?.set(try? JSONEncoder().encode(dayStart), forKey: "dayStart") } }
     var layouts: [String: TabPrefs] {
         didSet { defaults?.set(try? JSONEncoder().encode(layouts), forKey: "layouts") }
     }
@@ -45,6 +56,10 @@ final class Preferences {
         wantsLive = defaults.map { $0.object(forKey: "wantsLive") as? Bool ?? true } ?? false
         density = defaults?.string(forKey: "density").flatMap(Density.init) ?? .compact
         appearance = defaults?.string(forKey: "appearance").flatMap(Appearance.init) ?? .system
+        palette = defaults?.string(forKey: "palette").flatMap(Palette.init) ?? .ember
+        // Without stored preferences (tests, snapshots) nothing moves: clicks land where the layout says.
+        motion = defaults.map { $0.object(forKey: "motion") as? Bool ?? true } ?? false
+        dayStart = defaults?.data(forKey: "dayStart").flatMap { try? JSONDecoder().decode(DayStart.self, from: $0) }
         layouts = defaults?.data(forKey: "layouts").flatMap { try? JSONDecoder().decode([String: TabPrefs].self, from: $0) } ?? [:]
     }
 

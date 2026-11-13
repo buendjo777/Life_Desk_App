@@ -24,6 +24,14 @@ struct CustomiseView: View {
                 Spacer()
                 Text(verbatim: prefs.density == .compact ? "The mockup's spacing." : "More space, fewer rows.").style(\.small, \.inkMuted)
             }
+            HStack(spacing: t.sp12) {
+                Text(verbatim: "Colours").style(\.smallStrong, \.ink)
+                CountedTabs(items: Palette.allCases.map { .init(id: $0, title: $0.title) }, selection: $prefs.palette)
+                Spacer()
+                Toggle(isOn: $prefs.motion) { Text(verbatim: "Motion").style(\.small, \.ink) }
+                    .toggleStyle(.switch).controlSize(.small)
+                    .help("The living background, hover lift, entrances and sparks")
+            }
             CountedTabs(items: Tab.sidebar.map { .init(id: $0, title: $0.title) }, selection: $tab)
             Scroller {
                 VStack(spacing: t.sp6) {

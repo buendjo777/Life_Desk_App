@@ -99,13 +99,87 @@ extension Derived {
     }
 
     /// Today's share: in each group, its open items ÷ the days left, rounded up, so every group ends on time.
+    /// Ticks made today count against today's share: tick one and the share shrinks by one,
+    /// down to "done for today".
     func todaysShare(_ list: StudyList) -> [Check] {
         let days = max(1, daysLeft(list) ?? 1)
-        return list.groups.flatMap { group -> [Check] in
+        var share = list.groups.map { group -> [Check] in
             let open = group.items.filter { !$0.done }
-            return Array(open.prefix(Int((Double(open.count) / Double(days)).rounded(.up))))
+            return Array(open.prefix(Self.quota(open.count, days: days)))
         }
+        if let start = dayStart, start.key == Self.paceKey(list) {
+            let left = max(0, Self.quota(start.open, days: days) - (start.open - list.open.count))
+            // Trim the longest group first, so every group keeps a turn.
+            while share.map(\.count).reduce(0, +) > left, let longest = share.indices.max(by: { share[$0].count < share[$1].count }) {
+                share[longest].removeLast()
+            }
+        }
+        return share.flatMap { $0 }
     }
+
+    /// `open` items spread over `days`, rounded up.
+    static func quota(_ open: Int, days: Int) -> Int {
+        Int((Double(open) / Double(max(1, days))).rounded(.up))
+    }
+
+    // MARK: The day's tide (the glow in the backdrop)
+
+    static let papersPace = "papers"
+    static func paceKey(_ list: StudyList) -> String { "list:\(list.title)" }
+
+    /// The list in play: open, and not past its due day.
+    var activeList: StudyList? { openLists.first { (daysLeft($0) ?? 0) >= 1 } }
+
+    /// What sets today's pace right now: the list in play, else the past papers.
+    var paceNow: Pace {
+        activeList.map { Pace(key: Self.paceKey($0), open: $0.open.count) }
+            ?? Pace(key: Self.papersPace, open: open(forPace: Self.papersPace))
+    }
+
+    func open(forPace key: String) -> Int {
+        if key == Self.papersPace { return study?.papers.filter { !$0.done }.count ?? 0 }
+        return study?.lists.first { Self.paceKey($0) == key }?.open.count ?? 0
+    }
+
+    private var paceStart: Pace { dayStart ?? paceNow }
+
+    /// Study items today asks for: a list's share, or the papers the plan was short of this morning.
+    var studyQuota: Int {
+        let start = paceStart
+        if start.key == Self.papersPace {
+            let doneAtStart = (study?.papers.count ?? 0) - start.open
+            return max(0, plannedPapers(by: today) - doneAtStart)
+        }
+        guard let list = study?.lists.first(where: { Self.paceKey($0) == start.key }) else { return 0 }
+        return Self.quota(start.open, days: max(1, daysLeft(list) ?? 1))
+    }
+
+    var studyDoneToday: Int { max(0, paceStart.open - open(forPace: paceStart.key)) }
+
+    private var tasksDueToday: [TaskItem] { data.tasks.filter { $0.due.map { cal.isSameDay($0, today) } == true } }
+
+    /// Today's work done, 0…1: study items against today's quota, plus the tasks due today.
+    var dayTide: Double {
+        let total = studyQuota + tasksDueToday.count
+        guard total > 0 else { return 0 }
+        return min(1, Double(min(studyDoneToday, studyQuota) + tasksDueToday.filter(\.done).count) / Double(total))
+    }
+
+    /// "3 of 9 done today", or `nil` when today asks for nothing.
+    var dayTideText: String? {
+        let total = studyQuota + tasksDueToday.count
+        guard total > 0 else { return nil }
+        let done = min(studyDoneToday, studyQuota) + tasksDueToday.filter(\.done).count
+        return done >= total ? "Today's work is done." : "\(done) of \(total) done today"
+    }
+
+    /// Where the day stands between its first and last hour, 0…1 (the column of light in the backdrop).
+    var dayFraction: Double {
+        min(1, max(0, Self.stripFraction(cal.hours(now))))
+    }
+
+    /// A deadline within two days: the backdrop drifts faster.
+    var deadlineIsClose: Bool { (distinctDeadlines.first?.daysLeft ?? .max) <= 2 }
 
     /// "Due Sun 15 Nov · 4 days left · 20 to go".
     func listSubtitle(_ list: StudyList) -> String {
@@ -129,9 +203,13 @@ extension Derived {
     /// `plan_start` the next open topics.
     var studyTarget: StudyTarget? {
         guard let study else { return nil }
-        if let list = openLists.first(where: { (daysLeft($0) ?? 0) >= 1 }), let due = list.due {
+        if let list = activeList, let due = list.due {
             let share = todaysShare(list)
             let video = share.compactMap(Self.minutes).reduce(0, +)
+            if share.isEmpty {
+                return StudyTarget(headline: "Done for today", detail: "\(list.open.count) left, due \(cal.format(due, "EEEE")). Ahead of the pace.",
+                                   items: list.open.prefix(1).map { "Next: \($0.title)" })
+            }
             return StudyTarget(
                 headline: "\(Self.plural(share.count, "item")) today",
                 detail: "\(list.open.count) left, due \(cal.format(due, "EEEE"))" + (video > 0 ? " · \(Self.durationText(video * 60)) of video today." : "."),

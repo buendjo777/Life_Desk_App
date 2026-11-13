@@ -6,39 +6,69 @@ import SwiftUI
 struct Theme {
     var scheme: ColorScheme = .light
     var density: Density = .compact
+    var palette: Palette = .ember
+    /// Opaque surfaces instead of glass: Reduce Transparency or Increase Contrast is on.
+    var solid = false
+
+    private var c: Palette.Colors { palette.colors }
+    private var isDark: Bool { scheme == .dark }
 
     private func pick(_ light: UInt32, _ dark: UInt32) -> Color {
-        Color(hex: scheme == .dark ? dark : light)
+        Color(hex: isDark ? dark : light)
     }
 
-    // MARK: Palette (DESIGN.md)
+    /// A signal colour, given as (dark mode, light mode).
+    private func signal(_ pair: (UInt32, UInt32), shade: Double = 1) -> Color {
+        Color(hex: (isDark ? pair.0 : pair.1).shaded(shade))
+    }
 
-    var canvas: Color { pick(0xECE8E1, 0x101215) }
-    var panel: Color { pick(0x16181C, 0x08090B) }
-    var primary: Color { pick(0x16181C, 0xECE8E1) }
-    var onPrimary: Color { pick(0xECE8E1, 0x101215) }
-    var control: Color { pick(0x16181C, 0x23272D) }
-    var panelText: Color { Color(hex: 0xECE8E1) }
-    var panelMuted: Color { pick(0x8C8A84, 0x77756F) }
-    var surface: Color { pick(0xE2DDD4, 0x1A1D22) }
-    var raised: Color { pick(0xF7F4EF, 0x23272D) }
-    var line: Color { pick(0xD2CCC1, 0x2E333A) }
-    var ink: Color { pick(0x16181C, 0xECE8E1) }
-    var inkMuted: Color { pick(0x5F5D57, 0x9C9990) }
-    var onAccent: Color { Color(hex: 0x16181C) }
-    var caution: Color { Color(hex: 0xD4A23F) }
-    var cautionDeep: Color { Color(hex: 0xB4842A) }
-    var focus: Color { Color(hex: 0xC8763C) }
-    var focusDeep: Color { Color(hex: 0xA35A2A) }
-    var info: Color { Color(hex: 0x8EA6BE) }
-    var infoDeep: Color { Color(hex: 0x6C88A5) }
-    var good: Color { Color(hex: 0x8A9A5B) }
-    var goodDeep: Color { Color(hex: 0x6B7A41) }
-    var deep: Color { pick(0x1F2C3B, 0x2A3B4F) }
-    var deepDeep: Color { pick(0x101A26, 0x1B2836) }
-    var alert: Color { pick(0xA8432F, 0xC9573F) }
-    /// The sidebar and the round buttons get a hairline border in dark mode only.
-    var panelBorder: Color { scheme == .dark ? line : .clear }
+    // MARK: Palette (Palette.swift holds the hex values; DESIGN.md explains the roles)
+
+    /// The flat colour under the backdrop, and behind sheets.
+    var canvas: Color { pick(c.fieldLight[0], c.field[0]) }
+    var panel: Color { Color(hex: isDark ? c.field[0] : c.deep).opacity(solid ? 1 : isDark ? panelGlassDark : panelGlassLight) }
+    var primary: Color { pick(c.deep, c.bright) }
+    var onPrimary: Color { pick(0xFFFFFF, c.field[0]) }
+    var control: Color { isDark ? Color(hex: c.field[2]).opacity(solid ? 1 : raisedGlass) : Color(hex: c.deep) }
+    var panelText: Color { Color(hex: c.ink) }
+    var panelMuted: Color { Color(hex: c.muted).opacity(captionOpacity) }
+    /// Glass: a card or row over the backdrop.
+    var surface: Color {
+        if solid { return pick(0xFFFFFF, c.field[1]) }
+        return isDark ? Color.white.opacity(surfaceGlassDark) : Color.white.opacity(surfaceGlassLight)
+    }
+    /// Brighter glass: search field, event cards, hover.
+    var raised: Color {
+        if solid { return pick(0xFFFFFF, c.field[2]) }
+        return isDark ? Color.white.opacity(raisedGlass) : Color.white.opacity(raisedGlassLight)
+    }
+    /// Opaque: panels that float over other content (the inspector, search results, popovers).
+    var floating: Color { pick(0xFFFFFF, c.field[1].mixed(with: c.field[2], 0.5)) }
+    var line: Color { isDark ? Color.white.opacity(lineGlass) : Color(hex: c.inkLight).opacity(lineGlass) }
+    /// The light edge on glass: brighter at the top, as if lit from above.
+    var glassEdge: Color { Color.white.opacity(isDark ? edgeGlassDark : edgeGlassLight) }
+    var ink: Color { pick(c.inkLight, c.ink) }
+    var inkMuted: Color { pick(c.mutedLight, c.muted) }
+    /// Text on a tinted glass card: the same ink as everywhere else.
+    var onAccent: Color { ink }
+    /// The bright accent: today, selection, the one thing to look at.
+    var focus: Color { pick(c.focusLight, c.bright) }
+    var focusDeep: Color { pick(c.focusLight.shaded(deepShade), c.bright.shaded(deepShade)) }
+    /// Text on a solid `focus` fill.
+    var onFocus: Color { pick(0xFFFFFF, c.field[0]) }
+    /// A selected row: glass washed with the accent.
+    var selection: Color { focus.opacity(selectionWash) }
+    var caution: Color { signal(c.caution) }
+    var cautionDeep: Color { signal(c.caution, shade: deepShade) }
+    var info: Color { signal(c.info) }
+    var infoDeep: Color { signal(c.info, shade: deepShade) }
+    var good: Color { signal(c.good) }
+    var goodDeep: Color { signal(c.good, shade: deepShade) }
+    var deep: Color { pick(c.deep, c.field[2]) }
+    var deepDeep: Color { pick(c.deep.shaded(deepShade), c.field[1]) }
+    var alert: Color { signal(c.alert) }
+    /// The sidebar and the round buttons get a hairline border.
+    var panelBorder: Color { isDark ? line : .clear }
     /// The window's traffic lights, drawn only in offscreen snapshots.
     var lights: [Color] { [Color(hex: 0xFF5F57), Color(hex: 0xFEBC2E), Color(hex: 0x28C840)] }
 
@@ -71,14 +101,55 @@ struct Theme {
         accent == .neutral ? line.opacity(tintOpacity + tintOpacity) : fill(accent).opacity(tintOpacity)
     }
 
-    /// Text colour on a card filled with the accent.
-    func on(_ accent: Accent) -> Color {
-        switch accent {
-        case .deep, .alert: panelText
-        case .neutral: ink
-        default: onAccent
-        }
+    /// Text colour on a card washed with the accent.
+    func on(_ accent: Accent) -> Color { ink }
+
+    /// The wash of a stat card: the accent fading across the glass, top left to bottom right.
+    func wash(_ accent: Accent) -> [Color] {
+        accent == .neutral ? [.clear, .clear] : [fill(accent).opacity(isDark ? washStrongDark : washStrong), fill(accent).opacity(washFaint)]
     }
+
+    // MARK: Backdrop (Shell/Backdrop.swift)
+
+    var fieldStops: [Color] { (isDark ? c.field : c.fieldLight).map { Color(hex: $0) } }
+    /// Two slow drifts of colour in the field.
+    var auroraCool: Color { Color(hex: isDark ? c.field[2].mixed(with: c.info.0, 0.25) : c.info.0).opacity(isDark ? 0.50 : 0.28) }
+    var auroraWarm: Color { Color(hex: isDark ? c.glow : c.glowLight).opacity(isDark ? 0.14 : 0.30) }
+    /// The day's tide: the second strong colour, rising and brightening as today's work gets done.
+    func tide(_ progress: Double) -> Color {
+        Color(hex: isDark ? c.glow : c.glowLight).opacity(tideFloor + tideGain * progress)
+    }
+    /// The tide's core: the bright accent, a sun on the horizon that only shows once work is being done.
+    func tideCore(_ progress: Double) -> Color {
+        Color(hex: isDark ? c.bright : c.focusLight.mixed(with: c.glowLight, 0.4)).opacity(tideCoreGain * progress)
+    }
+    /// The ribs of the fluted glass: a shadow line and a highlight per rib.
+    var fluteShadow: Color { Color.black.opacity(isDark ? 0.16 : 0.035) }
+    var fluteLight: Color { Color.white.opacity(isDark ? 0.045 : 0.22) }
+    /// The column of light at the current time of day.
+    var nowLight: Color { Color.white.opacity(isDark ? 0.10 : 0.35) }
+
+    // MARK: Glass
+
+    let surfaceGlassDark = 0.075
+    let surfaceGlassLight = 0.56
+    let raisedGlass = 0.14
+    let raisedGlassLight = 0.84
+    let panelGlassDark = 0.55
+    let panelGlassLight = 0.94
+    let lineGlass = 0.13
+    let edgeGlassDark = 0.24
+    let edgeGlassLight = 0.95
+    let selectionWash = 0.20
+    let washStrong = 0.34
+    /// Bright accents over a dark field turn muddy when strong, so the wash is lighter there.
+    let washStrongDark = 0.20
+    let washFaint = 0.07
+    let shapeWash = 0.26
+    let deepShade = 0.78
+    let tideFloor = 0.55
+    let tideGain = 0.30
+    let tideCoreGain = 0.55
 
     // MARK: Opacity
 
@@ -98,10 +169,10 @@ struct Theme {
 
     // MARK: Type (DESIGN.md)
 
-    var display: TextStyle { .init(size: 40, weight: .bold, tracking: -0.8) }
-    var title: TextStyle { .init(size: 28, weight: .bold, tracking: -0.5) }
+    var display: TextStyle { .init(size: 42, weight: .semibold, tracking: -0.6, serif: true) }
+    var title: TextStyle { .init(size: 30, weight: .semibold, tracking: -0.4, serif: true) }
     var section: TextStyle { .init(size: 20, weight: .semibold, tracking: -0.2) }
-    var brand: TextStyle { .init(size: 26, weight: .bold, tracking: -0.6) }
+    var brand: TextStyle { .init(size: 27, weight: .semibold, tracking: -0.4, serif: true) }
     var cardTitle: TextStyle { .init(size: 17, weight: .semibold) }
     var figure: TextStyle { .init(size: 26, weight: .bold, tracking: -0.4, monoDigits: true) }
     var figureUnit: TextStyle { .init(size: 15, weight: .semibold) }
@@ -206,6 +277,34 @@ struct Theme {
     // MARK: Motion
 
     let motion: Double = 0.18
+    /// Hover: a card rises a little and its shadow grows.
+    let liftScale = 1.012
+    let liftRise: CGFloat = 2
+    let liftResponse = 0.3
+    let liftDamping = 0.8
+    /// The shape inside a stat card drifts this far towards the pointer.
+    let parallax: CGFloat = 10
+    /// Sections fade up one after another when a tab opens.
+    let entranceRise: CGFloat = 12
+    let entrance = 0.36
+    let entranceStagger = 0.045
+    let entranceMaxDelay = 0.27
+    /// Bars and rings fill when they appear.
+    let fillIn = 0.7
+    /// A tick: eight sparks fly out.
+    let sparks = 8
+    let sparkSize: CGFloat = 4
+    let sparkReach: CGFloat = 20
+    let sparkTime = 0.5
+    /// The backdrop: frames per second, the width of a glass rib, how fast the colours drift.
+    let backdropFPS = 20.0
+    let flute: CGFloat = 18
+    let nowRibs: CGFloat = 3
+    let drift = 1.0
+    let driftUrgent = 1.7
+    /// The tide a snapshot is drawn with (the demo has no ticks made "today").
+    let showcaseTide = 0.6
+    let tideSettle = 1.4
 
     // MARK: Timing
 
@@ -231,9 +330,11 @@ struct TextStyle {
     var uppercase = false
     var monoDigits = false
     var monospaced = false
+    /// Headlines are set in the system serif (New York).
+    var serif = false
 
     var font: Font {
-        let base = Font.system(size: size, weight: weight, design: monospaced ? .monospaced : .default)
+        let base = Font.system(size: size, weight: weight, design: monospaced ? .monospaced : serif ? .serif : .default)
         return monoDigits ? base.monospacedDigit() : base
     }
 }

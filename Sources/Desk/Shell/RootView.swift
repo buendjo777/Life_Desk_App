@@ -4,10 +4,13 @@ import SwiftUI
 struct RootView: View {
     @Environment(Store.self) private var store
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
     @FocusState private var keysFocused: Bool
 
     var body: some View {
-        let t = Theme(scheme: scheme, density: store.prefs.density)
+        let t = Theme(scheme: scheme, density: store.prefs.density, palette: store.prefs.palette,
+                      solid: reduceTransparency || contrast == .increased)
         HStack(spacing: 0) {
             Sidebar().padding(t.sidebarInset)
             TabHost()
@@ -15,6 +18,7 @@ struct RootView: View {
                 .padding(.trailing, t.columnGap)
                 .padding(.top, t.columnGap)
         }
+        .background { Backdrop() }
         .background(t.canvas)
         .background {
             if !store.isSnapshot {
@@ -97,7 +101,7 @@ struct TabHost: View {
             HStack(alignment: .top, spacing: t.columnGap) {
                 Scroller {
                     VStack(alignment: .leading, spacing: t.sp20 + t.sp2) {
-                        TabHeader()
+                        TabHeader().entrance(0)
                         if let empty = store.d.emptyState(for: store.tab) {
                             EmptyState(line: empty.line, hint: empty.hint)
                         } else {
@@ -107,12 +111,17 @@ struct TabHost: View {
                     .padding(.top, t.sp8)
                     .padding(.bottom, t.columnGap)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    // A new identity per tab: the sections make their entrance again.
+                    .id(store.tab)
                 }
                 if !rail.isEmpty {
                     Scroller {
                         VStack(alignment: .leading, spacing: t.sp12 + t.sp2) {
-                            ForEach(rail) { $0.view }
+                            ForEach(Array(rail.enumerated()), id: \.element.id) { index, section in
+                                section.view.entrance(index + 2)
+                            }
                         }
+                        .id(store.tab)
                         .padding(.bottom, t.columnGap)
                     }
                     .frame(width: t.railWidth)
@@ -150,6 +159,14 @@ struct TabHeader: View {
                 .lineSpacing(t.sp4)
                 .frame(maxWidth: t.summaryWidth, alignment: .leading)
                 .fixedSize(horizontal: false, vertical: true)
+            if store.tab == .today, let tide = store.d.dayTideText {
+                // The tide in words: the same number the glow behind the window is drawn from.
+                HStack(spacing: t.sp10) {
+                    ProgressBar(value: store.d.dayTide, accent: .focus).frame(width: t.railWidth / 2)
+                    Text(verbatim: tide).style(\.small, \.inkMuted)
+                }
+                .padding(.top, t.sp4)
+            }
         }
     }
 }

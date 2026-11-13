@@ -11,7 +11,7 @@ struct SearchBar: View {
         HStack(spacing: t.sp10) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: t.symbol, weight: .semibold))
-                .foregroundStyle(t.onAccent)
+                .foregroundStyle(t.onFocus)
                 .frame(width: t.badge, height: t.badge)
                 .background(t.focus, in: Circle())
                 .accessibilityHidden(true)

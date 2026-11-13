@@ -76,7 +76,7 @@ struct MonthCalendar: View {
             store.selectedDay = cell.isToday ? nil : cell.date
         } label: {
             Text(verbatim: String(cell.day))
-                .style(cell.isToday ? \.bodyStrong : \.nav, cell.isToday ? \.onAccent : cell.isWeekend ? \.inkMuted : \.ink)
+                .style(cell.isToday ? \.bodyStrong : \.nav, cell.isToday ? \.onFocus : cell.isWeekend ? \.inkMuted : \.ink)
                 .frame(width: t.calendarToday, height: t.calendarToday)
                 .background(cell.isToday ? t.focus : selected ? t.surface : .clear, in: Circle())
                 .frame(maxWidth: .infinity)
@@ -286,7 +286,7 @@ struct NowLine: View {
     var body: some View {
         HStack(spacing: t.sp6) {
             Text(verbatim: time)
-                .style(\.micro, \.onAccent)
+                .style(\.micro, \.onFocus)
                 .fixedSize()
                 .padding(.horizontal, t.sp4 + t.sp2)
                 .padding(.vertical, t.sp2)

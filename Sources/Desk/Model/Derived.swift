@@ -5,6 +5,14 @@ import Foundation
 struct Derived {
     let data: VaultData
     let now: Date
+    /// What was open in the study plan when today began (kept by the Store). `nil`: today starts now.
+    var dayStart: Pace?
+
+    /// The part of the study plan that sets today's pace, and how much of it is open.
+    struct Pace: Equatable {
+        var key: String
+        var open: Int
+    }
 
     var cal: DeskCalendar { data.cal }
     var today: Date { cal.startOfDay(now) }
