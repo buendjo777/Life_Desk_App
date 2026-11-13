@@ -17,10 +17,10 @@ enum Parse {
             guard let date = cal.date(year: year, month: month, day: day, hour: hour ?? 0, minute: minute ?? 0) else { return nil }
             return Stamp(date: date, hasTime: hour != nil)
         }
-        let formatter = ISO8601DateFormatter()
-        for options: ISO8601DateFormatter.Options in [[.withInternetDateTime], [.withInternetDateTime, .withFractionalSeconds]] {
-            formatter.formatOptions = options
-            if let date = formatter.date(from: text) { return Stamp(date: date, hasTime: true) }
+        for fractional in [false, true] {
+            if let date = Formatters.iso(timeZone: cal.calendar.timeZone, fractional: fractional).date(from: text) {
+                return Stamp(date: date, hasTime: true)
+            }
         }
         return nil
     }
@@ -82,10 +82,15 @@ enum Parse {
         return (fields, end + 1)
     }
 
-    /// A `- [ ]` or `- [x]` line.
+    /// A `- [ ]` or `- [x]` line (`*` works too, indented or not). Matched by hand rather than with a regex:
+    /// every line of every Markdown file goes through here on each reload.
     static func checkbox(_ line: String) -> (done: Bool, title: String)? {
-        guard let match = line.wholeMatch(of: /\s*[-*] \[([ xX])\] (.*)/) else { return nil }
-        return (match.1 != " ", match.2.trimmingCharacters(in: .whitespaces))
+        let rest = line.drop(while: \.isWhitespace)
+        guard let bullet = rest.first, bullet == "-" || bullet == "*" else { return nil }
+        let box = Array(rest.dropFirst().prefix(5))
+        guard box.count == 5, box[0] == " ", box[1] == "[", box[3] == "]", box[4] == " ",
+              box[2] == " " || box[2] == "x" || box[2] == "X" else { return nil }
+        return (box[2] != " ", rest.dropFirst(6).trimmingCharacters(in: .whitespaces))
     }
 
     /// `## Heading` text, or `nil`.
@@ -240,8 +245,46 @@ enum Parse {
         return StudyFile(
             exam: fields["exam"] ?? "", date: day(fields["date"], cal),
             planPerDay: min(maxPlanPerDay, max(0, fields["plan_per_day"].flatMap(Int.init) ?? 0)), planStart: day(fields["plan_start"], cal),
-            theory: group("Theory"), problems: group("Problems"), papers: papers
+            theory: group("Theory"), problems: group("Problems"), papers: papers,
+            lists: studyLists(lines, from: bodyStart, cal)
         )
+    }
+
+    static let studySections: Set<String> = ["Theory", "Problems", "Past papers"]
+
+    /// The study file's own lists: each other `##` section with checkboxes, its `###` headings as groups.
+    /// "This weekend — due 2026-11-15" gives the title "This weekend" and the due day.
+    static func studyLists(_ lines: [String], from start: Int, _ cal: DeskCalendar) -> [StudyList] {
+        var lists: [StudyList] = []
+        var inList = false
+        for index in lines.indices.dropFirst(start) {
+            let line = lines[index]
+            if let title = heading(line) {
+                inList = !studySections.contains(title)
+                if inList { lists.append(studyList(title, line: index, cal)) }
+            } else if inList, let title = heading(line, level: 3) {
+                lists[lists.count - 1].groups.append(StudyList.Group(title: title, items: [], line: index))
+            } else if inList, let box = checkbox(line) {
+                let list = lists.count - 1
+                if lists[list].groups.isEmpty {
+                    lists[list].groups.append(StudyList.Group(title: lists[list].title, items: [], line: index))
+                }
+                lists[list].groups[lists[list].groups.count - 1].items.append(Check(title: box.title, done: box.done, line: index))
+            }
+        }
+        return lists.compactMap { list in
+            var list = list
+            list.groups.removeAll { $0.items.isEmpty }
+            return list.groups.isEmpty ? nil : list
+        }
+    }
+
+    private static func studyList(_ heading: String, line: Int, _ cal: DeskCalendar) -> StudyList {
+        guard let match = heading.firstMatch(of: /\s*[—–-]*\s*\b[Dd]ue\s+(.+)$/) else {
+            return StudyList(title: heading, due: nil, groups: [], line: line)
+        }
+        let title = heading[..<match.range.lowerBound].trimmingCharacters(in: .whitespaces)
+        return StudyList(title: title.isEmpty ? heading : title, due: looseDate(String(match.1), cal)?.date, groups: [], line: line)
     }
 
     static func project(path: String, _ text: String, _ cal: DeskCalendar) -> Project? {

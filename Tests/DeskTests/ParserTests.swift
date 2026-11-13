@@ -241,6 +241,44 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(data.events.filter { $0.calendar == "Tutoring" }.count, 36)
     }
 
+    func testStudyLists() throws {
+        let cal = DeskCalendar(timeZone: "Europe/Madrid")
+        let text = """
+        ---
+        exam: Statics
+        ---
+        ## This weekend — due 2026-11-15
+        ### Classes
+        - [ ] Session 5 · Multiple choice · 105 min
+        - [x] Session 6 · 117 min
+        ### Sheets
+        - [ ] Sheet 1
+        ## Theory
+        - [ ] T1 Statics
+        ## Overdue bits
+        - [ ] A loose item
+        ## Notes
+        Plain text, no boxes.
+        """
+        let study = try XCTUnwrap(Parse.study(text, cal))
+        XCTAssertEqual(study.lists.map(\.title), ["This weekend", "Overdue bits"])
+        XCTAssertEqual(study.lists[0].due, Parse.day("2026-11-15", cal))
+        XCTAssertEqual(study.lists[0].groups.map(\.title), ["Classes", "Sheets"])
+        XCTAssertEqual(study.lists[0].items.map(\.done), [false, true, false])
+        // "Overdue" is not a due date, and a list without `###` is one group named like the list.
+        XCTAssertNil(study.lists[1].due)
+        XCTAssertEqual(study.lists[1].groups.map(\.title), ["Overdue bits"])
+        XCTAssertEqual(study.theory.map(\.title), ["T1 Statics"])
+        XCTAssertEqual(Derived.minutes(study.lists[0].items[0]), 105)
+        XCTAssertEqual(Parse.study("## Week — due 15 Nov 2026\n- [ ] One", cal)?.lists.first?.due, Parse.day("2026-11-15", cal))
+        // Checkboxes, by hand: indented, starred, or not a box at all.
+        XCTAssertEqual(Parse.checkbox("  * [X] Done")?.done, true)
+        XCTAssertEqual(Parse.checkbox("- [ ] Spaced  ")?.title, "Spaced")
+        XCTAssertNil(Parse.checkbox("- [ ]"))
+        XCTAssertNil(Parse.checkbox("- [y] No"))
+        XCTAssertNil(Parse.checkbox("-[ ] No"))
+    }
+
     func testLessonsCSV() {
         let rows = Parse.lessons("month,initials,student,lessons,hours,rate,amount\n2026-10,AB,Ana Blanco,4,4.5,30,135\n2026-09,CD,Carlos,2,2,,\nnot a row\n")
         XCTAssertEqual(rows.count, 2)

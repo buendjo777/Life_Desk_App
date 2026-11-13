@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum Mode: String, Codable, CaseIterable, Identifiable {
@@ -41,6 +42,15 @@ final class Store {
     @ObservationIgnored private var epoch = 0
     /// Live calendar events, refreshed on sync.
     @ObservationIgnored private var liveEvents: [CalEvent] = []
+    /// Live: changes waiting behind a git job, shown at once (path → text). Each path counts its waiting writes.
+    @ObservationIgnored private var pendingText: [String: String] = [:]
+    @ObservationIgnored private var pendingCount: [String: Int] = [:]
+    /// Live: committed files changed since the last sync. They are synced together once ticking pauses.
+    @ObservationIgnored private var dirty: Set<String> = []
+    @ObservationIgnored private var syncTimer: Task<Void, Never>?
+    @ObservationIgnored private var quitObserver: NSObjectProtocol?
+    /// How long Desk waits after the last change before it commits and pushes.
+    static let syncPause: Duration = .seconds(2)
     /// Why the live calendar is empty, if it is.
     private(set) var calendarHint: String?
 
@@ -75,6 +85,9 @@ final class Store {
         self.demoVault = demoVault
         self.calendar = calendar
         resolveMode()
+        quitObserver = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.commitBeforeQuit() }
+        }
         // In exam mode Studying is the first screen.
         tab = d.examMode ? .studying : .today
         selection = d.focus.first.map { .row($0.id) }
@@ -108,6 +121,11 @@ final class Store {
         lastSync = nil
         busy = 0
         pending = nil
+        pendingText = [:]
+        pendingCount = [:]
+        dirty = []
+        syncTimer?.cancel()
+        syncTimer = nil
         epoch += 1
         mode = next
         git = next == .live ? VaultGit(root: prefs.vaultURL) : nil
@@ -123,7 +141,7 @@ final class Store {
     }
 
     private var reader: VaultReader {
-        VaultReader(root: vaultURL, overlay: mode == .demo ? overlay : [:])
+        VaultReader(root: vaultURL, overlay: mode == .demo ? overlay : pendingText)
     }
 
     /// Re-reads the vault and recomputes everything. Demo pins the clock to `demo_today`.
@@ -138,6 +156,13 @@ final class Store {
         let pinned = mode == .demo ? Parse.day(data.settings.demoToday, data.cal) : nil
         d = Derived(data: data, now: pinned ?? Date())
         if mode == .demo { lastSync = d.now.addingTimeInterval(-120) }
+    }
+
+    /// After Desk changed one file: re-parse just that file when it feeds one part of the model, else everything.
+    private func reload(changed path: String) {
+        var data = d.data
+        guard data.refresh(path, from: reader) else { return reload() }
+        d = Derived(data: data, now: mode == .demo ? d.now : Date())
     }
 
     /// Live only: moves the clock forward. The demo clock stays pinned.
@@ -183,7 +208,8 @@ final class Store {
 
     /// Changes one of Jose's files. `transform` gets the file's current text and returns the new
     /// text, or `nil` when the edit no longer applies (the file changed underneath).
-    /// Live edits never overlap a running git operation: they wait behind it and re-read the file.
+    /// The view changes at once. Live writes never overlap a running git operation: while one runs, the change
+    /// is shown from memory and written when it ends. Commits and pushes wait for a pause in ticking (`syncPause`).
     private func edit(_ path: String, _ transform: @escaping (String) -> String?) {
         guard canWrite(path) else {
             banner = "Desk does not write \(path)."
@@ -193,13 +219,13 @@ final class Store {
             // Demo never writes to disk.
             if let text = transform(reader.text(path) ?? "") {
                 overlay[path] = text
+                reload(changed: path)
             } else {
                 banner = Self.stale(path)
+                reload()
             }
-            reload()
             return
         }
-        let message = VaultWriter.commitMessage(for: path)
         if busy == 0 {
             do {
                 try applyLive(path, transform)
@@ -207,15 +233,64 @@ final class Store {
                 banner = (error as? Refused)?.message ?? "Could not save \(path): \(error.localizedDescription)"
                 return
             }
-            if VaultWriter.isCommitted(path) {
-                enqueue(failure: "Saved locally, but the vault did not sync") { try await $0.commitAndSync(path: path, message: message) }
-            }
+            if VaultWriter.isCommitted(path) { scheduleSync(path) }
         } else {
-            enqueue(failure: "Could not save \(path)") { [weak self] git in
+            guard let shown = transform(reader.text(path) ?? "") else {
+                banner = Self.stale(path)
+                return
+            }
+            pendingText[path] = shown
+            pendingCount[path, default: 0] += 1
+            reload(changed: path)
+            enqueue(failure: "Could not save \(path)", isSync: false) { [weak self] _ in
+                defer { self?.landed(path) }
                 try self?.applyLive(path, transform)
-                if VaultWriter.isCommitted(path) { try await git.commitAndSync(path: path, message: message) }
+                if VaultWriter.isCommitted(path) { self?.scheduleSync(path) }
             }
         }
+    }
+
+    /// A waiting write has run or failed. Once none is left for `path`, the view shows the file on disk again.
+    private func landed(_ path: String) {
+        pendingCount[path, default: 1] -= 1
+        guard (pendingCount[path] ?? 0) <= 0 else { return }
+        pendingCount[path] = nil
+        pendingText[path] = nil
+        reload(changed: path)
+    }
+
+    /// Commits and pushes once ticking pauses, so five quick ticks make one sync instead of five in a row.
+    private func scheduleSync(_ path: String) {
+        dirty.insert(path)
+        syncTimer?.cancel()
+        let queuedIn = epoch
+        syncTimer = Task { [weak self] in
+            try? await Task.sleep(for: Self.syncPause)
+            guard !Task.isCancelled, let self, self.epoch == queuedIn else { return }
+            self.flushSync()
+        }
+    }
+
+    private func flushSync() {
+        syncTimer?.cancel()
+        syncTimer = nil
+        let paths = dirty.sorted()
+        dirty = []
+        guard !paths.isEmpty else { return }
+        enqueue(failure: "Saved locally, but the vault did not sync") { try await $0.commitAndSync(paths: paths) }
+    }
+
+    /// On quit: commit what was waiting for the pause, so no tick is left uncommitted. The next sync pushes it.
+    func commitBeforeQuit() {
+        guard mode == .live, !dirty.isEmpty, busy == 0 else { return }
+        syncTimer?.cancel()
+        let git = Git(root: prefs.vaultURL)
+        guard git.busyReason() == nil else { return }
+        for path in dirty.sorted() {
+            _ = try? git.run(["add", "--", path])
+            _ = try? git.run(["commit", "-m", VaultWriter.commitMessage(for: path), "--", path])
+        }
+        dirty = []
     }
 
     private static func stale(_ path: String) -> String {
@@ -225,16 +300,18 @@ final class Store {
     private func applyLive(_ path: String, _ transform: (String) -> String?) throws {
         // Demo never writes to disk, even if an edit was queued while the app was still Live.
         guard mode == .live else { throw Refused(message: "Not saved: Desk is no longer in Live mode.") }
-        guard let text = transform(reader.text(path) ?? "") else {
+        // The file on disk, not the view: a change waiting in `pendingText` is already in the view.
+        guard let text = transform(VaultReader(root: prefs.vaultURL).text(path) ?? "") else {
             reload()
             throw Refused(message: Self.stale(path))
         }
         try VaultWriter.write(text, to: path, in: prefs.vaultURL, studyFile: data.settings.exam?.file)
-        reload()
+        reload(changed: path)
     }
 
-    /// Queues git work behind whatever is already running. A failure shows the banner.
-    private func enqueue(failure: String, _ work: @escaping (VaultGit) async throws -> Void) {
+    /// Queues git work behind whatever is already running. A failure shows the banner. A sync (`isSync`) may
+    /// pull other changes, so everything is re-read after it; a waiting write has already refreshed its file.
+    private func enqueue(failure: String, isSync: Bool = true, _ work: @escaping (VaultGit) async throws -> Void) {
         guard let git else { return }
         let previous = pending
         let queuedIn = epoch
@@ -245,33 +322,38 @@ final class Store {
             guard let self, self.epoch == queuedIn else { return }
             do {
                 try await work(git)
-                self.finished(nil, queuedIn)
+                self.finished(nil, queuedIn, isSync: isSync)
             } catch let refused as Refused {
-                self.finished(refused.message, queuedIn)
+                self.finished(refused.message, queuedIn, isSync: isSync)
             } catch {
-                self.finished("\(failure). \(error.localizedDescription)", queuedIn)
+                self.finished("\(failure). \(error.localizedDescription)", queuedIn, isSync: isSync)
             }
         }
     }
 
-    private func finished(_ problem: String?, _ queuedIn: Int) {
+    private func finished(_ problem: String?, _ queuedIn: Int, isSync: Bool) {
         guard epoch == queuedIn else { return }
         busy -= 1
         banner = problem
+        guard isSync else { return }
         if problem == nil { lastSync = Date() }
         reload()
     }
 
-    /// Waits for queued git work (used by tests).
+    /// Syncs what is waiting for the pause and waits for all queued git work (used by tests).
     func settle() async {
-        await pending?.value
+        repeat {
+            if syncTimer != nil { flushSync() }
+            await pending?.value
+        } while syncTimer != nil
     }
 
     /// The title the model holds for a checkbox, used to check the line is still the same item.
     private func checkTitle(path: String, line: Int) -> String? {
         if path == VaultData.tasksFile { return data.tasks.first { $0.line == line }?.title }
         if path == data.settings.exam?.file, let study = data.study {
-            return (study.theory + study.problems).first { $0.line == line }?.title ?? study.papers.first { $0.line == line }?.title
+            return (study.theory + study.problems + study.lists.flatMap(\.items)).first { $0.line == line }?.title
+                ?? study.papers.first { $0.line == line }?.title
         }
         return (data.unis.first { $0.path == path }?.items ?? data.projects.first { $0.path == path }?.items)?.first { $0.line == line }?.title
     }
@@ -423,6 +505,8 @@ final class Store {
             reload()
             return
         }
+        // Changes waiting for the pause go first, so the pull never meets an uncommitted tick.
+        if !dirty.isEmpty { flushSync() }
         enqueue(failure: "Sync failed, so this view may be stale") { try await $0.pull() }
         refreshCalendar()
     }

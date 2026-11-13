@@ -41,17 +41,21 @@ final class WriteTests: XCTestCase {
         XCTAssertEqual(store.d.toConfirm.count, 0)
         XCTAssertEqual(try String(contentsOf: file, encoding: .utf8), before)
         XCTAssertEqual(try String(contentsOf: DemoVault.url.appendingPathComponent(VaultData.decisionsFile), encoding: .utf8), decisions)
+        // A list item in the study file ticks like a topic.
+        let list = try XCTUnwrap(store.d.openLists.first)
+        let item = try XCTUnwrap(list.open.first)
+        store.toggleCheck(path: try XCTUnwrap(store.data.settings.exam?.file), line: item.line)
+        XCTAssertTrue(store.d.study?.lists.first?.items.first { $0.line == item.line }?.done == true)
         // A project checklist is read-only: the tick is refused, with a banner.
         let project = try XCTUnwrap(store.data.projects.first { !$0.items.isEmpty })
         store.toggleCheck(path: project.path, line: project.items[0].line)
         XCTAssertNotNil(store.banner)
     }
 
-    @MainActor
-    func testLiveTickCommitsAndPushes() async throws {
+    /// A copy of the demo vault in a throwaway git repo with a local "remote": never the real vault.
+    private func liveVault() throws -> (base: URL, vault: URL, git: Git) {
         let fm = FileManager.default
         let base = fm.temporaryDirectory.appendingPathComponent("desk-test-\(UUID().uuidString)")
-        defer { try? fm.removeItem(at: base) }
         let remote = base.appendingPathComponent("remote.git")
         let vault = base.appendingPathComponent("vault")
         try fm.createDirectory(at: remote, withIntermediateDirectories: true)
@@ -67,6 +71,13 @@ final class WriteTests: XCTestCase {
         try git.run(["commit", "-m", "Seed"])
         try git.run(["remote", "add", "origin", remote.path])
         try git.run(["push", "-u", "origin", "main"])
+        return (base, vault, git)
+    }
+
+    @MainActor
+    func testLiveTickCommitsAndPushes() async throws {
+        let (base, vault, git) = try liveVault()
+        defer { try? FileManager.default.removeItem(at: base) }
         let snapshot = try Data(contentsOf: vault.appendingPathComponent(VaultData.snapshotFile))
 
         let prefs = Preferences(defaults: nil)
@@ -106,6 +117,34 @@ final class WriteTests: XCTestCase {
         store.sync()
         await store.settle()
         XCTAssertTrue(store.banner?.contains("Sync failed") == true)
+    }
+
+    /// Ticks show at once, even while a sync is running, and quick ticks reach the remote in one commit and one push.
+    @MainActor
+    func testTicksShowAtOnceAndSyncTogether() async throws {
+        let (base, vault, git) = try liveVault()
+        defer { try? FileManager.default.removeItem(at: base) }
+        let prefs = Preferences(defaults: nil)
+        prefs.vaultPath = vault.path
+        prefs.wantsLive = true
+        let store = Store(prefs: prefs, calendar: FakeCalendar())
+        let open = store.data.tasks.filter { !$0.done }
+        XCTAssertGreaterThanOrEqual(open.count, 2)
+        // A sync is running, so the writes wait for it, but the view shows both ticks straight away.
+        store.sync()
+        store.toggle(open[0])
+        store.toggle(open[1])
+        XCTAssertTrue(store.data.tasks.first { $0.line == open[0].line }?.done == true)
+        XCTAssertTrue(store.data.tasks.first { $0.line == open[1].line }?.done == true)
+        await store.settle()
+        XCTAssertNil(store.banner)
+        let onDisk = Parse.tasks(try String(contentsOf: vault.appendingPathComponent(VaultData.tasksFile), encoding: .utf8), store.cal)
+        XCTAssertTrue(onDisk.first { $0.line == open[0].line }?.done == true)
+        XCTAssertTrue(onDisk.first { $0.line == open[1].line }?.done == true)
+        XCTAssertEqual(try git.run(["status", "--porcelain"]), "")
+        XCTAssertEqual(try git.run(["rev-parse", "HEAD"]), try git.run(["rev-parse", "origin/main"]))
+        let ticks = try git.run(["log", "--format=%s", "origin/main"]).components(separatedBy: "\n").filter { $0 == "Desk: tick in TASKS.md" }
+        XCTAssertEqual(ticks.count, 1, "two quick ticks in one file make one commit")
     }
 
     @MainActor
@@ -295,7 +334,7 @@ final class WriteTests: XCTestCase {
         try "- [x] a\n".write(to: repo.appendingPathComponent("TASKS.md"), atomically: true, encoding: .utf8)
         let vault = VaultGit(root: repo)
         do {
-            try await vault.commitAndSync(path: "TASKS.md", message: "Desk: tick in TASKS.md")
+            try await vault.commitAndSync(paths: ["TASKS.md"])
             XCTFail("commitAndSync must refuse while a rebase is in progress")
         } catch {
             XCTAssertTrue(error.localizedDescription.contains("middle of a rebase"))

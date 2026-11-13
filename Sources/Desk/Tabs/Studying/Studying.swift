@@ -79,10 +79,69 @@ struct StudyTargetCard: View {
                             Text(verbatim: item).style(\.rowTitle, \.ink).lineLimit(1)
                         }
                     }
+                    if let path = store.d.data.settings.exam?.file {
+                        ForEach(target.checks) { check in
+                            CheckLine(path: path, check: check)
+                        }
+                    }
                     Spacer(minLength: 0)
                     LinkButton(title: "Open in Claude", url: store.d.data.settings.exam.flatMap {
                         Links.claude(seed: "Quiz me on the open topics in \($0.file) in my vault, one question at a time.")
                     })
+                }
+            }
+        }
+    }
+}
+
+/// The study file's own lists ("This weekend — due 2026-11-15"): a card per `###` group, two side by side.
+struct StudyLists: View {
+    @Environment(Store.self) private var store
+    @Environment(\.theme) private var t
+
+    var body: some View {
+        let d = store.d
+        if let path = d.data.settings.exam?.file, let lists = d.study?.lists, !lists.isEmpty {
+            VStack(alignment: .leading, spacing: t.sp16) {
+                ForEach(lists) { list in
+                    VStack(alignment: .leading, spacing: t.sp8) {
+                        SectionHeader(title: list.title, subtitle: d.listSubtitle(list))
+                        ForEach(Array(stride(from: 0, to: list.groups.count, by: 2)), id: \.self) { start in
+                            HStack(alignment: .top, spacing: t.sp16) {
+                                ForEach(list.groups[start..<min(start + 2, list.groups.count)]) { group in
+                                    ListGroupCard(path: path, group: group)
+                                }
+                                // An odd last card keeps half the width.
+                                if list.groups.count > 1, start + 1 == list.groups.count {
+                                    Color.clear.frame(maxWidth: .infinity, maxHeight: 0)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// One group of a list: its progress, its items, and the video time left when the items say it.
+private struct ListGroupCard: View {
+    @Environment(\.theme) private var t
+    let path: String
+    let group: StudyList.Group
+
+    var body: some View {
+        let progress = Derived.progress(group.items)
+        SurfaceCard {
+            VStack(alignment: .leading, spacing: t.sp8) {
+                LabelledProgress(label: group.title, value: progress.fraction, valueText: progress.text, accent: .ochre)
+                    .padding(.bottom, t.sp4)
+                ForEach(group.items) { check in
+                    CheckLine(path: path, check: check)
+                }
+                if let minutes = Derived.minutesLeft(group) {
+                    Text(verbatim: "\(Derived.durationText(minutes * 60)) of video left").style(\.small, \.inkMuted)
+                        .padding(.top, t.sp4)
                 }
             }
         }

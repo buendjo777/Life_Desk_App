@@ -98,13 +98,16 @@ actor VaultGit {
         try git.run(["push"])
     }
 
-    /// After a write to one of Jose's files: commit that file, `pull --rebase`, `push`.
-    func commitAndSync(path: String, message: String) throws {
-        precondition(VaultWriter.isCommitted(path), "Desk never commits \(path)")
+    /// After writes to Jose's files: commit each file that changed (one commit per file), then `pull --rebase`
+    /// and `push` once.
+    func commitAndSync(paths: [String]) throws {
         try ensureFree()
-        if try !git.run(["status", "--porcelain", "--", path]).isEmpty {
-            try git.run(["add", "--", path])
-            try git.run(["commit", "-m", message, "--", path])
+        for path in paths {
+            precondition(VaultWriter.isCommitted(path), "Desk never commits \(path)")
+            if try !git.run(["status", "--porcelain", "--", path]).isEmpty {
+                try git.run(["add", "--", path])
+                try git.run(["commit", "-m", VaultWriter.commitMessage(for: path), "--", path])
+            }
         }
         try rebaseAndPush()
     }

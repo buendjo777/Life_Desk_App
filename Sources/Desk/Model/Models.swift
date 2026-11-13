@@ -159,6 +159,8 @@ struct StudyFile {
     var theory: [Check]
     var problems: [Check]
     var papers: [Paper]
+    /// Jose's own lists: every other `##` section with checkboxes, e.g. "This weekend — due 2026-11-15".
+    var lists: [StudyList] = []
 
     struct Paper: Identifiable, Hashable {
         var title: String
@@ -166,6 +168,25 @@ struct StudyFile {
         var date: Date?
         var score: Double?
         var outOf: Double?
+        var line: Int
+        var id: Int { line }
+    }
+}
+
+/// A list in the study file: a `##` section other than Theory, Problems and Past papers, with an optional due day
+/// ("This weekend — due 2026-11-15") and its `###` headings as groups.
+struct StudyList: Identifiable, Hashable {
+    var title: String
+    var due: Date?
+    var groups: [Group]
+    var line: Int
+    var id: Int { line }
+    var items: [Check] { groups.flatMap(\.items) }
+    var open: [Check] { items.filter { !$0.done } }
+
+    struct Group: Identifiable, Hashable {
+        var title: String
+        var items: [Check]
         var line: Int
         var id: Int { line }
     }

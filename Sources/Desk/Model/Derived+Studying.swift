@@ -74,16 +74,70 @@ extension Derived {
         )
     }
 
+    // MARK: Lists ("This weekend — due 2026-11-15")
+
+    /// Minutes written in an item's title: "Lecture 6 · Beam deflection · 110 min" → 110.
+    static func minutes(_ check: Check) -> Int? {
+        check.title.firstMatch(of: /(\d+)\s*min\b/).flatMap { Int($0.1) }
+    }
+
+    /// Minutes left in a group's open items; `nil` when none says how long it takes.
+    static func minutesLeft(_ group: StudyList.Group) -> Int? {
+        let minutes = group.items.filter { !$0.done }.compactMap(minutes)
+        return minutes.isEmpty ? nil : minutes.reduce(0, +)
+    }
+
+    /// Lists with something left to do, the soonest due first.
+    var openLists: [StudyList] {
+        (study?.lists ?? []).filter { !$0.open.isEmpty }
+            .sorted { ($0.due ?? .distantFuture, $0.line) < ($1.due ?? .distantFuture, $1.line) }
+    }
+
+    /// Days to the due day, today and that day both counted: 1 on the day itself, 0 or less once it has passed.
+    func daysLeft(_ list: StudyList) -> Int? {
+        list.due.map { cal.days(from: today, to: $0) + 1 }
+    }
+
+    /// Today's share: in each group, its open items ÷ the days left, rounded up, so every group ends on time.
+    func todaysShare(_ list: StudyList) -> [Check] {
+        let days = max(1, daysLeft(list) ?? 1)
+        return list.groups.flatMap { group -> [Check] in
+            let open = group.items.filter { !$0.done }
+            return Array(open.prefix(Int((Double(open.count) / Double(days)).rounded(.up))))
+        }
+    }
+
+    /// "Due Sun 15 Nov · 4 days left · 20 to go".
+    func listSubtitle(_ list: StudyList) -> String {
+        let left = list.open.count
+        guard let due = list.due, let days = daysLeft(list) else { return left == 0 ? "All done" : "\(left) to go" }
+        if left == 0 { return "All done · due \(cal.weekdayDay(due))" }
+        let when = days < 1 ? "\(Self.plural(1 - days, "day")) late" : days == 1 ? "due today" : "\(Self.plural(days, "day")) left"
+        return "Due \(cal.weekdayDay(due)) · \(when) · \(left) to go"
+    }
+
     struct StudyTarget {
         let headline: String
         let detail: String
         /// The next unticked papers or topics to do today.
-        let items: [String]
+        var items: [String] = []
+        /// From a list: today's share, ticked straight from the card.
+        var checks: [Check] = []
     }
 
-    /// Today's target, worked out from the plan. Before `plan_start` it points at the next open topics.
+    /// Today's target. Until a list's due day, its share for today; otherwise the paper plan, and before
+    /// `plan_start` the next open topics.
     var studyTarget: StudyTarget? {
         guard let study else { return nil }
+        if let list = openLists.first(where: { (daysLeft($0) ?? 0) >= 1 }), let due = list.due {
+            let share = todaysShare(list)
+            let video = share.compactMap(Self.minutes).reduce(0, +)
+            return StudyTarget(
+                headline: "\(Self.plural(share.count, "item")) today",
+                detail: "\(list.open.count) left, due \(cal.format(due, "EEEE"))" + (video > 0 ? " · \(Self.durationText(video * 60)) of video today." : "."),
+                checks: share
+            )
+        }
         let openPapers = study.papers.filter { !$0.done }
         let openTopics = (study.theory.filter { !$0.done }.map { "Theory · \($0.title)" })
         if let start = study.planStart, today < start {
@@ -111,6 +165,10 @@ extension Derived {
         if let days = examDaysLeft, let date = examDate {
             phrases += [Phrase(text: "\(Self.plural(days, "day")) to the exam", strong: true),
                         Phrase(text: " on \(cal.format(date, "EEEE d MMMM, HH:mm")). ")]
+        }
+        if let list = openLists.first {
+            phrases += [Phrase(text: "\(list.title): \(list.items.count - list.open.count) of \(list.items.count) done", strong: true),
+                        Phrase(text: list.due.map { " (due \(cal.format($0, "EEEE d MMM"))). " } ?? ". ")]
         }
         phrases += [Phrase(text: "\(theoryProgress.done + problemsProgress.done) of \(theoryProgress.total + problemsProgress.total) topic ticks", strong: true),
                     Phrase(text: " and "),

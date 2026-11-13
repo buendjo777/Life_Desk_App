@@ -134,12 +134,12 @@ extension VaultData {
         }
         let docPaths = Set([deadlinesDoc, comparisonDoc] + data.projects.compactMap(\.doc).filter(Parse.isTrustedDoc))
         for path in docPaths {
-            if let text = reader.text(path) { data.docs[path] = Parse.plainWikilinks(text) }
+            if let text = reader.text(path) { data.docs[path] = ParseCache.plainDoc(path, text) }
         }
         for path in [deadlinesDoc, comparisonDoc] where data.docs[path] == nil {
             data.issues[path] = "\(path) is missing."
         }
-        if let text = data.docs[deadlinesDoc] { data.masterDeadlines = Parse.masterDeadlines(text, cal) }
+        if let text = data.docs[deadlinesDoc] { data.masterDeadlines = ParseCache.masterDeadlines(text, cal) }
 
         // Optional boards: absent until they move into the vault.
         if let text = reader.text(targetsFile) {
@@ -167,5 +167,62 @@ extension VaultData {
         data.tutoring.template = reader.text("tutoring/template.md")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         data.tutoring.reminderTemplate = reader.text("tutoring/template-reminder.md")?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return data
+    }
+
+    /// Re-reads one file Desk writes and updates only what it feeds: a tick costs one small file, not the vault.
+    /// False when `path` is not one of those files; the caller then reloads everything.
+    mutating func refresh(_ path: String, from reader: VaultReader) -> Bool {
+        let text = reader.text(path)
+        if path == Self.tasksFile {
+            tasks = text.map { Parse.tasks($0, cal) } ?? []
+        } else if path == Self.decisionsFile {
+            decisions = text.map { Parse.lines(Decision.self, $0, cal) } ?? []
+        } else if path == Self.paymentsFile {
+            tutoring.payments = text.map { Parse.payments($0, cal) } ?? []
+        } else if path == settings.exam?.file, let text, let parsed = Parse.study(text, cal) {
+            study = parsed
+        } else if let index = unis.firstIndex(where: { $0.path == path }), let text, let uni = Parse.uni(path: path, text) {
+            unis[index] = uni
+        } else {
+            return false
+        }
+        return true
+    }
+}
+
+/// The long docs (the programme comparison, the deadline table) are most of a reload's work and rarely change,
+/// so the last parse of each is kept and reused while its text is the same.
+enum ParseCache {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var docs: [String: (raw: String, plain: String)] = [:]
+    nonisolated(unsafe) private static var deadlines: (raw: String, zone: String, result: [String: Stamp])?
+
+    static func plainDoc(_ path: String, _ raw: String) -> String {
+        lock.lock()
+        if let hit = docs[path], hit.raw == raw {
+            lock.unlock()
+            return hit.plain
+        }
+        lock.unlock()
+        let plain = Parse.plainWikilinks(raw)
+        lock.lock()
+        docs[path] = (raw, plain)
+        lock.unlock()
+        return plain
+    }
+
+    static func masterDeadlines(_ text: String, _ cal: DeskCalendar) -> [String: Stamp] {
+        let zone = cal.calendar.timeZone.identifier
+        lock.lock()
+        if let hit = deadlines, hit.raw == text, hit.zone == zone {
+            lock.unlock()
+            return hit.result
+        }
+        lock.unlock()
+        let result = Parse.masterDeadlines(text, cal)
+        lock.lock()
+        deadlines = (text, zone, result)
+        lock.unlock()
+        return result
     }
 }

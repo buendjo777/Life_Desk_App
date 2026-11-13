@@ -53,12 +53,7 @@ struct DeskCalendar {
 
     /// Formats with a fixed pattern, e.g. `"EEE d MMM"` → "Wed 11 Nov".
     func format(_ date: Date, _ pattern: String, locale: String = "en_GB") -> String {
-        let formatter = DateFormatter()
-        formatter.calendar = calendar
-        formatter.timeZone = calendar.timeZone
-        formatter.locale = Locale(identifier: locale)
-        formatter.dateFormat = pattern
-        return formatter.string(from: date)
+        Formatters.date(pattern, locale: locale, calendar: calendar).string(from: date)
     }
 
     func time(_ date: Date) -> String { format(date, "HH:mm") }
@@ -72,10 +67,42 @@ struct DeskCalendar {
 
     /// ISO 8601 with the vault's offset, e.g. `2026-11-11T08:12:00+01:00`.
     func isoStamp(_ date: Date) -> String {
-        let formatter = ISO8601DateFormatter()
+        Formatters.iso(timeZone: calendar.timeZone).string(from: date)
+    }
+}
+
+/// Date formatters are slow to make and safe to share between threads, so Desk makes each one once:
+/// one per pattern, locale and time zone. Views format dates on every redraw.
+enum Formatters {
+    private static let lock = NSLock()
+    nonisolated(unsafe) private static var dates: [String: DateFormatter] = [:]
+    nonisolated(unsafe) private static var stamps: [String: ISO8601DateFormatter] = [:]
+
+    static func date(_ pattern: String, locale: String, calendar: Calendar) -> DateFormatter {
+        let key = "\(calendar.timeZone.identifier)|\(locale)|\(pattern)"
+        lock.lock()
+        defer { lock.unlock() }
+        if let formatter = dates[key] { return formatter }
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
-        formatter.formatOptions = [.withInternetDateTime]
-        return formatter.string(from: date)
+        formatter.locale = Locale(identifier: locale)
+        formatter.dateFormat = pattern
+        dates[key] = formatter
+        return formatter
+    }
+
+    /// ISO 8601 with an offset (`2026-11-11T08:12:00+01:00`), optionally with fractional seconds.
+    static func iso(timeZone: TimeZone, fractional: Bool = false) -> ISO8601DateFormatter {
+        let key = "\(timeZone.identifier)|\(fractional)"
+        lock.lock()
+        defer { lock.unlock() }
+        if let formatter = stamps[key] { return formatter }
+        let formatter = ISO8601DateFormatter()
+        formatter.timeZone = timeZone
+        formatter.formatOptions = fractional ? [.withInternetDateTime, .withFractionalSeconds] : [.withInternetDateTime]
+        stamps[key] = formatter
+        return formatter
     }
 }
 

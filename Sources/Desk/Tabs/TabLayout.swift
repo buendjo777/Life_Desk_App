@@ -44,6 +44,7 @@ enum TabLayout {
         case .studying: [
             DeskSection("study.hero", "Exam countdown", width: 500) { StudyHero() },
             DeskSection("study.target", "Today's target", width: 288) { StudyTargetCard() },
+            DeskSection("study.lists", "Lists") { StudyLists() },
             DeskSection("study.theory", "Theory", width: 394) { TopicColumn(title: "Theory", theory: true) },
             DeskSection("study.problems", "Problems", width: 394) { TopicColumn(title: "Problems", theory: false) },
             DeskSection("study.plan", "Plan chart", width: 394) { PlanChartCard() },

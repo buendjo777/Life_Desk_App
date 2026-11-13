@@ -5,6 +5,19 @@ plan_per_day: 3
 plan_start: 2026-11-16
 ---
 
+## This week — due 2026-11-15
+
+### Recorded lectures
+- [x] Lecture 5 · Shear stress · 95 min
+- [ ] Lecture 6 · Beam deflection · 110 min
+- [ ] Lecture 7 · Buckling · 100 min
+
+### Problem sheets
+- [x] Sheet 1 · Axial bars
+- [ ] Sheet 2 · Torsion of shafts
+- [ ] Sheet 3 · Bending of a cantilever
+- [ ] Sheet 4 · Combined loading
+
 ## Theory
 - [x] Axial loading
 - [x] Torsion

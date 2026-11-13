@@ -120,7 +120,10 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(at("2026-11-17T09:00:00+01:00").plannedPapers(by: Parse.day("2026-11-17", cal)!), 6)
         XCTAssertEqual(d.planChart?.plan.last, 12)
         XCTAssertEqual(d.planChart?.done.last, 3)
-        XCTAssertEqual(d.studyTarget?.headline, "Plan starts Mon 16 Nov")
+        // Without a list in play, the target comes from the paper plan.
+        var plain = data
+        plain.study?.lists = []
+        XCTAssertEqual(Derived(data: plain, now: demoNow).studyTarget?.headline, "Plan starts Mon 16 Nov")
         XCTAssertEqual(at("2026-11-16T09:00:00+01:00").studyTarget?.headline, "On plan")
         XCTAssertEqual(at("2026-11-17T09:00:00+01:00").studyTarget?.headline, "3 papers today")
         XCTAssertNil(d.emptyState(for: .studying))
@@ -173,6 +176,29 @@ final class DerivedTests: XCTestCase {
             }
         }
         XCTAssertEqual(offenders, [])
+    }
+
+    func testAListSetsTodaysShareUntilItsDueDay() throws {
+        let list = try XCTUnwrap(d.openLists.first)
+        XCTAssertEqual(list.title, "This week")
+        XCTAssertEqual(d.daysLeft(list), 5)
+        XCTAssertEqual(d.listSubtitle(list), "Due Sun 15 Nov · 5 days left · 5 to go")
+        // Five days for 2 lectures and 3 sheets: one of each today, so both groups end on Sunday.
+        XCTAssertEqual(d.todaysShare(list).map(\.title), ["Lecture 6 · Beam deflection · 110 min", "Sheet 2 · Torsion of shafts"])
+        let target = try XCTUnwrap(d.studyTarget)
+        XCTAssertEqual(target.headline, "2 items today")
+        XCTAssertEqual(target.detail, "5 left, due Sunday · 1 h 50 of video today.")
+        XCTAssertEqual(target.checks.count, 2)
+        XCTAssertEqual(Derived.minutesLeft(list.groups[0]), 210)
+        XCTAssertTrue(d.studyingSummary.map(\.text).joined().contains("This week: 2 of 7 done (due Sunday 15 Nov)."))
+        // On the due day everything left is today's.
+        let sunday = at("2026-11-15T09:00:00+01:00")
+        XCTAssertEqual(sunday.todaysShare(list).count, 5)
+        XCTAssertEqual(sunday.listSubtitle(list), "Due Sun 15 Nov · due today · 5 to go")
+        // After it the list shows as late, and the paper plan sets the target again.
+        let monday = at("2026-11-16T09:00:00+01:00")
+        XCTAssertEqual(monday.listSubtitle(list), "Due Sun 15 Nov · 1 day late · 5 to go")
+        XCTAssertEqual(monday.studyTarget?.headline, "On plan")
     }
 
     // MARK: Tutoring

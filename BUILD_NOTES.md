@@ -136,3 +136,9 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - **Desk writes `tutoring/` itself** on launch and ⌘R. A backup was compared before the first write: `payments.csv` came out identical, and the archive gained the one row whose rate was unknown before.
 - **History tab** (decision 82), with invented demo data in `demo-vault/tutoring/lessons.csv` that matches the demo payments and calendar.
 - **Checked:** 80 tests (1 opt-in skipped), plus the live-vault check; History and Tutoring rendered in light and dark.
+
+## 12 Nov — Studying: instant ticks and the weekend lists
+- **Why ticks felt slow:** two causes, both measured. First, every tick was its own commit, pull and push, and later ticks queued behind it: ten quick ticks took 24 s to reach GitHub. Second, every tick re-read the whole vault on the main thread, at 100–200 ms each, mostly regex work on the Masters docs and new date formatters.
+- **Fix** (decisions 86–88): ticks show at once, syncs wait for a 2-second pause, and only the changed file is re-read (about 2–3 ms). Docs are cached, formatters are shared, and checkboxes are matched by hand. `LiveVaultCheck` now prints these timings.
+- **Lists** (decisions 84–85): the study file's own `##` lists appear in Studying, and today's target paces them to their due day. The real weekend lists live in the private vault; the demo vault has an invented one.
+- **Checked:** 83 tests (1 opt-in skipped), including a test that two ticks during a running sync show at once and land in one commit and one push. Studying rendered in light and dark.
