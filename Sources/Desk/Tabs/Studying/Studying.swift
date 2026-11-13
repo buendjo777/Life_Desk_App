@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The hero card (ochre): countdown and the overall progress ring.
+/// The hero card (caution): countdown and the overall progress ring.
 struct StudyHero: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
@@ -8,7 +8,7 @@ struct StudyHero: View {
     var body: some View {
         let d = store.d
         StatCard(title: d.study?.exam ?? d.data.settings.exam?.title ?? "Exam", subtitle: d.examMode ? "Exam mode" : nil,
-                 accent: .ochre, shape: .triangle, tall: true) {
+                 accent: .caution, shape: .triangle, tall: true) {
             HStack(alignment: .center, spacing: t.sp24) {
                 VStack(alignment: .leading, spacing: t.sp12) {
                     if let days = d.examDaysLeft {
@@ -83,7 +83,7 @@ struct StudyTargetCard: View {
                     Text(verbatim: target.detail).style(\.small, \.inkMuted).fixedSize(horizontal: false, vertical: true)
                     ForEach(target.items, id: \.self) { item in
                         HStack(spacing: t.sp8) {
-                            Circle().fill(t.ochre).frame(width: t.dot, height: t.dot)
+                            Circle().fill(t.caution).frame(width: t.dot, height: t.dot)
                             Text(verbatim: item).style(\.rowTitle, \.ink).lineLimit(1)
                         }
                     }
@@ -146,7 +146,7 @@ private struct ListGroupCard: View {
         let progress = Derived.progress(group.items)
         SurfaceCard {
             VStack(alignment: .leading, spacing: t.sp8) {
-                LabelledProgress(label: group.title, value: progress.fraction, valueText: progress.text, accent: .ochre)
+                LabelledProgress(label: group.title, value: progress.fraction, valueText: progress.text, accent: .caution)
                     .padding(.bottom, t.sp4)
                 ForEach(group.items) { check in
                     CheckLine(path: path, check: check)
@@ -173,7 +173,7 @@ struct TopicColumn: View {
         let progress = theory ? d.theoryProgress : d.problemsProgress
         SurfaceCard {
             VStack(alignment: .leading, spacing: t.sp8) {
-                LabelledProgress(label: title, value: progress.fraction, valueText: progress.text, accent: .ochre)
+                LabelledProgress(label: title, value: progress.fraction, valueText: progress.text, accent: .caution)
                     .padding(.bottom, t.sp4)
                 if let path = d.data.settings.exam?.file {
                     ForEach(checks) { check in
@@ -202,7 +202,7 @@ struct CheckLine: View {
             } label: {
                 Image(systemName: check.done ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: t.symbol, weight: .medium))
-                    .foregroundStyle(check.done ? t.mossDeep : t.inkMuted)
+                    .foregroundStyle(check.done ? t.goodDeep : t.inkMuted)
             }
             .buttonStyle(.plain)
             .disabled(!store.canWrite(path))
@@ -216,21 +216,21 @@ struct CheckLine: View {
         }
         .padding(.vertical, t.sp2)
         .padding(.horizontal, t.sp6)
-        .background(selected ? t.tint(.rust) : .clear, in: RoundedRectangle(cornerRadius: t.radiusSmall))
+        .background(selected ? t.tint(.focus) : .clear, in: RoundedRectangle(cornerRadius: t.radiusSmall))
         .contentShape(Rectangle())
         .onTapGesture { store.selection = item }
         .accessibilityAction { store.selection = item }
     }
 }
 
-/// The plan chart (steel): papers done against the plan line.
+/// The plan chart (info): papers done against the plan line.
 struct PlanChartCard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Past papers", subtitle: "Done against the plan", accent: .steel, shape: .star, tall: true) {
+        StatCard(title: "Past papers", subtitle: "Done against the plan", accent: .info, shape: .star, tall: true) {
             if let chart = d.planChart {
                 HStack(alignment: .top, spacing: t.sp20) {
                     Figure(String(chart.done.last ?? 0), caption: "Done")
@@ -315,7 +315,7 @@ struct PaperList: View {
                             selected: store.selection == item, action: { store.selection = item }) { selected in
                         if let score = paper.score, let outOf = paper.outOf {
                             Chip(text: "\(Parse.number(score))/\(Parse.number(outOf))",
-                                 accent: score / max(outOf, 1) >= 0.5 ? .moss : .alert, onAccent: selected)
+                                 accent: score / max(outOf, 1) >= 0.5 ? .good : .alert, onAccent: selected)
                         }
                     }
                 }

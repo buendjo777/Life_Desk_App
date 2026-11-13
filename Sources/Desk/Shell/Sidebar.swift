@@ -46,10 +46,10 @@ struct Sidebar: View {
         HStack(spacing: t.sp10) {
             Text(verbatim: "Desk").style(\.brand, \.panelText)
             Text(verbatim: store.mode.label)
-                .style(\.caption, \.ochre)
+                .style(\.caption, \.caution)
                 .padding(.horizontal, t.sp8)
                 .padding(.vertical, t.sp4)
-                .background(t.ochre.opacity(t.tintOpacity / 2), in: Capsule())
+                .background(t.caution.opacity(t.tintOpacity / 2), in: Capsule())
         }
         .padding(.leading, t.sp10)
         .padding(.top, t.sp20 + t.sp2)
@@ -84,7 +84,7 @@ private struct NavRow: View {
             .background(Color.white.opacity(selected ? t.navSelectedFill : 0), in: RoundedRectangle(cornerRadius: t.radiusNav))
             .overlay(alignment: .leading) {
                 Capsule()
-                    .fill(selected ? t.rust : .clear)
+                    .fill(selected ? t.focus : .clear)
                     .frame(width: t.navBar)
                     .padding(.vertical, t.sp8 + t.hairline)
             }
@@ -106,7 +106,7 @@ private struct SyncBox: View {
         let status = store.d.runStatus
         VStack(alignment: .leading, spacing: t.sp4) {
             HStack(spacing: t.sp6) {
-                Circle().fill(store.banner == nil ? t.moss : t.alert).frame(width: t.dot, height: t.dot)
+                Circle().fill(store.banner == nil ? t.good : t.alert).frame(width: t.dot, height: t.dot)
                 Text(verbatim: store.lastSync.map { "Synced \(store.cal.time($0))" } ?? "Not synced yet").style(\.small, \.panelText)
             }
             Text(verbatim: "Vault · \(store.vaultName)").style(\.small, \.panelMuted).lineLimit(1)

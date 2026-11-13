@@ -11,22 +11,22 @@ struct HistoryStat: View {
         switch kind {
         case .thisYear:
             let year = d.earnings(inYear: d.currentYear)
-            StatCard(title: "This year", subtitle: d.currentYear, accent: .steel, shape: .star) {
+            StatCard(title: "This year", subtitle: d.currentYear, accent: .info, shape: .star) {
                 Figure(d.money(year.amount), caption: Derived.plural(year.lessons, "lesson"))
             }
         case .lastYear:
             let year = d.earnings(inYear: d.previousYear)
-            StatCard(title: "Last year", subtitle: d.previousYear, accent: .steel, shape: .star) {
+            StatCard(title: "Last year", subtitle: d.previousYear, accent: .info, shape: .star) {
                 Figure(d.money(year.amount), caption: Derived.plural(year.lessons, "lesson"))
             }
         case .allTime:
             let all = d.allTime
-            StatCard(title: "All time", accent: .moss, shape: .star) {
+            StatCard(title: "All time", accent: .good, shape: .star) {
                 Figure(d.money(all.amount), caption: all.months.min().map { "Since \(d.monthName($0, pattern: "MMM yyyy"))" } ?? "No lessons yet")
             }
         case .best:
             let best = d.bestMonth
-            StatCard(title: "Best month", accent: .ochre, shape: .star) {
+            StatCard(title: "Best month", accent: .caution, shape: .star) {
                 Figure(best.map { d.money($0.amount) } ?? "—", caption: best.map { d.monthName($0.key) } ?? "No lessons yet")
             }
         }
@@ -58,7 +58,7 @@ struct EarningsBars: View {
                                 Text(verbatim: bar.amount > 0 ? Parse.number(bar.amount.rounded()) : " ")
                                     .style(\.micro, current ? \.ink : \.inkMuted).lineLimit(1).minimumScaleFactor(t.tightScale)
                                 RoundedRectangle(cornerRadius: t.radiusSmall)
-                                    .fill(current ? t.deep(.steel) : t.fill(.steel))
+                                    .fill(current ? t.deep(.info) : t.fill(.info))
                                     .frame(height: bar.amount > 0 ? max(t.sp2, CGFloat(bar.amount / top) * room) : t.hairline)
                                 Text(verbatim: d.monthName(bar.key, pattern: "LLLLL")).style(\.micro, current ? \.ink : \.inkMuted)
                                 // The year under each January, and under the first bar.
@@ -93,10 +93,10 @@ struct YearTotals: View {
                 let partial = year.key == d.currentYear
                 // No change for this year (not over) or against the first year (it started mid-year).
                 let change = partial || index + 2 >= years.count ? nil : Derived.change(year.amount, from: years[index + 1].amount)
-                ListRow(leading: .symbol("calendar", .steel), title: partial ? "\(year.key) so far" : year.key,
+                ListRow(leading: .symbol("calendar", .info), title: partial ? "\(year.key) so far" : year.key,
                         subtitle: "\(Derived.plural(year.lessons, "lesson")) · \(Derived.hoursText(year.hours)) · \(Derived.plural(year.students.count, "student"))") { _ in
                     if let change { Text(verbatim: change).style(\.small, \.inkMuted) }
-                    Chip(text: d.money(year.amount), accent: .moss)
+                    Chip(text: d.money(year.amount), accent: .good)
                 }
             }
         }
@@ -119,9 +119,9 @@ struct StudentTotals: View {
             SectionHeader(title: "By student", subtitle: "\(current) current · \(rows.count - current) former")
             if rows.isEmpty { EmptyState(line: "No lessons yet.") }
             ForEach(rows.prefix(shown)) { student in
-                ListRow(leading: .initials(student.initials, student.current ? .ochre : .neutral), title: student.name,
+                ListRow(leading: .initials(student.initials, student.current ? .caution : .neutral), title: student.name,
                         subtitle: "\(d.monthName(student.first, pattern: "MMM yyyy")) – \(d.monthName(student.last, pattern: "MMM yyyy")) · \(Derived.plural(student.total.lessons, "lesson"))") { _ in
-                    if student.current { Chip(text: "Current", accent: .ochre) }
+                    if student.current { Chip(text: "Current", accent: .caution) }
                     Text(verbatim: d.money(student.total.amount)).style(\.bodyStrong, \.ink)
                 }
             }

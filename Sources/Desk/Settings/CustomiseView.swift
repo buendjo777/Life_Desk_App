@@ -37,7 +37,7 @@ struct CustomiseView: View {
                                     .font(.system(size: t.symbol, weight: .medium))
                                     .foregroundStyle(hidden ? t.inkMuted : t.ink)
                                     .frame(width: t.badgeSmall, height: t.badgeSmall)
-                                    .background(t.tint(hidden ? .neutral : .moss), in: Circle())
+                                    .background(t.tint(hidden ? .neutral : .good), in: Circle())
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel(Text(verbatim: hidden ? "Show \(section.title)" : "Hide \(section.title)"))

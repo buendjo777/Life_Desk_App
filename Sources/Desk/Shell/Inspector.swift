@@ -190,7 +190,7 @@ struct RowInspector: View {
         case .draft:
             InspectorTitle(text: row.title)
             if let draft = d.draft(for: row) {
-                Chip(text: draft.status.capitalized, accent: .steel)
+                Chip(text: draft.status.capitalized, accent: .info)
                 InspectorField(label: "To", value: draft.to)
                 // The draft body is untrusted text: verbatim, no Markdown, no links.
                 Text(verbatim: draft.body)

@@ -26,10 +26,10 @@ struct TargetCountCard: View {
 
     static func accent(_ status: String) -> Accent {
         switch status {
-        case "open": .ochre
-        case "applied": .steel
-        case "interview", "offer": .moss
-        case "rejected": .navy
+        case "open": .caution
+        case "applied": .info
+        case "interview", "offer": .good
+        case "rejected": .deep
         default: .neutral
         }
     }
@@ -97,15 +97,15 @@ struct TargetRow: View {
                     .frame(maxWidth: t.railWidth - t.sp32, alignment: .trailing)
             }
             if let priority = target.priority {
-                Chip(text: "Priority \(priority)", accent: priority == "A" ? .rust : .neutral, onAccent: selected)
+                Chip(text: "Priority \(priority)", accent: priority == "A" ? .focus : .neutral, onAccent: selected)
             }
             if let graduate = target.graduateOk {
-                Chip(text: graduate ? "Graduate OK" : "Needs convenio", accent: graduate ? .moss : .neutral, onAccent: selected)
+                Chip(text: graduate ? "Graduate OK" : "Needs convenio", accent: graduate ? .good : .neutral, onAccent: selected)
             }
             if let days = d.daysLeft(target.deadline) {
-                Chip(text: days < 0 ? "Closed" : "\(days) d", accent: days < 0 ? .alert : .ochre, onAccent: selected)
+                Chip(text: days < 0 ? "Closed" : "\(days) d", accent: days < 0 ? .alert : .caution, onAccent: selected)
             }
-            if d.isNew(target) { Chip(text: "New", accent: .rust, onAccent: selected) }
+            if d.isNew(target) { Chip(text: "New", accent: .focus, onAccent: selected) }
             TargetStatusMenu(target: target, onAccent: selected)
             if let url = Links.web(target.url) {
                 Button(target.list == "apply_now" && target.status == "open" ? "Apply" : "Open") { Links.open(url) }.buttonStyle(.deskSecondary)

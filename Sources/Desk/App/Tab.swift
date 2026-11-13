@@ -41,15 +41,15 @@ enum Tab: String, CaseIterable, Identifiable, Codable {
 
     var accent: Accent {
         switch self {
-        case .today: .rust
-        case .studying: .ochre
-        case .projects: .rust
-        case .internships: .ochre
-        case .uni: .steel
-        case .tutoring: .ochre
-        case .history: .steel
-        case .health: .moss
-        case .system, .portfolio: .navy
+        case .today: .focus
+        case .studying: .caution
+        case .projects: .focus
+        case .internships: .caution
+        case .uni: .info
+        case .tutoring: .caution
+        case .history: .info
+        case .health: .good
+        case .system, .portfolio: .deep
         }
     }
 

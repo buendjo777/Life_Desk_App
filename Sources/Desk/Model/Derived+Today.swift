@@ -135,7 +135,7 @@ extension Derived {
             let days = (0..<7).map { offset -> DayCell in
                 let date = cal.add(days: week * 7 + offset, to: first)
                 let isToday = cal.isSameDay(date, today)
-                let dot: Accent? = isToday ? nil : deadlineDays.contains(date) ? .ochre : proposalDays.contains(date) ? .rust : eventDays.contains(date) ? .steel : nil
+                let dot: Accent? = isToday ? nil : deadlineDays.contains(date) ? .caution : proposalDays.contains(date) ? .focus : eventDays.contains(date) ? .info : nil
                 return DayCell(date: date, day: cal.day(date), inMonth: cal.isSameDay(cal.monthStart(date), monthStart),
                                isToday: isToday, isWeekend: offset >= 5, dot: dot)
             }
@@ -149,13 +149,13 @@ extension Derived {
     func eventStyle(_ event: CalEvent) -> (symbol: String, accent: Accent) {
         let words = Set(event.title.lowercased().split(whereSeparator: { !$0.isLetter }).map(String.init))
         func has(_ candidates: String...) -> Bool { !words.isDisjoint(with: candidates) }
-        if isTutoring(event) { return ("person", .ochre) }
-        if has("exam") { return ("triangle", .ochre) }
-        if has("flight", "train") { return ("airplane", .steel) }
-        if has("call", "interview") { return ("phone", .steel) }
-        if has("meeting", "session") { return ("person.2", .steel) }
-        if has("run", "gym", "ride", "swim", "strength", "walk") { return ("waveform.path.ecg", .moss) }
-        return ("scope", .rust)
+        if isTutoring(event) { return ("person", .caution) }
+        if has("exam") { return ("triangle", .caution) }
+        if has("flight", "train") { return ("airplane", .info) }
+        if has("call", "interview") { return ("phone", .info) }
+        if has("meeting", "session") { return ("person.2", .info) }
+        if has("run", "gym", "ride", "swim", "strength", "walk") { return ("waveform.path.ecg", .good) }
+        return ("scope", .focus)
     }
 
     func timeRange(_ start: Date, _ end: Date) -> String {

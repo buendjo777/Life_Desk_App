@@ -72,15 +72,15 @@ struct FocusRow: View {
         let deadline = d.deadlines.first { !$0.isExam && row.title.localizedCaseInsensitiveContains($0.short) }
         let leading: RowLeading =
             done ? .tick(done: true, toggle: { store.toggleFocus(row) })
-            : row.gmailThread != nil ? .symbol("envelope", .rust)
-            : deadline != nil ? .symbol("pencil", .ochre)
+            : row.gmailThread != nil ? .symbol("envelope", .focus)
+            : deadline != nil ? .symbol("pencil", .caution)
             : .tick(done: false, toggle: { store.toggleFocus(row) })
         ListRow(leading: leading, title: row.title, subtitle: row.detail,
                 selected: store.selection == .row(row.id), done: done, action: { store.open(.row(row.id)) }) { selected in
             if row.gmailThread != nil {
-                Chip(text: "Email", accent: .rust, onAccent: selected)
+                Chip(text: "Email", accent: .focus, onAccent: selected)
             } else if let deadline {
-                Chip(text: "\(deadline.daysLeft) d", accent: .ochre, onAccent: selected)
+                Chip(text: "\(deadline.daysLeft) d", accent: .caution, onAccent: selected)
             }
         }
     }
@@ -152,7 +152,7 @@ struct EmailRow: View {
 
     var body: some View {
         let tag = row.tag.flatMap(Derived.EmailTag.init)
-        ListRow(leading: .initials(initials(of: row.title), .steel), title: row.title,
+        ListRow(leading: .initials(initials(of: row.title), .info), title: row.title,
                 subtitle: [row.subject, row.detail].compactMap { $0 }.joined(separator: " — "),
                 selected: store.selection == .row(row.id), action: { store.open(.row(row.id)) }) { selected in
             // Open in Gmail without leaving the list: shown on the row under the pointer and on the selected row.
@@ -164,7 +164,7 @@ struct EmailRow: View {
                         .font(.system(size: t.symbolSmall, weight: .bold))
                         .foregroundStyle(selected ? t.onAccent : t.ink)
                         .frame(width: t.sp24, height: t.sp24)
-                        .background(selected ? t.onAccent.opacity(t.onAccentWash) : t.tint(.steel), in: Circle())
+                        .background(selected ? t.onAccent.opacity(t.onAccentWash) : t.tint(.info), in: Circle())
                 }
                 .buttonStyle(.plain)
                 .help("Open in Gmail")
@@ -181,8 +181,8 @@ struct EmailRow: View {
 extension Derived.EmailTag {
     var accent: Accent {
         switch self {
-        case .needsReply: .rust
-        case .deadline: .ochre
+        case .needsReply: .focus
+        case .deadline: .caution
         case .fyi: .neutral
         }
     }
@@ -202,10 +202,10 @@ struct DraftList: View {
                     EmptyState(line: "No drafts waiting for review.")
                 }
                 ForEach(d.draftRows) { row in
-                    ListRow(leading: .symbol("square.and.pencil", .steel), title: row.title,
+                    ListRow(leading: .symbol("square.and.pencil", .info), title: row.title,
                             subtitle: d.draft(for: row).map { "\($0.status.capitalized) · \($0.to)" },
                             selected: store.selection == .row(row.id), action: { store.open(.row(row.id)) }) { selected in
-                        Chip(text: "Draft", accent: .steel, onAccent: selected)
+                        Chip(text: "Draft", accent: .info, onAccent: selected)
                     }
                 }
             }
@@ -228,10 +228,10 @@ struct WaitingList: View {
                     EmptyState(line: "Not waiting on anyone.")
                 }
                 ForEach(d.waiting) { row in
-                    ListRow(leading: .symbol("hourglass", .ochre), title: row.title, subtitle: row.detail,
+                    ListRow(leading: .symbol("hourglass", .caution), title: row.title, subtitle: row.detail,
                             selected: store.selection == .row(row.id), action: { store.open(.row(row.id)) }) { selected in
                         if let since = row.when?.date {
-                            Chip(text: "\(d.cal.days(from: since, to: d.today)) d", accent: .ochre, onAccent: selected)
+                            Chip(text: "\(d.cal.days(from: since, to: d.today)) d", accent: .caution, onAccent: selected)
                         }
                     }
                 }

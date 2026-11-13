@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// The latest run (navy): status, duration, messages scanned, drafts and the usage note.
+/// The latest run (deep): status, duration, messages scanned, drafts and the usage note.
 struct LatestRunCard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Latest run", subtitle: d.lastRun.map { d.cal.format($0.startedAt.date, "EEE d MMM · HH:mm") }, accent: .navy, shape: .cog, tall: true) {
+        StatCard(title: "Latest run", subtitle: d.lastRun.map { d.cal.format($0.startedAt.date, "EEE d MMM · HH:mm") }, accent: .deep, shape: .cog, tall: true) {
             if let run = d.lastRun {
                 HStack(alignment: .top, spacing: t.sp24) {
                     Figure(run.isOK ? "OK" : Derived.label(run.status), caption: run.mode ?? "run")
@@ -29,14 +29,14 @@ struct LatestRunCard: View {
     }
 }
 
-/// The models used in the latest run (navy).
+/// The models used in the latest run (deep).
 struct ModelsCard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Models", subtitle: "Latest run", accent: .navy, shape: .cog, tall: true) {
+        StatCard(title: "Models", subtitle: "Latest run", accent: .deep, shape: .cog, tall: true) {
             if d.modelsUsed.isEmpty { Text(verbatim: "No agents listed.").style(\.small) }
             ForEach(d.modelsUsed) { use in
                 VStack(alignment: .leading, spacing: t.sp2) {
@@ -75,14 +75,14 @@ struct RunStrip: View {
                     ForEach(d.runStrip) { day in
                         VStack(spacing: t.sp4) {
                             RoundedRectangle(cornerRadius: t.radiusSmall + t.sp2)
-                                .fill(day.state == .ok ? t.moss : day.state == .failed ? t.alert : t.line)
+                                .fill(day.state == .ok ? t.good : day.state == .failed ? t.alert : t.line)
                                 .frame(height: t.streakCell)
                                 .overlay {
                                     Text(verbatim: day.state == .ok ? (day.runs > 1 ? "OK ×\(day.runs)" : "OK") : day.state == .failed ? "Fail" : "—")
                                         .style(\.micro)
                                         .foregroundStyle(day.state == .failed ? t.panelText : day.state == .ok ? t.onAccent : t.inkMuted)
                                 }
-                            Text(verbatim: d.cal.format(day.date, "d")).style(\.micro, d.cal.isSameDay(day.date, d.today) ? \.rust : \.inkMuted)
+                            Text(verbatim: d.cal.format(day.date, "d")).style(\.micro, d.cal.isSameDay(day.date, d.today) ? \.focus : \.inkMuted)
                         }
                         .frame(maxWidth: .infinity)
                         .accessibilityElement()
@@ -109,13 +109,13 @@ struct RunHistory: View {
             if runs.isEmpty { EmptyState(line: "No runs recorded yet.", hint: d.data.hint(VaultData.runsFile)) }
             ForEach(runs.prefix(shown)) { run in
                 let failures = run.failures ?? []
-                ListRow(leading: .symbol(run.isOK ? (failures.isEmpty ? "checkmark" : "exclamationmark") : "xmark", run.isOK ? (failures.isEmpty ? .moss : .ochre) : .alert),
+                ListRow(leading: .symbol(run.isOK ? (failures.isEmpty ? "checkmark" : "exclamationmark") : "xmark", run.isOK ? (failures.isEmpty ? .good : .caution) : .alert),
                         title: "\(d.cal.format(run.startedAt.date, "EEE d MMM · HH:mm")) · \(Derived.runDuration(run))",
                         // Failure lines and usage notes are agent-written: ListRow draws them verbatim.
                         subtitle: failures.isEmpty ? [Derived.modelsText(run), run.usageNote].compactMap { $0 }.joined(separator: " · ") : failures.joined(separator: " · ")) { _ in
                     Text(verbatim: "\(run.messagesScanned ?? 0) scanned · \(Derived.plural(run.drafts ?? 0, "draft"))").style(\.small, \.inkMuted)
-                    if run.mode == "manual" { Chip(text: "Manual", accent: .ochre) }
-                    Chip(text: run.isOK ? "OK" : Derived.label(run.status), accent: run.isOK ? .moss : .alert)
+                    if run.mode == "manual" { Chip(text: "Manual", accent: .caution) }
+                    Chip(text: run.isOK ? "OK" : Derived.label(run.status), accent: run.isOK ? .good : .alert)
                 }
             }
             if runs.count > shown {

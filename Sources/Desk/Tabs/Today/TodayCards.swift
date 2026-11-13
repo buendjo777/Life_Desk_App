@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// Deadlines (ochre): the nearest three with days left, and a 90-day runway.
+/// Deadlines (caution): the nearest three with days left, and a 90-day runway.
 struct DeadlinesCard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Deadlines", accent: .ochre, shape: .triangle, tall: true) {
+        StatCard(title: "Deadlines", accent: .caution, shape: .triangle, tall: true) {
             if d.deadlines.isEmpty {
                 Text(verbatim: d.data.hint(VaultData.snapshotFile) ?? "No upcoming deadlines.").style(\.small)
             } else {
@@ -38,7 +38,7 @@ struct Runway: View {
                     Capsule().fill(ink.opacity(t.onAccentTrack)).frame(height: t.stroke)
                     ForEach(points) { point in
                         Circle()
-                            .fill(point.near ? ink : (onCard ? t.ochre : t.canvas))
+                            .fill(point.near ? ink : (onCard ? t.caution : t.canvas))
                             .overlay(Circle().strokeBorder(ink, lineWidth: t.stroke))
                             .frame(width: t.runwayDot, height: t.runwayDot)
                             .offset(x: point.fraction * proxy.size.width - t.runwayDot / 2)
@@ -65,14 +65,14 @@ struct Runway: View {
     }
 }
 
-/// Today (rust): focus, due, leftovers, to confirm, and the 07:00–22:00 day strip.
+/// Today (focus): focus, due, leftovers, to confirm, and the 07:00–22:00 day strip.
 struct TodayCard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Today", subtitle: d.cal.weekdayDay(d.now), accent: .rust, shape: .circle, tall: true) {
+        StatCard(title: "Today", subtitle: d.cal.weekdayDay(d.now), accent: .focus, shape: .circle, tall: true) {
             HStack(alignment: .top, spacing: t.sp24 + t.sp2) {
                 Figure(String(d.focus.count), caption: "Focus")
                 Figure(String(d.dueToday.count), caption: "Due today")
@@ -162,14 +162,14 @@ struct DashedLine: Shape {
     }
 }
 
-/// Inbox (steel): important, need reply, deadline. As of the last run, not live.
+/// Inbox (info): important, need reply, deadline. As of the last run, not live.
 struct InboxCard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Inbox", subtitle: d.scannedText, accent: .steel, shape: .star) {
+        StatCard(title: "Inbox", subtitle: d.scannedText, accent: .info, shape: .star) {
             HStack(alignment: .top, spacing: t.sp24 + t.sp2) {
                 Figure(String(d.emails.count), caption: "Important")
                 Figure(String(d.emails(.needsReply).count), caption: "Need reply")
@@ -179,7 +179,7 @@ struct InboxCard: View {
     }
 }
 
-/// Health (moss): sessions and time this week, and the last workout.
+/// Health (good): sessions and time this week, and the last workout.
 struct HealthCard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
@@ -188,7 +188,7 @@ struct HealthCard: View {
         let d = store.d
         let week = d.weekActivities
         let (hours, minutes) = Derived.hoursMinutes(week.map(\.durationS).reduce(0, +))
-        StatCard(title: "Health", subtitle: "This week", accent: .moss, shape: .heart) {
+        StatCard(title: "Health", subtitle: "This week", accent: .good, shape: .heart) {
             HStack(alignment: .top, spacing: t.sp24) {
                 Figure(String(week.count), caption: "Sessions")
                 Figure(parts: [.init(text: String(hours)), .init(text: "h", unit: true), .init(text: String(format: " %02d", minutes))], caption: "Time")

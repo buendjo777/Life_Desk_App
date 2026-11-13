@@ -13,7 +13,7 @@ struct SearchBar: View {
                 .font(.system(size: t.symbol, weight: .semibold))
                 .foregroundStyle(t.onAccent)
                 .frame(width: t.badge, height: t.badge)
-                .background(t.rust, in: Circle())
+                .background(t.focus, in: Circle())
                 .accessibilityHidden(true)
             field
             Text(verbatim: "In:").style(\.small, \.inkMuted)
@@ -137,8 +137,8 @@ struct StatusChip: View {
 extension Derived.RunLevel {
     var accent: Accent {
         switch self {
-        case .green: .moss
-        case .amber: .ochre
+        case .green: .good
+        case .amber: .caution
         case .red: .alert
         }
     }

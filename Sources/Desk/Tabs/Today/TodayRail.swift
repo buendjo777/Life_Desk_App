@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The month calendar: Monday first, ISO week numbers, today in a rust circle, dots for events and deadlines.
+/// The month calendar: Monday first, ISO week numbers, today in a focus circle, dots for events and deadlines.
 struct MonthCalendar: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
@@ -24,7 +24,7 @@ struct MonthCalendar: View {
                         .style(\.smallStrong, \.ink)
                         .padding(.horizontal, t.sp12 + t.sp2)
                         .padding(.vertical, t.sp6)
-                        .background(t.tint(.rust), in: Capsule())
+                        .background(t.tint(.focus), in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .help("Back to today")
@@ -78,7 +78,7 @@ struct MonthCalendar: View {
             Text(verbatim: String(cell.day))
                 .style(cell.isToday ? \.bodyStrong : \.nav, cell.isToday ? \.onAccent : cell.isWeekend ? \.inkMuted : \.ink)
                 .frame(width: t.calendarToday, height: t.calendarToday)
-                .background(cell.isToday ? t.rust : selected ? t.surface : .clear, in: Circle())
+                .background(cell.isToday ? t.focus : selected ? t.surface : .clear, in: Circle())
                 .frame(maxWidth: .infinity)
                 .frame(height: t.calendarCell)
                 .overlay(alignment: .bottom) {
@@ -161,7 +161,7 @@ struct ProposalView: View {
                     .lineSpacing(t.sp2)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.leading, t.sp8 + t.hairline)
-                    .overlay(alignment: .leading) { Rectangle().fill(t.rust).frame(width: t.stroke) }
+                    .overlay(alignment: .leading) { Rectangle().fill(t.focus).frame(width: t.stroke) }
                     .padding(.top, t.sp8 + t.hairline)
             }
             HStack(spacing: t.sp8) {
@@ -278,7 +278,7 @@ struct EventRow: View {
     }
 }
 
-/// The dashed rust "now" line with its time pill.
+/// The dashed focus "now" line with its time pill.
 struct NowLine: View {
     @Environment(\.theme) private var t
     let time: String
@@ -290,10 +290,10 @@ struct NowLine: View {
                 .fixedSize()
                 .padding(.horizontal, t.sp4 + t.sp2)
                 .padding(.vertical, t.sp2)
-                .background(t.rust, in: Capsule())
+                .background(t.focus, in: Capsule())
                 .frame(width: t.timeColumn, alignment: .leading)
             DashedLine()
-                .stroke(t.rust, style: StrokeStyle(lineWidth: t.stroke, dash: [t.sp6, t.sp4]))
+                .stroke(t.focus, style: StrokeStyle(lineWidth: t.stroke, dash: [t.sp6, t.sp4]))
                 .frame(height: t.stroke)
         }
         .frame(height: t.sp12)

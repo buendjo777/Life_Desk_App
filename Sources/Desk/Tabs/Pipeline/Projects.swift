@@ -30,10 +30,10 @@ struct ProjectColumn: View {
 extension ProjectStatus {
     var accent: Accent {
         switch self {
-        case .active: .rust
-        case .waiting: .ochre
-        case .frozen: .steel
-        case .idea: .moss
+        case .active: .focus
+        case .waiting: .caution
+        case .frozen: .info
+        case .idea: .good
         }
     }
 }
@@ -72,7 +72,7 @@ struct ProjectCard: View {
         .padding(t.sp12 + t.sp2)
         .frame(maxWidth: .infinity, minHeight: t.boardCardMin, alignment: .topLeading)
         .fixedSize(horizontal: false, vertical: true)
-        .background(selected ? t.rust : t.surface, in: RoundedRectangle(cornerRadius: t.radiusRow))
+        .background(selected ? t.focus : t.surface, in: RoundedRectangle(cornerRadius: t.radiusRow))
         .contentShape(RoundedRectangle(cornerRadius: t.radiusRow))
         .onTapGesture { store.open(.project(project.path)) }
         .accessibilityAction { store.open(.project(project.path)) }

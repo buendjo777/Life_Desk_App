@@ -7,7 +7,7 @@ struct Chip: View {
     @Environment(\.theme) private var t
     let text: String
     var accent: Accent = .neutral
-    /// On a selected (rust) row the chip sits on a dark wash instead of a tint.
+    /// On a selected (focus) row the chip sits on a dark wash instead of a tint.
     var onAccent = false
 
     var body: some View {
@@ -122,7 +122,7 @@ struct Badge: View {
     let content: Content
     var accent: Accent = .neutral
     var small = false
-    /// On a selected (rust) row.
+    /// On a selected (focus) row.
     var onAccent = false
 
     var body: some View {
@@ -147,7 +147,7 @@ struct ProgressBar: View {
     @Environment(\.theme) private var t
     /// 0…1.
     let value: Double
-    var accent: Accent = .moss
+    var accent: Accent = .good
     /// On an accent card the track and fill are drawn in the card's ink.
     var onCard = false
 
@@ -173,7 +173,7 @@ struct LabelledProgress: View {
     let label: String
     let value: Double
     let valueText: String
-    var accent: Accent = .moss
+    var accent: Accent = .good
 
     var body: some View {
         VStack(alignment: .leading, spacing: t.sp6) {

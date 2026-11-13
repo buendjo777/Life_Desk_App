@@ -99,7 +99,7 @@ enum RowLeading {
     case tick(done: Bool, toggle: (() -> Void)?)
 }
 
-/// A list row: icon badge, semibold title, muted subtitle, chip on the right. Selected rows turn rust.
+/// A list row: icon badge, semibold title, muted subtitle, chip on the right. Selected rows turn focus.
 struct ListRow<Trailing: View>: View {
     @Environment(\.theme) private var t
     let leading: RowLeading
@@ -132,7 +132,7 @@ struct ListRow<Trailing: View>: View {
         .padding(.leading, t.sp8 + t.hairline)
         .padding(.trailing, t.sp12)
         .frame(height: t.rowHeight)
-        .background(selected ? t.rust : t.surface, in: RoundedRectangle(cornerRadius: t.radiusRow))
+        .background(selected ? t.focus : t.surface, in: RoundedRectangle(cornerRadius: t.radiusRow))
         .contentShape(RoundedRectangle(cornerRadius: t.radiusRow))
         .onTapGesture { action?() }
         .accessibilityAction { action?() }
@@ -151,7 +151,7 @@ struct ListRow<Trailing: View>: View {
             Button {
                 toggle?()
             } label: {
-                Badge(content: .symbol(isDone ? "checkmark.circle.fill" : "circle"), accent: isDone ? .moss : .neutral, onAccent: selected)
+                Badge(content: .symbol(isDone ? "checkmark.circle.fill" : "circle"), accent: isDone ? .good : .neutral, onAccent: selected)
             }
             .buttonStyle(.plain)
             .disabled(toggle == nil)

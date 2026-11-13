@@ -26,16 +26,16 @@ struct Theme {
     var ink: Color { pick(0x16181C, 0xECE8E1) }
     var inkMuted: Color { pick(0x5F5D57, 0x9C9990) }
     var onAccent: Color { Color(hex: 0x16181C) }
-    var ochre: Color { Color(hex: 0xD4A23F) }
-    var ochreDeep: Color { Color(hex: 0xB4842A) }
-    var rust: Color { Color(hex: 0xC8763C) }
-    var rustDeep: Color { Color(hex: 0xA35A2A) }
-    var steel: Color { Color(hex: 0x8EA6BE) }
-    var steelDeep: Color { Color(hex: 0x6C88A5) }
-    var moss: Color { Color(hex: 0x8A9A5B) }
-    var mossDeep: Color { Color(hex: 0x6B7A41) }
-    var navy: Color { pick(0x1F2C3B, 0x2A3B4F) }
-    var navyDeep: Color { pick(0x101A26, 0x1B2836) }
+    var caution: Color { Color(hex: 0xD4A23F) }
+    var cautionDeep: Color { Color(hex: 0xB4842A) }
+    var focus: Color { Color(hex: 0xC8763C) }
+    var focusDeep: Color { Color(hex: 0xA35A2A) }
+    var info: Color { Color(hex: 0x8EA6BE) }
+    var infoDeep: Color { Color(hex: 0x6C88A5) }
+    var good: Color { Color(hex: 0x8A9A5B) }
+    var goodDeep: Color { Color(hex: 0x6B7A41) }
+    var deep: Color { pick(0x1F2C3B, 0x2A3B4F) }
+    var deepDeep: Color { pick(0x101A26, 0x1B2836) }
     var alert: Color { pick(0xA8432F, 0xC9573F) }
     /// The sidebar and the round buttons get a hairline border in dark mode only.
     var panelBorder: Color { scheme == .dark ? line : .clear }
@@ -44,11 +44,11 @@ struct Theme {
 
     func fill(_ accent: Accent) -> Color {
         switch accent {
-        case .ochre: ochre
-        case .rust: rust
-        case .steel: steel
-        case .moss: moss
-        case .navy: navy
+        case .caution: caution
+        case .focus: focus
+        case .info: info
+        case .good: good
+        case .deep: deep
         case .alert: alert
         case .neutral: surface
         }
@@ -56,11 +56,11 @@ struct Theme {
 
     func deep(_ accent: Accent) -> Color {
         switch accent {
-        case .ochre: ochreDeep
-        case .rust: rustDeep
-        case .steel: steelDeep
-        case .moss: mossDeep
-        case .navy: navyDeep
+        case .caution: cautionDeep
+        case .focus: focusDeep
+        case .info: infoDeep
+        case .good: goodDeep
+        case .deep: deepDeep
         case .alert: alert
         case .neutral: line
         }
@@ -74,7 +74,7 @@ struct Theme {
     /// Text colour on a card filled with the accent.
     func on(_ accent: Accent) -> Color {
         switch accent {
-        case .navy, .alert: panelText
+        case .deep, .alert: panelText
         case .neutral: ink
         default: onAccent
         }
@@ -221,7 +221,7 @@ enum Density: String, CaseIterable, Codable, Identifiable {
 }
 
 enum Accent: String, CaseIterable {
-    case ochre, rust, steel, moss, navy, alert, neutral
+    case caution, focus, info, good, deep, alert, neutral
 }
 
 struct TextStyle {

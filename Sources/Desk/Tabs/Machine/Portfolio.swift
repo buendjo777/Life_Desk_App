@@ -32,21 +32,21 @@ extension Derived {
     }
 
     static let architecture: [(title: String, detail: String, accent: Accent)] = [
-        ("Nightly agents", "Read mail, calendar and Strava in the cloud", .navy),
-        ("Vault (git)", "snapshot.json · runs.jsonl · drafts · Jose's notes", .ochre),
-        ("Desk for Mac", "git pull · pure parsers · nine tabs", .rust),
-        ("Jose", "Ticks, Add, Dismiss → decisions.jsonl", .moss),
+        ("Nightly agents", "Read mail, calendar and Strava in the cloud", .deep),
+        ("Vault (git)", "snapshot.json · runs.jsonl · drafts · Jose's notes", .caution),
+        ("Desk for Mac", "git pull · pure parsers · nine tabs", .focus),
+        ("Jose", "Ticks, Add, Dismiss → decisions.jsonl", .good),
     ]
 }
 
-/// What the system does (navy).
+/// What the system does (deep).
 struct PortfolioIntro: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
         let d = store.showcase
-        StatCard(title: "Desk: a life desk run by nightly agents", accent: .navy, shape: .cog, tall: true) {
+        StatCard(title: "Desk: a life desk run by nightly agents", accent: .deep, shape: .cog, tall: true) {
             Text(verbatim: "Cloud agents read the inbox, the calendar and Strava every night and write a brief into a private git vault. "
                 + "Desk is the native Mac app that reads it: what is due, what needs a reply, what to confirm. "
                 + "It holds no credentials, renders untrusted text as plain text, and changes nothing without a click.")
@@ -64,13 +64,13 @@ struct PortfolioIntro: View {
     }
 }
 
-/// The evaluation result (ochre): the missed-reply rate, or an honest empty state.
+/// The evaluation result (caution): the missed-reply rate, or an honest empty state.
 struct PortfolioEvaluation: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
-        StatCard(title: "Evaluation", subtitle: "Missed-reply rate", accent: .ochre, shape: .triangle, tall: true) {
+        StatCard(title: "Evaluation", subtitle: "Missed-reply rate", accent: .caution, shape: .triangle, tall: true) {
             if let evaluation = store.portfolio?.evaluation {
                 Figure(String(format: "%.1f", evaluation.missedReplyRate * 100), unit: "%",
                        caption: evaluation.sample.map { "of \($0) emails that needed a reply" } ?? "Missed replies")
@@ -142,8 +142,8 @@ struct PortfolioAgents: View {
             SectionHeader(title: "Agents", subtitle: "Cheaper models read, stronger ones write and verify")
             if agents.isEmpty { EmptyState(line: "No agents listed in the last run.") }
             ForEach(agents, id: \.self) { agent in
-                ListRow(leading: .symbol("cpu", .navy), title: agent.name, subtitle: nil) { _ in
-                    Chip(text: agent.model, accent: agent.model == "haiku" ? .steel : .ochre)
+                ListRow(leading: .symbol("cpu", .deep), title: agent.name, subtitle: nil) { _ in
+                    Chip(text: agent.model, accent: agent.model == "haiku" ? .info : .caution)
                 }
             }
         }
@@ -161,17 +161,17 @@ struct PortfolioCosts: View {
         VStack(alignment: .leading, spacing: t.sp8) {
             SectionHeader(title: "Cost")
             ForEach(d.costTable) { line in
-                ListRow(leading: .symbol("eurosign", .moss), title: line.item, subtitle: line.note) { _ in
-                    Chip(text: line.cost, accent: .moss)
+                ListRow(leading: .symbol("eurosign", .good), title: line.item, subtitle: line.note) { _ in
+                    Chip(text: line.cost, accent: .good)
                 }
             }
             SectionHeader(title: "Failure log", subtitle: "\(d.failedRuns.count) failed of \(d.data.runs.count) runs")
             if d.failureLog.isEmpty { EmptyState(line: "No failures logged.") }
             ForEach(Array(d.failureLog.enumerated()), id: \.offset) { _, entry in
                 // Agent-written lines: ListRow draws them verbatim.
-                ListRow(leading: .symbol(entry.run.isOK ? "exclamationmark" : "xmark", entry.run.isOK ? .ochre : .alert),
+                ListRow(leading: .symbol(entry.run.isOK ? "exclamationmark" : "xmark", entry.run.isOK ? .caution : .alert),
                         title: entry.text, subtitle: d.cal.format(entry.run.startedAt.date, "EEE d MMM · HH:mm")) { _ in
-                    Chip(text: entry.run.isOK ? "Recovered" : "Failed", accent: entry.run.isOK ? .ochre : .alert)
+                    Chip(text: entry.run.isOK ? "Recovered" : "Failed", accent: entry.run.isOK ? .caution : .alert)
                 }
             }
         }

@@ -16,10 +16,10 @@ struct MoneyDonut: View {
                     Circle().stroke(t.line, lineWidth: t.donutLine)
                     if total > 0 {
                         Circle().trim(from: 0, to: received / total)
-                            .stroke(t.moss, style: StrokeStyle(lineWidth: t.donutLine))
+                            .stroke(t.good, style: StrokeStyle(lineWidth: t.donutLine))
                             .rotationEffect(.degrees(-90))
                         Circle().trim(from: received / total, to: 1)
-                            .stroke(t.ochre, style: StrokeStyle(lineWidth: t.donutLine))
+                            .stroke(t.caution, style: StrokeStyle(lineWidth: t.donutLine))
                             .rotationEffect(.degrees(-90))
                     }
                     VStack(spacing: 0) {
@@ -30,8 +30,8 @@ struct MoneyDonut: View {
                 .frame(width: t.donut - t.donutLine, height: t.donut - t.donutLine)
                 .padding(t.donutLine / 2)
                 VStack(alignment: .leading, spacing: t.sp8) {
-                    legend(.moss, "Received in \(d.currentYear)", d.money(received))
-                    legend(.ochre, "Still to come", d.money(pending))
+                    legend(.good, "Received in \(d.currentYear)", d.money(received))
+                    legend(.caution, "Still to come", d.money(pending))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -62,18 +62,18 @@ struct MoneyCard: View {
         let month = d.thisMonth
         switch kind {
         case .month:
-            StatCard(title: "This month", accent: .moss, shape: .ring) {
+            StatCard(title: "This month", accent: .good, shape: .ring) {
                 Figure(d.money(d.earnedThisMonth), caption: Derived.plural(month.map(\.lessons).reduce(0, +), "lesson") + " so far")
             }
         case .owed:
             let invoices = d.waitingForPayment.count + d.monthEnd.count
-            StatCard(title: "Owed", accent: .ochre, shape: .ring) {
+            StatCard(title: "Owed", accent: .caution, shape: .ring) {
                 Figure(d.money(d.owedAmount), caption: invoices == 0 ? "Nothing owed" : Derived.plural(invoices, "invoice"))
             }
         case .hours:
             let taught = month.map(\.hours).reduce(0, +)
             let planned = month.map(\.plannedHours).reduce(0, +)
-            StatCard(title: "Hours", accent: .steel, shape: .ring) {
+            StatCard(title: "Hours", accent: .info, shape: .ring) {
                 Figure(Parse.number(taught), unit: "h", caption: planned > taught ? "of \(Parse.number(planned)) planned" : "taught this month")
             }
         }
@@ -95,14 +95,14 @@ struct TutoringMonthList: View {
             }
             ForEach(d.thisMonth) { entry in
                 let student = entry.student
-                ListRow(leading: .initials(student.initials, .ochre),
+                ListRow(leading: .initials(student.initials, .caution),
                         title: ([d.studentName(student.initials), student.subject].filter { !$0.isEmpty }).joined(separator: " · "),
                         subtitle: ([student.level, "\(d.money(student.rate))/h", student.paysBy.isEmpty ? "" : "pays by \(student.paysBy)"]
                             .filter { !$0.isEmpty }).joined(separator: " · "),
                         selected: store.selection == .student(entry.student.initials), action: { store.open(.student(entry.student.initials)) }) { selected in
                     Text(verbatim: "\(Derived.plural(entry.lessons, "lesson")) · \(Derived.hoursText(entry.hours)) of \(Parse.number(entry.plannedHours))")
                         .style(\.small, selected ? \.onAccent : \.inkMuted)
-                    Chip(text: d.money(entry.amount), accent: .moss, onAccent: selected)
+                    Chip(text: d.money(entry.amount), accent: .good, onAccent: selected)
                 }
             }
         }
@@ -122,7 +122,7 @@ private struct InvoiceCard<Actions: View>: View {
         let d = store.d
         VStack(alignment: .leading, spacing: t.sp8) {
             HStack(spacing: t.sp10) {
-                Badge(content: .initials(payment.initials), accent: .ochre)
+                Badge(content: .initials(payment.initials), accent: .caution)
                 VStack(alignment: .leading, spacing: t.sp2) {
                     Text(verbatim: "\(d.studentName(payment.initials)) · \(d.monthName(payment.month))").style(\.rowTitle, \.ink)
                     Text(verbatim: detail).style(\.small, \.inkMuted).lineLimit(1)
@@ -206,7 +206,7 @@ struct PaymentsTable: View {
             SectionHeader(title: "Payments", subtitle: "Every month in the Classes note · local only, never committed")
             if rows.isEmpty { EmptyState(line: "No payments recorded yet.", hint: "Mark a month as sent to start the table.") }
             ForEach(rows.prefix(shown)) { payment in
-                ListRow(leading: .initials(payment.initials, .ochre), title: "\(d.studentName(payment.initials)) · \(d.monthName(payment.month))",
+                ListRow(leading: .initials(payment.initials, .caution), title: "\(d.studentName(payment.initials)) · \(d.monthName(payment.month))",
                         subtitle: "\(Derived.plural(payment.lessons, "lesson")) · \(Derived.hoursText(payment.hours))"
                             + (payment.paid.map { " · paid \(d.cal.shortDay($0))" } ?? payment.sent.map { " · sent \(d.cal.shortDay($0))" } ?? ""),
                         selected: store.selection == .student(payment.initials), action: { store.open(.student(payment.initials)) }) { selected in
@@ -230,8 +230,8 @@ extension Payment.Status {
     var accent: Accent {
         switch self {
         case .notSent: .neutral
-        case .sent: .ochre
-        case .paid: .moss
+        case .sent: .caution
+        case .paid: .good
         }
     }
 }
@@ -260,7 +260,7 @@ struct WeekLessons: View {
                     Text(verbatim: d.cal.format(lesson.start, "EEE")).style(\.micro, \.inkMuted)
                         .frame(width: t.timeColumn, alignment: .leading).padding(.top, t.sp8)
                     HStack(spacing: t.sp10) {
-                        Badge(content: .initials(initials), accent: .ochre, small: true)
+                        Badge(content: .initials(initials), accent: .caution, small: true)
                         VStack(alignment: .leading, spacing: t.hairline) {
                             Text(verbatim: d.studentName(initials)).style(\.rowTitle, \.ink).lineLimit(1)
                             Text(verbatim: lesson.detail).style(\.small, \.inkMuted)

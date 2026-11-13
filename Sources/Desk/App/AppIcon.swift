@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The app icon, drawn from the theme: a graphite tile, the rust sun from the Today card and a "D".
+/// The app icon, drawn from the theme: a graphite tile, the focus sun from the Today card and a "D".
 /// `Desk --render-icon <dir>` writes an `.iconset` for `iconutil` (see `scripts/build-app.sh`).
 struct AppIconView: View {
     let size: CGFloat
@@ -10,10 +10,10 @@ struct AppIconView: View {
         let tile = size * t.iconTile
         ZStack {
             RoundedRectangle(cornerRadius: tile * t.iconCorner, style: .continuous).fill(t.panel)
-            Circle().fill(t.rust)
+            Circle().fill(t.focus)
                 .frame(width: tile * 0.62, height: tile * 0.62)
                 .offset(x: tile * 0.26, y: -tile * 0.26)
-            CardShapeView(shape: .triangle, color: t.ochre)
+            CardShapeView(shape: .triangle, color: t.caution)
                 .frame(width: tile * 0.5, height: tile * 0.5)
                 .rotationEffect(.degrees(14))
                 .offset(x: -tile * 0.34, y: tile * 0.36)

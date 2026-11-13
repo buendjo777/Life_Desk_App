@@ -37,13 +37,13 @@ struct UniRunway: View {
                             .onChange(of: width) { measured = width }
                         Capsule().fill(t.line).frame(width: proxy.size.width, height: t.stroke + t.stroke)
                             .offset(y: lineY - t.stroke)
-                        Circle().fill(t.rust).frame(width: t.runwayDot, height: t.runwayDot)
+                        Circle().fill(t.focus).frame(width: t.runwayDot, height: t.runwayDot)
                             .offset(y: lineY - t.runwayDot / 2)
                         Text(verbatim: "Today").style(\.micro, \.ink).offset(y: y(lane: 0, lineY: lineY))
                         ForEach(Array(marks.enumerated()), id: \.element.id) { index, mark in
                             let x = t.weekColumn + Double(mark.daysLeft) / span * width
                             let lane = assigned[index]
-                            Circle().fill(mark.submitted ? t.moss : t.steelDeep)
+                            Circle().fill(mark.submitted ? t.good : t.infoDeep)
                                 .frame(width: t.runwayDot, height: t.runwayDot)
                                 .offset(x: x - t.runwayDot / 2, y: lineY - t.runwayDot / 2)
                             // A thin tick ties a label that is not right under its dot to the dot.
@@ -111,7 +111,7 @@ struct UniGrid: View {
     }
 }
 
-/// One programme card (steel): days left, checklist progress and status.
+/// One programme card (info): days left, checklist progress and status.
 struct UniCardView: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
@@ -120,7 +120,7 @@ struct UniCardView: View {
     var body: some View {
         if let card = store.d.uniCards.first(where: { $0.id == path }) {
             let selected = store.selection == .uni(path)
-            StatCard(title: card.school, accent: selected ? .rust : .steel, shape: .chevron) {
+            StatCard(title: card.school, accent: selected ? .focus : .info, shape: .chevron) {
                 Text(verbatim: card.degree).style(\.small).opacity(t.captionOpacity).lineLimit(1).padding(.top, -t.sp12)
                 HStack(alignment: .top, spacing: t.sp20) {
                     if let days = card.daysLeft {
@@ -155,7 +155,7 @@ struct UniInspector: View {
         let d = store.d
         InspectorTitle(text: card.school)
         Text(verbatim: card.degree).style(\.small, \.inkMuted)
-        Chip(text: card.status, accent: card.status == "Submitted" ? .moss : .steel)
+        Chip(text: card.status, accent: card.status == "Submitted" ? .good : .info)
         if let deadline = card.deadline, let days = card.daysLeft {
             InspectorField(label: "Deadline", value: "\(d.cal.format(deadline, "EEE d MMM yyyy, HH:mm")) · \(days < 0 ? "closed" : Derived.plural(days, "day"))")
         }
@@ -197,7 +197,7 @@ struct ContactsBoard: View {
                 .padding(.bottom, t.sp2)
                 if rows.isEmpty { EmptyState(line: "Nobody with this status.", hint: d.data.hint(VaultData.peopleFile)) }
                 ForEach(rows.prefix(shown)) { person in
-                    ListRow(leading: .initials(initials(of: person.name), .steel), title: person.name,
+                    ListRow(leading: .initials(initials(of: person.name), .info), title: person.name,
                             subtitle: [person.role, person.programme].compactMap { $0 }.joined(separator: " · "),
                             selected: store.selection == .person(person.id), action: { store.open(.person(person.id)) }) { selected in
                         if let next = person.next {
@@ -221,8 +221,8 @@ struct ContactsBoard: View {
 
     static func accent(_ status: String) -> Accent {
         switch status {
-        case "replied", "call_booked": .moss
-        case "sent", "drafted": .steel
+        case "replied", "call_booked": .good
+        case "sent", "drafted": .info
         case "no_reply": .alert
         default: .neutral
         }
