@@ -208,6 +208,9 @@ struct Derived {
             Phrase(text: Self.plural(leftovers.count, "leftover"), strong: true), Phrase(text: " and "),
             Phrase(text: "\(toConfirm.count) to confirm", strong: true), Phrase(text: ". "),
         ]
+        if let target = studyTarget, !target.checks.isEmpty {
+            phrases += [Phrase(text: "\(Self.plural(target.checks.count, "study item")) today", strong: true), Phrase(text: ". ")]
+        }
         let nearest = distinctDeadlines.prefix(2)
         if let first = nearest.first {
             let name = first.isExam ? "the exam" : first.short

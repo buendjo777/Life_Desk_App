@@ -5,10 +5,22 @@ struct UniRunway: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
+    /// The runway's measured width; until it is known, a typical one at the design size.
+    @State private var measured: CGFloat?
+
+    /// A label's height (name and date) and the space between rows.
+    private var labelHeight: CGFloat { t.sp32 }
+    private var rowGap: CGFloat { t.sp4 }
+
     var body: some View {
         let d = store.d
         let span = Double(d.uniRunwayDays)
-        let cards = d.uniCards.filter { ($0.daysLeft ?? -1) >= 0 }
+        let marks = d.uniRunwayMarks
+        // Rows needed at the measured width, so the card is only as tall as its labels need.
+        let planned = lanes(marks, width: measured ?? 1000, span: span)
+        let rowsAbove = planned.contains(3) ? 2 : planned.contains(1) ? 1 : 0
+        let rowsBelow = planned.contains(2) ? 2 : 1
+        let lineY = CGFloat(rowsAbove) * (labelHeight + rowGap) + t.runwayDot / 2
         SurfaceCard {
             VStack(alignment: .leading, spacing: t.sp8) {
                 HStack {
@@ -18,30 +30,57 @@ struct UniRunway: View {
                 }
                 GeometryReader { proxy in
                     let width = proxy.size.width - t.weekColumn * 2
+                    let assigned = lanes(marks, width: width, span: span)
                     ZStack(alignment: .topLeading) {
+                        Color.clear
+                            .onAppear { measured = width }
+                            .onChange(of: width) { measured = width }
                         Capsule().fill(t.line).frame(width: proxy.size.width, height: t.stroke + t.stroke)
-                            .offset(y: t.runwayDot / 2 - t.stroke)
+                            .offset(y: lineY - t.stroke)
                         Circle().fill(t.rust).frame(width: t.runwayDot, height: t.runwayDot)
-                        Text(verbatim: "Today").style(\.micro, \.ink).offset(y: t.runwayDot + t.sp4)
-                        ForEach(cards) { card in
-                            let x = t.weekColumn + Double(card.daysLeft ?? 0) / span * width
-                            Circle().fill(card.status == "Submitted" ? t.moss : t.steelDeep)
+                            .offset(y: lineY - t.runwayDot / 2)
+                        Text(verbatim: "Today").style(\.micro, \.ink).offset(y: y(lane: 0, lineY: lineY))
+                        ForEach(Array(marks.enumerated()), id: \.element.id) { index, mark in
+                            let x = t.weekColumn + Double(mark.daysLeft) / span * width
+                            let lane = assigned[index]
+                            Circle().fill(mark.submitted ? t.moss : t.steelDeep)
                                 .frame(width: t.runwayDot, height: t.runwayDot)
-                                .offset(x: x - t.runwayDot / 2)
-                            VStack(spacing: 0) {
-                                Text(verbatim: card.school.split(separator: " ").first.map(String.init) ?? card.school).style(\.smallStrong, \.ink)
-                                Text(verbatim: "\(card.daysLeft ?? 0) d · \(card.deadline.map(d.cal.shortDay) ?? "")").style(\.micro, \.inkMuted)
+                                .offset(x: x - t.runwayDot / 2, y: lineY - t.runwayDot / 2)
+                            // A thin tick ties a label that is not right under its dot to the dot.
+                            if lane >= 1 {
+                                let top = lane % 2 == 1 ? y(lane: lane, lineY: lineY) + labelHeight : lineY + t.runwayDot / 2
+                                let bottom = lane % 2 == 1 ? lineY - t.runwayDot / 2 : y(lane: lane, lineY: lineY)
+                                Rectangle().fill(t.line)
+                                    .frame(width: t.hairline, height: max(0, bottom - top))
+                                    .offset(x: x, y: top)
                             }
-                            .frame(width: t.weekColumn * 2)
-                            .offset(x: x - t.weekColumn, y: t.runwayDot + t.sp4)
+                            VStack(spacing: 0) {
+                                Text(verbatim: mark.title).style(\.smallStrong, \.ink).lineLimit(1)
+                                Text(verbatim: "\(mark.daysLeft) d · \(mark.deadline.map(d.cal.shortDay) ?? "")").style(\.micro, \.inkMuted).lineLimit(1)
+                            }
+                            .frame(width: t.weekColumn * 2, height: labelHeight)
+                            .offset(x: x - t.weekColumn, y: y(lane: lane, lineY: lineY))
                         }
                     }
                 }
-                .frame(height: t.runwayDot + t.sp32 + t.sp4)
+                .frame(height: lineY + t.runwayDot / 2 + t.sp4 + CGFloat(rowsBelow) * (labelHeight + rowGap))
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text(verbatim: "Deadline runway, \(cards.count) programmes ahead"))
+        .accessibilityLabel(Text(verbatim: "Deadline runway, \(marks.count) deadlines ahead"))
+    }
+
+    private func lanes(_ marks: [Derived.RunwayMark], width: Double, span: Double) -> [Int] {
+        Derived.runwayLanes(marks.map { t.weekColumn + Double($0.daysLeft) / span * width },
+                            labelWidth: t.weekColumn * 2, gap: t.sp4, occupied: t.weekColumn)
+    }
+
+    /// The top of a label in `lane`: 0 and 2 below the line, 1 and 3 above it.
+    private func y(lane: Int, lineY: CGFloat) -> CGFloat {
+        let row = CGFloat(lane / 2)
+        return lane % 2 == 0
+            ? lineY + t.runwayDot / 2 + t.sp4 + row * (labelHeight + rowGap)
+            : lineY - t.runwayDot / 2 - t.sp4 - labelHeight - row * (labelHeight + rowGap)
     }
 }
 

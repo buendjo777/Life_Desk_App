@@ -49,7 +49,7 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(d.greeting, "Good morning, Jose")
         XCTAssertEqual(
             d.todaySummary.map(\.text).joined(),
-            "Wednesday 11 November. 4 due today, 3 leftovers and 2 to confirm. 16 days to the exam, 19 to Alpine. Last run 06:34, all green."
+            "Wednesday 11 November. 4 due today, 3 leftovers and 2 to confirm. 2 study items today. 16 days to the exam, 19 to Alpine. Last run 06:34, all green."
         )
         XCTAssertEqual(at("2026-11-11T19:00:00+01:00").greeting, "Good evening, Jose")
     }
@@ -144,7 +144,22 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(d.applyNow.count, 7)
         XCTAssertEqual(d.allTargets.count, 12)
         XCTAssertEqual(d.applyNow.first?.company, "Meridian Health AI")
+        // A status card shows its targets, in the Apply now order.
+        XCTAssertEqual(d.filteredTargets(status: "applied").map(\.company), ["Helix Diagnostics", "Pulsewave"])
+        XCTAssertEqual(d.filteredTargets(status: "rejected").count, 1)
+        // Today's summary carries today's study share.
+        XCTAssertTrue(d.todaySummary.map(\.text).joined().contains("2 study items today."))
         XCTAssertEqual(Derived.label("not_contacted"), "Not contacted")
+    }
+
+    func testRunwayLabelsTakeTurnsAboveAndBelow() {
+        // Three labels 60 pt wide, close together: below, above, then a second row below.
+        XCTAssertEqual(Derived.runwayLanes([100, 120, 140], labelWidth: 60, gap: 4, occupied: 0), [0, 1, 2])
+        // Far apart: all on the first lane. The "Today" label reserves its start.
+        XCTAssertEqual(Derived.runwayLanes([100, 300, 500], labelWidth: 60, gap: 4, occupied: 0), [0, 0, 0])
+        XCTAssertEqual(Derived.runwayLanes([30], labelWidth: 60, gap: 4, occupied: 40), [1])
+        // Programmes of one school closing the same day share one mark.
+        XCTAssertEqual(Set(d.uniRunwayMarks.map(\.id)).count, d.uniRunwayMarks.count)
     }
 
     func testUniCards() {

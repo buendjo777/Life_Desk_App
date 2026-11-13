@@ -66,6 +66,9 @@ final class Store {
     var selectedDay: Date?
     private(set) var lastSync: Date?
 
+    /// Internship apps: the status card Jose picked; the list below shows only that status.
+    var targetFilter: String?
+
     var query = ""
     var searchScope = Derived.SearchScope.all
     /// Bumped by ⌘F; the search field takes focus when it changes.

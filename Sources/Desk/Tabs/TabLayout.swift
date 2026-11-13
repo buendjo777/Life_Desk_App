@@ -39,6 +39,7 @@ enum TabLayout {
             DeskSection("today.waiting", "Waiting", width: 386) { WaitingList() },
             DeskSection("today.calendar", "Month calendar", slot: .rail) { MonthCalendar() },
             DeskSection("today.confirm", "Needs confirmation", slot: .rail) { ConfirmCard() },
+            DeskSection("today.study", "Study today", slot: .rail) { StudyTargetCard(label: "Study today", onToday: true) },
             DeskSection("today.timeline", "Timeline", slot: .rail) { DayTimeline() },
         ]
         case .studying: [

@@ -61,15 +61,23 @@ struct ProgressRing: View {
     }
 }
 
-/// Today's target, from the plan.
+/// Today's target, from a list or the plan. On Today it sits in the rail as "Study today", without the Claude button.
 struct StudyTargetCard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
+    var label = "Today's target"
+    var onToday = false
 
     var body: some View {
+        if !onToday || store.d.studyTarget != nil {
+            card
+        }
+    }
+
+    private var card: some View {
         SurfaceCard {
             VStack(alignment: .leading, spacing: t.sp8) {
-                Text(verbatim: "Today's target").style(\.label, \.inkMuted)
+                Text(verbatim: label).style(\.label, \.inkMuted)
                 if let target = store.d.studyTarget {
                     Text(verbatim: target.headline).style(\.section, \.ink)
                     Text(verbatim: target.detail).style(\.small, \.inkMuted).fixedSize(horizontal: false, vertical: true)
@@ -85,9 +93,13 @@ struct StudyTargetCard: View {
                         }
                     }
                     Spacer(minLength: 0)
-                    LinkButton(title: "Open in Claude", url: store.d.data.settings.exam.flatMap {
-                        Links.claude(seed: "Quiz me on the open topics in \($0.file) in my vault, one question at a time.")
-                    })
+                    if onToday {
+                        Button("Open Studying") { store.show(.studying) }.buttonStyle(.deskSecondary)
+                    } else {
+                        LinkButton(title: "Open in Claude", url: store.d.data.settings.exam.flatMap {
+                            Links.claude(seed: "Quiz me on the open topics in \($0.file) in my vault, one question at a time.")
+                        })
+                    }
                 }
             }
         }

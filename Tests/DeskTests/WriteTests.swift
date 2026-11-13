@@ -156,7 +156,7 @@ final class WriteTests: XCTestCase {
         let layout = prefs.layouts[Tab.today.rawValue]
         XCTAssertEqual(TabLayout.ordered(.today, prefs: layout).map(\.id).prefix(2), [ids[1], ids[0]])
         XCTAssertFalse(TabLayout.arranged(.today, .main, prefs: layout).contains { $0.id == "today.health" })
-        XCTAssertEqual(TabLayout.arranged(.today, .rail, prefs: layout).count, 3)
+        XCTAssertEqual(TabLayout.arranged(.today, .rail, prefs: layout).count, 4)
         prefs.density = .comfortable
         XCTAssertEqual(Theme(density: prefs.density).rowHeight, 60)
         prefs.resetLayout()

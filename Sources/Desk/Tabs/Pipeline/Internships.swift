@@ -1,15 +1,27 @@
 import SwiftUI
 
-/// One count card per status: Open, Applied, Interview, Rejected.
+/// One count card per status: Open, Applied, Interview, Rejected. Clicking one shows only those below.
 struct TargetCountCard: View {
     @Environment(Store.self) private var store
+    @Environment(\.theme) private var t
     let status: String
 
     var body: some View {
         let targets = store.d.targets(status: status)
-        StatCard(title: Derived.label(status), accent: Self.accent(status), shape: .square) {
-            Figure(String(targets.count), caption: targets.count == 1 ? "target" : "targets")
+        let picked = store.targetFilter == status
+        Button {
+            store.targetFilter = picked ? nil : status
+        } label: {
+            StatCard(title: Derived.label(status), subtitle: picked ? "Showing" : nil, accent: Self.accent(status), shape: .square) {
+                Figure(String(targets.count), caption: targets.count == 1 ? "target" : "targets")
+            }
+            .overlay(RoundedRectangle(cornerRadius: t.radiusCard).strokeBorder(t.ink, lineWidth: picked ? t.stroke + t.hairline : 0))
+            .opacity(store.targetFilter == nil || picked ? 1 : t.captionOpacity)
+            .contentShape(RoundedRectangle(cornerRadius: t.radiusCard))
         }
+        .buttonStyle(.plain)
+        .help(picked ? "Show every target again" : "Show only \(Derived.label(status).lowercased()) targets")
+        .accessibilityAddTraits(picked ? [.isButton, .isSelected] : .isButton)
     }
 
     static func accent(_ status: String) -> Accent {
@@ -23,12 +35,12 @@ struct TargetCountCard: View {
     }
 }
 
-/// The targets table: Apply now · All targets.
+/// The targets table: Apply now · All targets, or only the status picked on a card. Long lists grow 30 rows at a time.
 struct TargetList: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
     @State private var all = false
-    @State private var expanded = false
+    @State private var extra = 0
 
     var body: some View {
         let d = store.d
@@ -38,22 +50,30 @@ struct TargetList: View {
                 EmptyState(line: "The internship board has not moved into the vault yet.", hint: "The morning run exports it to agent/board.json.")
                 LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard), primary: true)
             } else {
-                let rows = all ? d.allTargets : d.applyNow
-                let shown = expanded ? rows.count : min(rows.count, t.listRows + 1)
-                SectionHeader(title: "Targets") {
-                    CountedTabs(items: [
-                        .init(id: false, title: "Apply now", count: d.applyNow.filter { $0.status != "rejected" }.count),
-                        .init(id: true, title: "All targets", count: d.allTargets.count),
-                    ], selection: $all)
+                let filter = store.targetFilter
+                let rows = filter.map { d.filteredTargets(status: $0) } ?? (all ? d.allTargets : d.applyNow)
+                let shown = min(rows.count, t.listRows + 1 + extra)
+                SectionHeader(title: filter.map { "\(Derived.label($0)) · \(rows.count)" } ?? "Targets") {
+                    if filter != nil {
+                        Button("Show all") { store.targetFilter = nil }.buttonStyle(.deskSecondary)
+                    } else {
+                        CountedTabs(items: [
+                            .init(id: false, title: "Apply now", count: d.applyNow.filter { $0.status != "rejected" }.count),
+                            .init(id: true, title: "All targets", count: d.allTargets.count),
+                        ], selection: $all)
+                    }
                     LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard))
                 }
                 .padding(.bottom, t.sp2)
+                .onChange(of: filter) { extra = 0 }
+                .onChange(of: all) { extra = 0 }
                 if rows.isEmpty { EmptyState(line: "No targets in this list.") }
                 ForEach(rows.prefix(shown)) { target in
                     TargetRow(target: target)
                 }
                 if rows.count > shown {
-                    MoreLine(phrases: [.init(text: "+ "), .init(text: String(rows.count - shown), strong: true), .init(text: " more")]) { expanded = true }
+                    MoreLine(phrases: [.init(text: "+ "), .init(text: String(rows.count - shown), strong: true),
+                                       .init(text: rows.count - shown > 30 ? " more · show 30" : " more")]) { extra += 30 }
                 }
             }
         }
@@ -87,7 +107,7 @@ struct TargetRow: View {
             }
             Chip(text: target.statusLabel ?? Derived.label(target.status), accent: TargetCountCard.accent(target.status), onAccent: selected)
             if let url = Links.web(target.url) {
-                Button(target.list == "apply_now" ? "Apply" : "Open") { Links.open(url) }.buttonStyle(.deskSecondary)
+                Button(target.list == "apply_now" && target.status == "open" ? "Apply" : "Open") { Links.open(url) }.buttonStyle(.deskSecondary)
                     .help(target.url ?? "")
             }
         }

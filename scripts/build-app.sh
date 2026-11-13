@@ -26,7 +26,9 @@ fi
 # Finder metadata (.DS_Store, extended attributes) makes codesign refuse the bundle.
 find "$APP" -name .DS_Store -delete
 xattr -cr "$APP"
-codesign --force --deep --sign - "$APP"
+# Ad-hoc signing names the build by its hash, so macOS would ask again for Calendar and Notes after every
+# rebuild. A fixed requirement (the bundle identifier) lets the permissions carry over from build to build.
+codesign --force --deep --sign - --requirements '=designated => identifier "app.desk.mac"' "$APP"
 
 mkdir -p "$HOME/Applications"
 rm -rf "$HOME/Applications/Desk.app"

@@ -149,3 +149,8 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - **Found while checking the tabs:** the "Morning Desk" routine that feeds Today and System is disabled, so the last run is Thursday's. The "daily" internship scan runs on Mondays only.
 - **Checked:** 84 tests (1 opt-in skipped).
 - **First run since Thursday** (Morning Desk turned back on, 13 Nov 12:03): the board export worked, with 199 openings and 89 targets, and System is green. Email and calendar were skipped: the repo's deny rules did not load in the routine's session, so the skill left them out on purpose. The run did not commit, because Jose's own notes had uncommitted changes; Obsidian Git's backup commits them all.
+
+## 13 Nov — Today's study items, card filters, runway lanes, stable signing
+- Decisions 94–97. Checked live: Today shows today's 7 study items; the Rejected card lists the two rejected applications with their links; the Uni runway shows ten deadlines with no label on top of another.
+- **Email:** the morning run moved from a Cowork task, which never loads the vault's `.claude/` (its deny rules, hook and agents), to a cloud routine that clones jose-brain. In the cloud routine the deny rules load, and the injection eval passed: 61 checks, 0 failed.
+- **Checked:** 85 tests (1 opt-in skipped).

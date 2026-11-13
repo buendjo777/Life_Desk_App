@@ -49,6 +49,13 @@ extension Derived {
         }
     }
 
+    /// The rows behind a status card, in the Apply now order.
+    func filteredTargets(status: String) -> [Target] {
+        let picked = Set(targets(status: status).map(\.id))
+        let openings = applyNow.filter { picked.contains($0.id) }
+        return openings.isEmpty ? allTargets.filter { picked.contains($0.id) } : openings
+    }
+
     /// The board's targets (companies and labs), priority A first, then by place; without the board, every target.
     var allTargets: [Target] {
         let targets = (data.targets ?? []).filter { $0.list != "apply_now" }
@@ -74,6 +81,46 @@ extension Derived {
     }
 
     // MARK: Uni apps
+
+    /// One mark on the deadline runway. Programmes of one school closing the same day share it ("ETH").
+    struct RunwayMark: Identifiable {
+        let title: String
+        let daysLeft: Int
+        let deadline: Date?
+        let submitted: Bool
+        var id: String { "\(title)-\(daysLeft)" }
+    }
+
+    /// Marks for deadlines still ahead, nearest first.
+    var uniRunwayMarks: [RunwayMark] {
+        var marks: [RunwayMark] = []
+        for card in uniCards.sorted(by: { ($0.daysLeft ?? .max) < ($1.daysLeft ?? .max) }) {
+            guard let days = card.daysLeft, days >= 0 else { continue }
+            let title = card.school.split(separator: " ").first.map(String.init) ?? card.school
+            if let index = marks.firstIndex(where: { $0.title == title && $0.daysLeft == days }) {
+                // Shared mark: submitted only when every programme behind it is.
+                marks[index] = RunwayMark(title: title, daysLeft: days, deadline: marks[index].deadline,
+                                          submitted: marks[index].submitted && card.status == "Submitted")
+            } else {
+                marks.append(RunwayMark(title: title, daysLeft: days, deadline: card.deadline, submitted: card.status == "Submitted"))
+            }
+        }
+        return marks
+    }
+
+    /// Puts each label in the first lane where it does not touch the label before it: below the line, then above,
+    /// then a second row below, then above. `occupied` reserves the start of the first lane (the "Today" label).
+    /// `centres` must be in increasing order.
+    static func runwayLanes(_ centres: [Double], labelWidth: Double, gap: Double, occupied: Double, lanes: Int = 4) -> [Int] {
+        var ends = [Double](repeating: -.infinity, count: lanes)
+        ends[0] = occupied
+        return centres.map { x in
+            let left = x - labelWidth / 2
+            let lane = ends.indices.first { ends[$0] + gap <= left } ?? ends.indices.min { ends[$0] < ends[$1] } ?? 0
+            ends[lane] = x + labelWidth / 2
+            return lane
+        }
+    }
 
     struct UniCard: Identifiable {
         let programme: UniProgramme

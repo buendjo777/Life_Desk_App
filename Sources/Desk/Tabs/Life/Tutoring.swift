@@ -196,12 +196,12 @@ struct MonthEnd: View {
 struct PaymentsTable: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
-    @State private var expanded = false
+    @State private var extra = 0
 
     var body: some View {
         let d = store.d
         let rows = d.paymentsTable
-        let shown = expanded ? rows.count : min(rows.count, t.listRows - 1)
+        let shown = min(rows.count, t.listRows - 1 + extra)
         VStack(alignment: .leading, spacing: t.sp8) {
             SectionHeader(title: "Payments", subtitle: "Every month in the Classes note · local only, never committed")
             if rows.isEmpty { EmptyState(line: "No payments recorded yet.", hint: "Mark a month as sent to start the table.") }
@@ -218,7 +218,8 @@ struct PaymentsTable: View {
                 }
             }
             if rows.count > shown {
-                MoreLine(phrases: [.init(text: "+ "), .init(text: String(rows.count - shown), strong: true), .init(text: " earlier payments")]) { expanded = true }
+                MoreLine(phrases: [.init(text: "+ "), .init(text: String(rows.count - shown), strong: true),
+                                   .init(text: rows.count - shown > 30 ? " earlier payments · show 30" : " earlier payments")]) { extra += 30 }
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
