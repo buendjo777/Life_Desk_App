@@ -42,7 +42,7 @@ struct TargetList: View {
                 let shown = expanded ? rows.count : min(rows.count, t.listRows + 1)
                 SectionHeader(title: "Targets") {
                     CountedTabs(items: [
-                        .init(id: false, title: "Apply now", count: d.applyNow.count),
+                        .init(id: false, title: "Apply now", count: d.applyNow.filter { $0.status != "rejected" }.count),
                         .init(id: true, title: "All targets", count: d.allTargets.count),
                     ], selection: $all)
                     LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard))
@@ -75,6 +75,9 @@ struct TargetRow: View {
             if let next = target.next {
                 Text(verbatim: next).style(\.small, selected ? \.onAccent : \.inkMuted).lineLimit(1)
                     .frame(maxWidth: t.railWidth - t.sp32, alignment: .trailing)
+            }
+            if let priority = target.priority {
+                Chip(text: "Priority \(priority)", accent: priority == "A" ? .rust : .neutral, onAccent: selected)
             }
             if let graduate = target.graduateOk {
                 Chip(text: graduate ? "Graduate OK" : "Needs convenio", accent: graduate ? .moss : .neutral, onAccent: selected)

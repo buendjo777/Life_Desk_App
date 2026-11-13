@@ -148,3 +148,4 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - **Internship apps** (decisions 91–92): reads the board's own export. The first export waits for claude.ai's artifact store, which was down (HTTP 502) when this was built.
 - **Found while checking the tabs:** the "Morning Desk" routine that feeds Today and System is disabled, so the last run is Thursday's. The "daily" internship scan runs on Mondays only.
 - **Checked:** 84 tests (1 opt-in skipped).
+- **First run since Thursday** (Morning Desk turned back on, 13 Nov 12:03): the board export worked, with 199 openings and 89 targets, and System is green. Email and calendar were skipped: the repo's deny rules did not load in the routine's session, so the skill left them out on purpose. The run did not commit, because Jose's own notes had uncommitted changes; Obsidian Git's backup commits them all.

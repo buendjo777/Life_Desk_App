@@ -33,9 +33,28 @@ extension Derived {
 
     static let targetStatuses = ["open", "applied", "interview", "rejected"]
 
-    func targets(status: String) -> [Target] { (data.targets ?? []).filter { $0.status == status } }
-    var applyNow: [Target] { sortedTargets((data.targets ?? []).filter { $0.list == "apply_now" }) }
-    var allTargets: [Target] { sortedTargets(data.targets ?? []) }
+    /// The status cards count applications: the openings when there are any, else every target.
+    func targets(status: String) -> [Target] {
+        let openings = (data.targets ?? []).filter { $0.list == "apply_now" }
+        return (openings.isEmpty ? data.targets ?? [] : openings).filter { $0.status == status }
+    }
+
+    /// Openings to apply to first, nearest deadline first; then interviews and applications; closed ones last.
+    /// Ties keep the board's own order.
+    var applyNow: [Target] {
+        let rank = ["open": 0, "interview": 1, "offer": 1, "applied": 2, "rejected": 3]
+        return (data.targets ?? []).filter { $0.list == "apply_now" }.sorted {
+            (rank[$0.status] ?? 0, $0.deadline?.date ?? .distantFuture, $0.order ?? 0, $0.company)
+                < (rank[$1.status] ?? 0, $1.deadline?.date ?? .distantFuture, $1.order ?? 0, $1.company)
+        }
+    }
+
+    /// The board's targets (companies and labs), priority A first, then by place; without the board, every target.
+    var allTargets: [Target] {
+        let targets = (data.targets ?? []).filter { $0.list != "apply_now" }
+        guard !targets.isEmpty, targets.contains(where: { $0.priority != nil }) else { return sortedTargets(data.targets ?? []) }
+        return targets.sorted { ($0.priority ?? "Z", $0.order ?? 0, $0.company) < ($1.priority ?? "Z", $1.order ?? 0, $1.company) }
+    }
 
     private func sortedTargets(_ targets: [Target]) -> [Target] {
         targets.sorted { ($0.deadline?.date ?? .distantFuture, $0.company) < ($1.deadline?.date ?? .distantFuture, $1.company) }
@@ -45,7 +64,9 @@ extension Derived {
 
     var internshipsSummary: [Phrase] {
         guard let targets = data.targets else { return [] }
-        var phrases = [Phrase(text: "\(targets.count) targets", strong: true), Phrase(text: ", \(applyNow.count) to apply now. ")]
+        let live = applyNow.filter { $0.status != "rejected" }.count
+        var phrases = [Phrase(text: "\(live) openings to apply to", strong: true),
+                       Phrase(text: ", across \(Self.plural(allTargets.count, "target")). ")]
         if let next = sortedTargets(targets.filter { $0.status == "open" && (daysLeft($0.deadline) ?? -1) >= 0 }).first, let days = daysLeft(next.deadline) {
             phrases.append(Phrase(text: "Nearest open deadline: \(next.company) in \(Self.plural(days, "day"))."))
         }

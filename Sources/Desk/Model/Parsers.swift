@@ -413,19 +413,22 @@ enum Parse {
             guard let company = string(doc, ["company", "name", "organisation", "organization", "org", "lab"]) else { return nil }
             let raw = string(doc, ["status"])
             let notes = string(doc, ["notes", "note"])
+            // A target has no job title: its track and kind ("MedTech · Company") say what it is.
+            let role = string(doc, ["title", "role", "position"])
+                ?? [string(doc, ["track"]), string(doc, ["kind"])].compactMap { $0 }.joined(separator: " · ").nilIfEmpty
             return Target(
                 id: "\(list)-\(string(doc, ["id"]) ?? String(index))", company: company,
-                role: string(doc, ["title", "role", "position"]), city: string(doc, ["location", "city"]), country: string(doc, ["country"]),
+                role: role, city: string(doc, ["location", "place", "city"]), country: string(doc, ["country"]),
                 list: list, status: boardStatus(raw ?? ""), graduateOk: string(doc, ["eligType", "elig_type"]).map { $0.lowercased() == "graduate" },
                 deadline: string(doc, ["deadline", "closes"]).flatMap { looseDate($0, cal) },
                 next: notes.map { String($0.split(separator: "\n").first ?? "") }, url: string(doc, ["url", "link", "careers", "website"]),
                 statusLabel: raw, start: string(doc, ["start"]), duration: string(doc, ["duration"]), language: string(doc, ["language"]),
-                eligibility: string(doc, ["eligibility"]), fit: string(doc, ["fit", "why"]), notes: notes
+                eligibility: string(doc, ["eligibility"]), fit: string(doc, ["fit", "why"]), notes: notes,
+                priority: string(doc, ["priority"]), order: string(doc, ["order", "placeOrder"]).flatMap(Double.init) ?? Double(index)
             )
         }
-        let openings = docs("openings").enumerated()
-            .sorted { (Double(string($0.element, ["order"]) ?? "") ?? Double($0.offset)) < (Double(string($1.element, ["order"]) ?? "") ?? Double($1.offset)) }
-            .compactMap { target($0.element, index: $0.offset, list: "apply_now") }
+        let openings = docs("openings").enumerated().compactMap { target($0.element, index: $0.offset, list: "apply_now") }
+            .sorted { ($0.order ?? 0) < ($1.order ?? 0) }
         let targets = docs("targets").enumerated().compactMap { target($0.element, index: $0.offset, list: "target") }
         return openings + targets
     }
@@ -512,4 +515,9 @@ enum Parse {
         flush()
         return notes.sorted { $0.date < $1.date }
     }
+}
+
+extension String {
+    /// `nil` for an empty string.
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }

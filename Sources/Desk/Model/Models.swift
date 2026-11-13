@@ -238,6 +238,9 @@ struct Target: Decodable, Identifiable, Hashable {
     var eligibility: String?
     var fit: String?
     var notes: String?
+    /// The board's priority for a target ("A", "B", "C") and its order (an opening's, or a target's place).
+    var priority: String?
+    var order: Double?
 }
 
 struct Person: Decodable, Identifiable, Hashable {
