@@ -26,6 +26,8 @@ final class LiveVaultCheck: XCTestCase {
         for list in data.study?.lists ?? [] {
             print("LIVE list: \(list.title) · \(d.listSubtitle(list)) · groups \(list.groups.map { "\($0.title) \($0.items.count)" }) · today \(d.todaysShare(list).count)")
         }
+        let monday = Derived(data: data, now: Parse.stamp("2026-11-16T09:00:00+01:00", data.cal)?.date ?? Date())
+        print("LIVE papers: \(data.study?.papers.count ?? 0) listed; plan chart total \(d.planChart?.total ?? 0); on Mon 16 Nov: \(monday.studyTarget.map { "\($0.headline) · \($0.checks.map(\.title))" } ?? "none")")
         print("LIVE study target: \(d.studyTarget.map { "\($0.headline) — \($0.detail)" } ?? "none")")
         // Tutoring, initials and euros only.
         print("LIVE tutoring this month: \(d.thisMonth.map { "\($0.student.initials) \($0.lessons)× \(Parse.number($0.hours)) h \(Parse.number($0.amount)) €" })")

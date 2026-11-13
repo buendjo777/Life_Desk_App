@@ -149,13 +149,20 @@ extension Derived {
         }
         let gap = plannedPapers(by: today) - papersProgress.done
         let count = min(openPapers.count, max(gap, 0))
+        if study.papers.isEmpty {
+            return StudyTarget(headline: "No past papers listed", detail: "Add them under ## Past papers in the study file.",
+                               items: Array(openTopics.prefix(3)))
+        }
         if openPapers.isEmpty {
             return StudyTarget(headline: "All papers done", detail: "Review the weakest topics.", items: Array(openTopics.prefix(3)))
         }
+        // Today's papers are ticked straight from the card (and from Today); on plan, the next one is a hint.
+        let next = openPapers.prefix(max(count, 1))
         return StudyTarget(
             headline: count == 0 ? "On plan" : "\(Self.plural(count, "paper")) today",
             detail: gap > study.planPerDay ? "Behind the plan by \(gap - study.planPerDay)." : "\(study.planPerDay) a day keeps the plan.",
-            items: openPapers.prefix(max(count, 1)).map(\.title)
+            items: count == 0 ? next.map { "Next: \($0.title)" } : [],
+            checks: count == 0 ? [] : next.map { Check(title: $0.title, done: $0.done, line: $0.line) }
         )
     }
 

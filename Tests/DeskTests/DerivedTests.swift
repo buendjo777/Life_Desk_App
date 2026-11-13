@@ -126,6 +126,12 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(Derived(data: plain, now: demoNow).studyTarget?.headline, "Plan starts Mon 16 Nov")
         XCTAssertEqual(at("2026-11-16T09:00:00+01:00").studyTarget?.headline, "On plan")
         XCTAssertEqual(at("2026-11-17T09:00:00+01:00").studyTarget?.headline, "3 papers today")
+        // Today's papers can be ticked from the card; an empty list never reads as "all done".
+        XCTAssertEqual(at("2026-11-17T09:00:00+01:00").studyTarget?.checks.map(\.title), ["January 2024", "June 2023", "January 2023"])
+        var noPapers = data
+        noPapers.study?.papers = []
+        noPapers.study?.lists = []
+        XCTAssertEqual(Derived(data: noPapers, now: Parse.stamp("2026-11-17T09:00:00+01:00", cal)!.date).studyTarget?.headline, "No past papers listed")
         XCTAssertNil(d.emptyState(for: .studying))
         var none = data
         none.study = nil
