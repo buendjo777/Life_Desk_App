@@ -35,7 +35,7 @@ struct TargetList: View {
         VStack(alignment: .leading, spacing: t.sp8) {
             if d.data.targets == nil {
                 SectionHeader(title: "Targets")
-                EmptyState(line: "The internship board has not moved into the vault yet.", hint: "It appears here once internships/targets.json exists.")
+                EmptyState(line: "The internship board has not moved into the vault yet.", hint: "It appears here once internships/board.json exists.")
                 LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard), primary: true)
             } else {
                 let rows = all ? d.allTargets : d.applyNow
@@ -48,7 +48,7 @@ struct TargetList: View {
                     LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard))
                 }
                 .padding(.bottom, t.sp2)
-                if rows.isEmpty { EmptyState(line: "No targets in this list.", hint: d.data.hint(VaultData.targetsFile)) }
+                if rows.isEmpty { EmptyState(line: "No targets in this list.") }
                 ForEach(rows.prefix(shown)) { target in
                     TargetRow(target: target)
                 }
@@ -76,10 +76,17 @@ struct TargetRow: View {
                 Text(verbatim: next).style(\.small, selected ? \.onAccent : \.inkMuted).lineLimit(1)
                     .frame(maxWidth: t.railWidth - t.sp32, alignment: .trailing)
             }
+            if let graduate = target.graduateOk {
+                Chip(text: graduate ? "Graduate OK" : "Needs convenio", accent: graduate ? .moss : .neutral, onAccent: selected)
+            }
             if let days = d.daysLeft(target.deadline) {
                 Chip(text: days < 0 ? "Closed" : "\(days) d", accent: days < 0 ? .alert : .ochre, onAccent: selected)
             }
-            Chip(text: Derived.label(target.status), accent: TargetCountCard.accent(target.status), onAccent: selected)
+            Chip(text: target.statusLabel ?? Derived.label(target.status), accent: TargetCountCard.accent(target.status), onAccent: selected)
+            if let url = Links.web(target.url) {
+                Button(target.list == "apply_now" ? "Apply" : "Open") { Links.open(url) }.buttonStyle(.deskSecondary)
+                    .help(target.url ?? "")
+            }
         }
     }
 }
@@ -91,16 +98,22 @@ struct TargetInspector: View {
     var body: some View {
         let d = store.d
         InspectorTitle(text: target.company)
-        Chip(text: Derived.label(target.status), accent: TargetCountCard.accent(target.status))
+        Chip(text: target.statusLabel ?? Derived.label(target.status), accent: TargetCountCard.accent(target.status))
         if let role = target.role { InspectorField(label: "Role", value: role) }
         InspectorField(label: "Where", value: [target.city, target.country].compactMap { $0 }.joined(separator: ", "))
         InspectorField(label: "List", value: target.list == "apply_now" ? "Apply now" : "Target")
-        if let graduate = target.graduateOk { InspectorField(label: "Open to graduates", value: graduate ? "Yes" : "No") }
+        let when = [target.start, target.duration].compactMap { $0 }.joined(separator: " · ")
+        if !when.isEmpty { InspectorField(label: "When", value: when) }
+        if let language = target.language { InspectorField(label: "Language", value: language) }
+        if let graduate = target.graduateOk { InspectorField(label: "Open to graduates", value: graduate ? "Yes" : "Needs a convenio") }
+        if let eligibility = target.eligibility { InspectorField(label: "Eligibility", value: eligibility) }
+        if let fit = target.fit { InspectorField(label: "Fit", value: fit) }
         if let deadline = target.deadline, let days = d.daysLeft(deadline) {
             InspectorField(label: "Deadline", value: "\(d.cal.weekdayDay(deadline.date)) · \(days < 0 ? "closed" : Derived.plural(days, "day"))")
         }
-        if let next = target.next { InspectorField(label: "Next step", value: next) }
-        LinkButton(title: "Open posting", url: Links.web(target.url), primary: true)
-        LinkButton(title: "Open in Claude", url: Links.safeID(target.id).flatMap { Links.claude(seed: "Help me with internship target \($0) in internships/targets.json in my vault.") })
+        if let notes = target.notes { InspectorField(label: "Notes", value: notes) } else if let next = target.next { InspectorField(label: "Next step", value: next) }
+        LinkButton(title: target.list == "apply_now" ? "Apply" : "Open posting", url: Links.web(target.url), primary: true)
+        LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard))
+        LinkButton(title: "Open in Claude", url: Links.safeID(target.id).flatMap { Links.claude(seed: "Help me with internship target \($0) in internships/board.json in my vault.") })
     }
 }

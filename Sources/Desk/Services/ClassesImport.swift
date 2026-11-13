@@ -14,7 +14,8 @@ import Foundation
 enum ClassesImport {
     static let settingsFile = "tutoring/import.json"
     static let lessonsFile = VaultData.lessonsFile
-    static let paymentsArchiveFile = "tutoring/payments-archive.csv"
+    static let paymentsArchiveFile = VaultData.paymentsArchiveFile
+    static let lessonDatesFile = VaultData.lessonDatesFile
     static let studentsArchiveFile = "tutoring/students-archive.md"
     static let reviewFile = "tutoring/classes-review.md"
 
@@ -210,8 +211,16 @@ enum ClassesImport {
         var amount: Double? { rate.map { ($0 * hours * 100).rounded() / 100 } }
     }
 
+    /// One lesson on its day, for the Tutoring tab's week.
+    struct Dated: Equatable {
+        var date: String
+        var code: String
+        var hours: Double
+    }
+
     struct Result {
         var rows: [Row] = []
+        var dates: [Dated] = []
         var checks: [String] = []
         /// Initials → the name as written ("Hugo Brand").
         var names: [String: String] = [:]
@@ -315,6 +324,17 @@ enum ClassesImport {
         var numbered = Set<String>()
         for (i, block) in blocks.enumerated() {
             let ym = String(format: "%04d-%02d", years[i], block.month)
+            // Each dated lesson on its day. A lesson from a neighbouring month across New Year takes that year.
+            for entry in block.entries {
+                for lesson in entry.lessons {
+                    var year = years[i]
+                    if lesson.month - block.month > 6 { year -= 1 } else if block.month - lesson.month > 6 { year += 1 }
+                    guard let day = cal.date(year: year, month: lesson.month, day: lesson.day),
+                          cal.calendar.component(.day, from: day) == lesson.day else { continue }
+                    result.dates.append(Dated(date: String(format: "%04d-%02d-%02d", year, lesson.month, lesson.day),
+                                              code: code(entry.name), hours: lesson.hours))
+                }
+            }
             var order: [String] = []
             var lessons: [String: Int] = [:]
             var hours: [String: Double] = [:]
@@ -520,6 +540,10 @@ enum ClassesImport {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         try save(VaultData.tutoringContactsFile, String(decoding: try encoder.encode(contacts), as: UTF8.self) + "\n")
+
+        let dates = result.dates.sorted { ($0.date, $0.code) < ($1.date, $1.code) }
+            .map { "\($0.date),\($0.code),\(Parse.number($0.hours))" }
+        try save(lessonDatesFile, ([Parse.lessonDatesHeader] + dates).joined(separator: "\n") + "\n")
 
         try save(reviewFile, review(result))
     }

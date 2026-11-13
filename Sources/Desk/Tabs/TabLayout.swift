@@ -62,9 +62,9 @@ enum TabLayout {
             DeskSection("uni.contacts", "Contacts") { ContactsBoard() },
         ]
         case .tutoring: [
-            DeskSection("tutoring.donut", "Received vs pending", width: 284) { MoneyDonut() },
-            DeskSection("tutoring.received", "Received", width: 168) { MoneyCard(kind: .received) },
-            DeskSection("tutoring.pending", "Pending", width: 168) { MoneyCard(kind: .pending) },
+            DeskSection("tutoring.donut", "This year", width: 284) { MoneyDonut() },
+            DeskSection("tutoring.thisMonth", "This month so far", width: 168) { MoneyCard(kind: .month) },
+            DeskSection("tutoring.owed", "Owed", width: 168) { MoneyCard(kind: .owed) },
             DeskSection("tutoring.hours", "Hours", width: 168) { MoneyCard(kind: .hours) },
             DeskSection("tutoring.waiting", "Waiting for payment", width: 394) { WaitingPayments() },
             DeskSection("tutoring.monthEnd", "Month end", width: 394) { MonthEnd() },

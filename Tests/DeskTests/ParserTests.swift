@@ -279,6 +279,31 @@ final class ParserTests: XCTestCase {
         XCTAssertNil(Parse.checkbox("-[ ] No"))
     }
 
+    func testInternshipBoardExport() throws {
+        let cal = DeskCalendar(timeZone: "Europe/Madrid")
+        let json = """
+        {"openings": [
+          {"id": "o2", "order": 2, "company": "Helix Diagnostics", "title": "Data Science Intern", "location": "Basel", "start": "Jan 2027",
+           "duration": "6 months", "language": "English", "eligType": "graduate", "eligibility": "Bachelor's within 12 months",
+           "fit": "Biosignals", "url": "https://example.com/helix", "status": "Applied", "notes": "Sent 3 Nov\\n[12 Nov] looks closed?"},
+          {"id": "o1", "order": 1, "company": "Pulsewave", "title": "Biosignals Intern", "location": "Madrid", "eligType": "convenio",
+           "url": "https://example.com/pulse", "status": "Not started"}],
+         "targets": {"t1": {"name": "Corvid Lab", "city": "Zürich", "status": "Interview booked"}, "t2": {"location": "Nowhere"}}}
+        """
+        let targets = try XCTUnwrap(Parse.board(json, cal))
+        // Openings in the board's order, then the targets; a target without a name is skipped.
+        XCTAssertEqual(targets.map(\.company), ["Pulsewave", "Helix Diagnostics", "Corvid Lab"])
+        XCTAssertEqual(targets.map(\.list), ["apply_now", "apply_now", "target"])
+        XCTAssertEqual(targets.map(\.status), ["open", "applied", "interview"])
+        XCTAssertEqual(targets[1].statusLabel, "Applied")
+        XCTAssertEqual(targets[1].next, "Sent 3 Nov")
+        XCTAssertEqual(targets.map(\.graduateOk), [false, true, nil])
+        XCTAssertEqual(targets[1].url, "https://example.com/helix")
+        XCTAssertEqual(targets[1].duration, "6 months")
+        XCTAssertEqual(targets[2].id, "target-t1")
+        XCTAssertNil(Parse.board("[1, 2]", cal))
+    }
+
     func testLessonsCSV() {
         let rows = Parse.lessons("month,initials,student,lessons,hours,rate,amount\n2026-10,AB,Ana Blanco,4,4.5,30,135\n2026-09,CD,Carlos,2,2,,\nnot a row\n")
         XCTAssertEqual(rows.count, 2)
@@ -286,6 +311,10 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(rows.first?.student, "Ana Blanco")
         XCTAssertNil(rows.last?.rate)
         XCTAssertNil(rows.last?.amount)
+        let cal = DeskCalendar(timeZone: "Europe/Madrid")
+        let dates = Parse.lessonDates("date,initials,hours\n2026-11-09,AB,1.5\n2026-13-01,AB,1\nnot a row\n", cal)
+        XCTAssertEqual(dates.map(\.hours), [1.5])
+        XCTAssertEqual(dates.first?.date, Parse.day("2026-11-09", cal))
     }
 
     func testTutoring() throws {

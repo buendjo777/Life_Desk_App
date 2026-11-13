@@ -386,6 +386,67 @@ enum Parse {
     }
 
     static let lessonsHeader = "month,initials,student,lessons,hours,rate,amount"
+    static let lessonDatesHeader = "date,initials,hours"
+
+    /// `lesson-dates.csv`: `date,initials,hours`, one row per dated lesson in the Classes note.
+    /// The Internship Target Board's own export (`internships/board.json`): its "openings" (live postings) become
+    /// Apply now and its "targets" (companies and labs) the rest of the list. Field names follow the board's
+    /// collections; anything else is ignored, and an opening needs only a company.
+    static func board(_ text: String, _ cal: DeskCalendar) -> [Target]? {
+        guard let root = (try? JSONSerialization.jsonObject(with: Data(text.utf8))) as? [String: Any] else { return nil }
+        func docs(_ key: String) -> [[String: Any]] {
+            if let list = root[key] as? [[String: Any]] { return list }
+            // A collection exported as {id: document}.
+            let byID = root[key] as? [String: [String: Any]] ?? [:]
+            return byID.keys.sorted().map { id in byID[id, default: [:]].merging(["id": id]) { kept, _ in kept } }
+        }
+        func string(_ doc: [String: Any], _ keys: [String]) -> String? {
+            for key in keys {
+                if let value = doc[key] as? String, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    return value.trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+                if let value = doc[key] as? NSNumber { return value.stringValue }
+            }
+            return nil
+        }
+        func target(_ doc: [String: Any], index: Int, list: String) -> Target? {
+            guard let company = string(doc, ["company", "name", "organisation", "organization", "org", "lab"]) else { return nil }
+            let raw = string(doc, ["status"])
+            let notes = string(doc, ["notes", "note"])
+            return Target(
+                id: "\(list)-\(string(doc, ["id"]) ?? String(index))", company: company,
+                role: string(doc, ["title", "role", "position"]), city: string(doc, ["location", "city"]), country: string(doc, ["country"]),
+                list: list, status: boardStatus(raw ?? ""), graduateOk: string(doc, ["eligType", "elig_type"]).map { $0.lowercased() == "graduate" },
+                deadline: string(doc, ["deadline", "closes"]).flatMap { looseDate($0, cal) },
+                next: notes.map { String($0.split(separator: "\n").first ?? "") }, url: string(doc, ["url", "link", "careers", "website"]),
+                statusLabel: raw, start: string(doc, ["start"]), duration: string(doc, ["duration"]), language: string(doc, ["language"]),
+                eligibility: string(doc, ["eligibility"]), fit: string(doc, ["fit", "why"]), notes: notes
+            )
+        }
+        let openings = docs("openings").enumerated()
+            .sorted { (Double(string($0.element, ["order"]) ?? "") ?? Double($0.offset)) < (Double(string($1.element, ["order"]) ?? "") ?? Double($1.offset)) }
+            .compactMap { target($0.element, index: $0.offset, list: "apply_now") }
+        let targets = docs("targets").enumerated().compactMap { target($0.element, index: $0.offset, list: "target") }
+        return openings + targets
+    }
+
+    /// The board's status words in Desk's four: rejected or closed, an interview or a call, applied, else open.
+    static func boardStatus(_ raw: String) -> String {
+        let text = raw.lowercased()
+        if ["reject", "closed", "declin", "no longer"].contains(where: text.contains) { return "rejected" }
+        if ["interview", "call", "offer"].contains(where: text.contains) { return "interview" }
+        if ["applied", "submitted", "sent"].contains(where: text.contains) { return "applied" }
+        return "open"
+    }
+
+    static func lessonDates(_ text: String, _ cal: DeskCalendar) -> [LessonDate] {
+        splitLines(text).dropFirst().compactMap { line in
+            let cells = line.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            guard cells.count >= 3, let date = day(cells[0], cal), !cells[1].isEmpty,
+                  let hours = Double(cells[2]), hours.isFinite else { return nil }
+            return LessonDate(date: date, initials: cells[1], hours: hours)
+        }
+    }
 
     /// `lessons.csv`: `month,initials,student,lessons,hours,rate,amount`; rate and amount are empty when unknown.
     static func lessons(_ text: String) -> [LessonRow] {

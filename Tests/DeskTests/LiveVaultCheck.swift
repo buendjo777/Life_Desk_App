@@ -27,6 +27,11 @@ final class LiveVaultCheck: XCTestCase {
             print("LIVE list: \(list.title) · \(d.listSubtitle(list)) · groups \(list.groups.map { "\($0.title) \($0.items.count)" }) · today \(d.todaysShare(list).count)")
         }
         print("LIVE study target: \(d.studyTarget.map { "\($0.headline) — \($0.detail)" } ?? "none")")
+        // Tutoring, initials and euros only.
+        print("LIVE tutoring this month: \(d.thisMonth.map { "\($0.student.initials) \($0.lessons)× \(Parse.number($0.hours)) h \(Parse.number($0.amount)) €" })")
+        print("LIVE tutoring money: received \(Parse.number(d.receivedThisMonth)) €, pending \(Parse.number(d.pendingAmount)) €, month end \(d.monthEnd.count), payments \(data.tutoring.payments.count), week lessons \(d.weekLessons.count), events \(d.tutoringEvents.count)")
+        print("LIVE tutoring students: \(data.tutoring.students.map { "\($0.initials) level '\($0.level)' subject '\($0.subject)' \(Parse.number($0.rate)) \($0.paysBy)" })")
+        print("LIVE tutoring contacts: \(data.tutoring.contacts.count), with parent \(data.tutoring.contacts.values.filter { !$0.parent.isEmpty }.count), with phone \(data.tutoring.contacts.values.filter { !$0.phone.isEmpty }.count); notes \(data.tutoring.notes.count); lessons rows \(data.tutoring.lessons.count)")
         print("LIVE missing or unreadable: \(data.issues.keys.sorted())")
         // What one tick costs on the main thread: re-reading the vault and deriving the Studying tab.
         let runs = 10

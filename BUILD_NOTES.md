@@ -142,3 +142,9 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - **Fix** (decisions 86–88): ticks show at once, syncs wait for a 2-second pause, and only the changed file is re-read (about 2–3 ms). Docs are cached, formatters are shared, and checkboxes are matched by hand. `LiveVaultCheck` now prints these timings.
 - **Lists** (decisions 84–85): the study file's own `##` lists appear in Studying, and today's target paces them to their due day. The real weekend lists live in the private vault; the demo vault has an invented one.
 - **Checked:** 83 tests (1 opt-in skipped), including a test that two ticks during a running sync show at once and land in one commit and one push. Studying rendered in light and dark.
+
+## 13 Nov — Tutoring matches History; the target board's format
+- **Tutoring** (decisions 89–90): names, the full payment archive, this year's money in place of "this month's", and the week from the note's lesson dates.
+- **Internship apps** (decisions 91–92): reads the board's own export. The first export waits for claude.ai's artifact store, which was down (HTTP 502) when this was built.
+- **Found while checking the tabs:** the "Morning Desk" routine that feeds Today and System is disabled, so the last run is Thursday's. The "daily" internship scan runs on Mondays only.
+- **Checked:** 84 tests (1 opt-in skipped).

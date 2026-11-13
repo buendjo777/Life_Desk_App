@@ -1,14 +1,14 @@
 import SwiftUI
 
-/// Received vs pending as a donut.
+/// This year's money as a donut: received against still to come (owed, plus this month so far).
 struct MoneyDonut: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
 
     var body: some View {
         let d = store.d
-        let received = d.receivedThisMonth
-        let pending = d.pendingAmount
+        let received = d.receivedThisYear
+        let pending = d.toComeThisYear
         let total = received + pending
         SurfaceCard {
             HStack(spacing: t.sp20) {
@@ -30,14 +30,14 @@ struct MoneyDonut: View {
                 .frame(width: t.donut - t.donutLine, height: t.donut - t.donutLine)
                 .padding(t.donutLine / 2)
                 VStack(alignment: .leading, spacing: t.sp8) {
-                    legend(.moss, "Received", d.money(received))
-                    legend(.ochre, "Pending", d.money(pending))
+                    legend(.moss, "Received in \(d.currentYear)", d.money(received))
+                    legend(.ochre, "Still to come", d.money(pending))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text(verbatim: "Received \(d.money(received)), pending \(d.money(pending))"))
+        .accessibilityLabel(Text(verbatim: "Received in \(d.currentYear) \(d.money(received)), still to come \(d.money(pending))"))
     }
 
     private func legend(_ accent: Accent, _ label: String, _ value: String) -> some View {
@@ -51,9 +51,9 @@ struct MoneyDonut: View {
     }
 }
 
-/// The three money cards: received, pending, hours.
+/// The three money cards: this month so far, owed, hours.
 struct MoneyCard: View {
-    enum Kind: String { case received, pending, hours }
+    enum Kind: String { case month, owed, hours }
     @Environment(Store.self) private var store
     let kind: Kind
 
@@ -61,18 +61,20 @@ struct MoneyCard: View {
         let d = store.d
         let month = d.thisMonth
         switch kind {
-        case .received:
-            StatCard(title: "Received", accent: .moss, shape: .ring) {
-                Figure(d.money(d.receivedThisMonth), caption: "Paid in \(d.monthName(d.currentMonth, pattern: "LLLL"))")
+        case .month:
+            StatCard(title: "This month", accent: .moss, shape: .ring) {
+                Figure(d.money(d.earnedThisMonth), caption: Derived.plural(month.map(\.lessons).reduce(0, +), "lesson") + " so far")
             }
-        case .pending:
-            StatCard(title: "Pending", accent: .ochre, shape: .ring) {
-                Figure(d.money(d.pendingAmount), caption: Derived.plural(d.waitingForPayment.count, "invoice") + " sent")
+        case .owed:
+            let invoices = d.waitingForPayment.count + d.monthEnd.count
+            StatCard(title: "Owed", accent: .ochre, shape: .ring) {
+                Figure(d.money(d.owedAmount), caption: invoices == 0 ? "Nothing owed" : Derived.plural(invoices, "invoice"))
             }
         case .hours:
+            let taught = month.map(\.hours).reduce(0, +)
+            let planned = month.map(\.plannedHours).reduce(0, +)
             StatCard(title: "Hours", accent: .steel, shape: .ring) {
-                Figure(Parse.number(month.map(\.hours).reduce(0, +)), unit: "h",
-                       caption: "of \(Parse.number(month.map(\.plannedHours).reduce(0, +))) planned")
+                Figure(Parse.number(taught), unit: "h", caption: planned > taught ? "of \(Parse.number(planned)) planned" : "taught this month")
             }
         }
     }
@@ -92,8 +94,11 @@ struct TutoringMonthList: View {
                 EmptyState(line: "No students yet.", hint: d.data.hint(VaultData.studentsFile))
             }
             ForEach(d.thisMonth) { entry in
-                ListRow(leading: .initials(entry.student.initials, .ochre), title: "\(entry.student.initials) · \(entry.student.subject)",
-                        subtitle: "\(entry.student.level) · \(d.money(entry.student.rate))/h · pays by \(entry.student.paysBy)",
+                let student = entry.student
+                ListRow(leading: .initials(student.initials, .ochre),
+                        title: ([d.studentName(student.initials), student.subject].filter { !$0.isEmpty }).joined(separator: " · "),
+                        subtitle: ([student.level, "\(d.money(student.rate))/h", student.paysBy.isEmpty ? "" : "pays by \(student.paysBy)"]
+                            .filter { !$0.isEmpty }).joined(separator: " · "),
                         selected: store.selection == .student(entry.student.initials), action: { store.open(.student(entry.student.initials)) }) { selected in
                     Text(verbatim: "\(Derived.plural(entry.lessons, "lesson")) · \(Derived.hoursText(entry.hours)) of \(Parse.number(entry.plannedHours))")
                         .style(\.small, selected ? \.onAccent : \.inkMuted)
@@ -119,7 +124,7 @@ private struct InvoiceCard<Actions: View>: View {
             HStack(spacing: t.sp10) {
                 Badge(content: .initials(payment.initials), accent: .ochre)
                 VStack(alignment: .leading, spacing: t.sp2) {
-                    Text(verbatim: "\(payment.initials) · \(d.monthName(payment.month))").style(\.rowTitle, \.ink)
+                    Text(verbatim: "\(d.studentName(payment.initials)) · \(d.monthName(payment.month))").style(\.rowTitle, \.ink)
                     Text(verbatim: detail).style(\.small, \.inkMuted).lineLimit(1)
                 }
                 Spacer(minLength: 0)
@@ -198,10 +203,10 @@ struct PaymentsTable: View {
         let rows = d.paymentsTable
         let shown = expanded ? rows.count : min(rows.count, t.listRows - 1)
         VStack(alignment: .leading, spacing: t.sp8) {
-            SectionHeader(title: "Payments", subtitle: "tutoring/payments.csv · local only, never committed")
+            SectionHeader(title: "Payments", subtitle: "Every month in the Classes note · local only, never committed")
             if rows.isEmpty { EmptyState(line: "No payments recorded yet.", hint: "Mark a month as sent to start the table.") }
             ForEach(rows.prefix(shown)) { payment in
-                ListRow(leading: .initials(payment.initials, .ochre), title: "\(payment.initials) · \(d.monthName(payment.month))",
+                ListRow(leading: .initials(payment.initials, .ochre), title: "\(d.studentName(payment.initials)) · \(d.monthName(payment.month))",
                         subtitle: "\(Derived.plural(payment.lessons, "lesson")) · \(Derived.hoursText(payment.hours))"
                             + (payment.paid.map { " · paid \(d.cal.shortDay($0))" } ?? payment.sent.map { " · sent \(d.cal.shortDay($0))" } ?? ""),
                         selected: store.selection == .student(payment.initials), action: { store.open(.student(payment.initials)) }) { selected in
@@ -245,18 +250,19 @@ struct WeekLessons: View {
             }
             .padding(.top, t.sp8)
             if lessons.isEmpty {
-                EmptyState(line: "No lessons this week.", hint: "Lessons come from the \(d.data.settings.tutoringCalendar) calendar.")
+                EmptyState(line: "No lessons this week.",
+                           hint: d.data.tutoring.lessonDates.isEmpty ? "Lessons come from the \(d.data.settings.tutoringCalendar) calendar." : "Lessons come from the Classes note.")
             }
-            ForEach(lessons) { event in
-                let initials = event.title.trimmingCharacters(in: .whitespaces)
+            ForEach(lessons) { lesson in
+                let initials = lesson.initials
                 HStack(alignment: .top, spacing: t.sp8) {
-                    Text(verbatim: d.cal.format(event.start, "EEE")).style(\.micro, \.inkMuted)
+                    Text(verbatim: d.cal.format(lesson.start, "EEE")).style(\.micro, \.inkMuted)
                         .frame(width: t.timeColumn, alignment: .leading).padding(.top, t.sp8)
                     HStack(spacing: t.sp10) {
                         Badge(content: .initials(initials), accent: .ochre, small: true)
                         VStack(alignment: .leading, spacing: t.hairline) {
-                            Text(verbatim: "\(initials) · \(d.student(initials)?.subject ?? "Lesson")").style(\.rowTitle, \.ink).lineLimit(1)
-                            Text(verbatim: d.timeRange(event.start, event.end)).style(\.small, \.inkMuted)
+                            Text(verbatim: d.studentName(initials)).style(\.rowTitle, \.ink).lineLimit(1)
+                            Text(verbatim: lesson.detail).style(\.small, \.inkMuted)
                         }
                         Spacer(minLength: 0)
                     }
@@ -264,7 +270,7 @@ struct WeekLessons: View {
                     .frame(height: t.eventCard)
                     .background(t.raised, in: RoundedRectangle(cornerRadius: t.radiusEvent))
                 }
-                .opacity(event.end <= d.now ? t.pastOpacity : 1)
+                .opacity(lesson.past ? t.pastOpacity : 1)
                 .contentShape(Rectangle())
                 .onTapGesture { store.open(.student(initials)) }
                 .accessibilityAction { store.open(.student(initials)) }
@@ -283,9 +289,10 @@ struct StudentInspector: View {
     var body: some View {
         let d = store.d
         let notes = d.data.tutoring.notes[student.initials] ?? []
-        InspectorTitle(text: "\(student.initials) · \(student.subject)")
-        InspectorField(label: "Level", value: student.level)
+        InspectorTitle(text: ([d.studentName(student.initials), student.subject].filter { !$0.isEmpty }).joined(separator: " · "))
+        if !student.level.isEmpty { InspectorField(label: "Level", value: student.level) }
         InspectorField(label: "Rate", value: "\(d.money(student.rate))/h · pays by \(student.paysBy)")
+        if let history = d.studentHistory(student.initials) { InspectorField(label: "History", value: history) }
         if let note = notes.last {
             Text(verbatim: "Last note · \(d.cal.weekdayDay(note.date))").style(\.caption, \.inkMuted)
             Text(verbatim: note.text)

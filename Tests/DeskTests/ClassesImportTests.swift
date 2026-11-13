@@ -162,6 +162,12 @@ final class ClassesImportTests: XCTestCase {
         let lessons = Parse.splitLines(try read(ClassesImport.lessonsFile)).filter { !$0.isEmpty }
         XCTAssertEqual(lessons.count, 12)
         XCTAssertTrue(lessons.contains("2025-10,LM,Lucas Moreno,3,2.5,50,125"))
+        // Every dated lesson on its day: not the recap, not the ignored student, not "3 lessons" without dates.
+        let dates = Parse.splitLines(try read(ClassesImport.lessonDatesFile)).filter { !$0.isEmpty }
+        XCTAssertEqual(dates.count, 17)
+        XCTAssertEqual(dates[1], "2025-09-03,LM,1")
+        XCTAssertEqual(dates.last, "2026-01-08,NO,1.5")
+        XCTAssertFalse(dates.contains { $0.hasPrefix("2025-10-09") })
         let term = Parse.payments(try read(VaultData.paymentsFile), cal)
         XCTAssertEqual(term.map(\.id), ["2025-12-LM"])
         XCTAssertNil(term.first?.paid)

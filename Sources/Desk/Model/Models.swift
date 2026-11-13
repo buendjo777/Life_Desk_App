@@ -230,6 +230,14 @@ struct Target: Decodable, Identifiable, Hashable {
     var deadline: Stamp?
     var next: String?
     var url: String?
+    /// From the Internship Target Board: its own status words ("Not started"), and the posting's details.
+    var statusLabel: String?
+    var start: String?
+    var duration: String?
+    var language: String?
+    var eligibility: String?
+    var fit: String?
+    var notes: String?
 }
 
 struct Person: Decodable, Identifiable, Hashable {
@@ -331,10 +339,21 @@ struct LessonRow: Hashable {
     var amount: Double?
 }
 
+/// `tutoring/lesson-dates.csv`, written by Desk from the Classes note: one row per dated lesson.
+struct LessonDate: Hashable {
+    var date: Date
+    var initials: String
+    var hours: Double
+}
+
 struct Tutoring {
     var students: [Student] = []
+    /// This term's invoices (`payments.csv`), the ones Desk marks sent and paid.
     var payments: [Payment] = []
+    /// Earlier invoices (`payments-archive.csv`), written by the import.
+    var archive: [Payment] = []
     var lessons: [LessonRow] = []
+    var lessonDates: [LessonDate] = []
     var contacts: [String: TutoringContact] = [:]
     var notes: [String: [LessonNote]] = [:]
     var template = ""

@@ -57,14 +57,44 @@ extension Derived {
 
     var thisMonth: [StudentMonth] { tutoringMonth(currentMonth) }
 
+    /// Every invoice: this term's (`payments.csv`) and the archive's, this term's copy first.
+    var allPayments: [Payment] {
+        let term = Set(data.tutoring.payments.map(\.id))
+        return data.tutoring.payments + data.tutoring.archive.filter { !term.contains($0.id) }
+    }
+
+    /// A student's name as the Classes note writes it ("Lucas Moreno"), else the contact's first name, else the initials.
+    func studentName(_ initials: String) -> String {
+        var best = ""
+        for row in data.tutoring.lessons where row.initials == initials && row.student.count > best.count { best = row.student }
+        if !best.isEmpty { return best }
+        if let name = data.tutoring.contacts[initials]?.student, !name.isEmpty { return name }
+        return initials
+    }
+
     /// Paid this month.
     var receivedThisMonth: Double {
-        data.tutoring.payments.filter { $0.paid.map { cal.monthKey($0) == currentMonth } == true }.map(\.amount).reduce(0, +)
+        allPayments.filter { $0.paid.map { cal.monthKey($0) == currentMonth } == true }.map(\.amount).reduce(0, +)
     }
+
+    /// Earned so far this month, from the Classes note (or the calendar).
+    var earnedThisMonth: Double { thisMonth.map(\.amount).reduce(0, +) }
+
+    /// Paid invoices for this year's months, counted by the invoice's month rather than the day it was paid:
+    /// imported months count as paid on their last day.
+    var receivedThisYear: Double {
+        allPayments.filter { $0.paid != nil && $0.month.hasPrefix(currentYear) }.map(\.amount).reduce(0, +)
+    }
+
+    /// What finished months still owe: invoices sent and not paid, and months not yet sent.
+    var owedAmount: Double { pendingAmount + monthEnd.map(\.amount).reduce(0, +) }
+
+    /// Still to come this year: what is owed plus this month so far.
+    var toComeThisYear: Double { owedAmount + earnedThisMonth }
 
     /// Sent and not yet paid, oldest first.
     var waitingForPayment: [Payment] {
-        data.tutoring.payments.filter { $0.status == .sent }.sorted { ($0.sent ?? now) < ($1.sent ?? now) }
+        allPayments.filter { $0.status == .sent }.sorted { ($0.sent ?? now) < ($1.sent ?? now) }
     }
 
     var pendingAmount: Double { waitingForPayment.map(\.amount).reduce(0, +) }
@@ -72,12 +102,13 @@ extension Derived {
     /// Finished months not yet sent: a row without a sent date, or, without the Classes note, calendar lessons
     /// with no row at all. (Desk writes a row for every finished month in the note.)
     var monthEnd: [Payment] {
-        var result = data.tutoring.payments.filter { $0.status == .notSent && $0.month < currentMonth }
+        let known = Set(allPayments.map(\.id))
+        var result = allPayments.filter { $0.status == .notSent && $0.month < currentMonth }
         let months = lessonsFromNote ? [] : Set(tutoringEvents.map { cal.monthKey($0.start) }).filter { $0 < currentMonth }
         for month in months.sorted() {
             for entry in tutoringMonth(month) where entry.lessons > 0 {
                 let id = "\(month)-\(entry.student.initials)"
-                if !data.tutoring.payments.contains(where: { $0.id == id }) {
+                if !known.contains(id) {
                     result.append(Payment(month: month, initials: entry.student.initials, lessons: entry.lessons,
                                           hours: entry.hours, amount: entry.amount, sent: nil, paid: nil))
                 }
@@ -87,7 +118,7 @@ extension Derived {
         if lessonsFromNote, let first = Parse.day(currentMonth + "-01", cal) {
             let previous = cal.monthKey(cal.add(months: -1, to: first))
             for row in data.tutoring.lessons where row.month == previous {
-                guard let student = student(row.initials), !data.tutoring.payments.contains(where: { $0.id == "\(row.month)-\(row.initials)" }) else { continue }
+                guard let student = student(row.initials), !known.contains("\(row.month)-\(row.initials)") else { continue }
                 result.append(Payment(month: row.month, initials: row.initials, lessons: row.lessons, hours: row.hours,
                                       amount: row.amount ?? row.hours * student.rate, sent: nil, paid: nil))
             }
@@ -95,9 +126,16 @@ extension Derived {
         return result.sorted { ($0.month, $0.initials) < ($1.month, $1.initials) }
     }
 
-    /// Newest month first.
+    /// Newest month first, the archive included.
     var paymentsTable: [Payment] {
-        data.tutoring.payments.sorted { ($0.month, $1.initials) > ($1.month, $0.initials) }
+        allPayments.sorted { ($0.month, $1.initials) > ($1.month, $0.initials) }
+    }
+
+    /// A student's lessons and earnings across every month in the note: "Since Sep 2025 · 34 lessons · 1700 €".
+    func studentHistory(_ initials: String) -> String? {
+        let rows = data.tutoring.lessons.filter { $0.initials == initials }
+        guard let first = rows.map(\.month).min() else { return nil }
+        return "Since \(monthName(first, pattern: "MMM yyyy")) · \(Self.plural(rows.map(\.lessons).reduce(0, +), "lesson")) · \(money(rows.compactMap(\.amount).reduce(0, +)))"
     }
 
     func student(_ initials: String) -> Student? { data.tutoring.students.first { $0.initials == initials } }
@@ -123,11 +161,32 @@ extension Derived {
         return Links.whatsApp(phone: contact.phone, text: text)
     }
 
-    /// This week's lessons, Monday to Sunday.
-    var weekLessons: [CalEvent] {
+    /// A lesson in the week rail: logged in the Classes note, or on the tutoring calendar.
+    struct WeekLesson: Identifiable {
+        let id: String
+        let start: Date
+        let initials: String
+        /// "17:00–18:00" for a calendar lesson, "1.5 h" for one from the note.
+        let detail: String
+        let past: Bool
+    }
+
+    /// This week's lessons, Monday to Sunday. With dated lessons from the Classes note, those are the record and
+    /// the calendar adds only lessons still to come; otherwise the calendar alone.
+    var weekLessons: [WeekLesson] {
         let start = cal.weekStart(now)
         let end = cal.add(days: 7, to: start)
-        return tutoringEvents.filter { $0.start >= start && $0.start < end }
+        let dated = data.tutoring.lessonDates.filter { $0.date >= start && $0.date < end }
+        let logged = dated.enumerated().map { index, lesson in
+            WeekLesson(id: "note-\(index)", start: lesson.date, initials: lesson.initials,
+                       detail: Self.hoursText(lesson.hours), past: true)
+        }
+        let events = tutoringEvents.filter { $0.start >= start && $0.start < end && (data.tutoring.lessonDates.isEmpty || $0.end > now) }
+        let planned = events.map { event in
+            WeekLesson(id: event.id, start: event.start, initials: event.title.trimmingCharacters(in: .whitespaces),
+                       detail: timeRange(event.start, event.end), past: event.end <= now)
+        }
+        return (logged + planned).sorted { $0.start < $1.start }
     }
 
     func lastNote(_ initials: String) -> LessonNote? { data.tutoring.notes[initials]?.last }

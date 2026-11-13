@@ -70,11 +70,15 @@ struct VaultData {
     static let decisionsFile = "desk/decisions.jsonl"
     static let eventsFile = "calendar/events.json"
     static let targetsFile = "internships/targets.json"
+    /// The Internship Target Board's own export, "openings" and "targets" as the board stores them. Wins over targets.json.
+    static let boardFile = "internships/board.json"
     static let peopleFile = "contacts/people.json"
     static let studentsFile = "tutoring/students.md"
     static let paymentsFile = "tutoring/payments.csv"
     static let tutoringContactsFile = "tutoring/contacts.json"
     static let lessonsFile = "tutoring/lessons.csv"
+    static let lessonDatesFile = "tutoring/lesson-dates.csv"
+    static let paymentsArchiveFile = "tutoring/payments-archive.csv"
 
     /// The master doc's deadline for a programme, when its comparison heading or title names the same
     /// programme. Otherwise the agent's `deadline` row has the date.
@@ -142,7 +146,10 @@ extension VaultData {
         if let text = data.docs[deadlinesDoc] { data.masterDeadlines = ParseCache.masterDeadlines(text, cal) }
 
         // Optional boards: absent until they move into the vault.
-        if let text = reader.text(targetsFile) {
+        if let text = reader.text(boardFile) {
+            data.targets = Parse.board(text, cal)
+            if data.targets == nil { malformed(boardFile) }
+        } else if let text = reader.text(targetsFile) {
             data.targets = Parse.array(Target.self, text, cal) ?? []
             if Parse.array(Target.self, text, cal) == nil { malformed(targetsFile) }
         }
@@ -156,6 +163,8 @@ extension VaultData {
         if let text = read(studentsFile) { data.tutoring.students = Parse.students(text) }
         if let text = reader.text(paymentsFile) { data.tutoring.payments = Parse.payments(text, cal) }
         if let text = reader.text(lessonsFile) { data.tutoring.lessons = Parse.lessons(text) }
+        if let text = reader.text(lessonDatesFile) { data.tutoring.lessonDates = Parse.lessonDates(text, cal) }
+        if let text = reader.text(paymentsArchiveFile) { data.tutoring.archive = Parse.payments(text, cal) }
         if let text = reader.text(tutoringContactsFile) {
             data.tutoring.contacts = Parse.json([String: TutoringContact].self, text, cal) ?? [:]
         }

@@ -203,7 +203,7 @@ final class DerivedTests: XCTestCase {
 
     // MARK: Tutoring
 
-    func testTutoringMoney() {
+    func testTutoringMoney() throws {
         XCTAssertEqual(d.thisMonth.map(\.lessons), [3, 1, 3, 1])
         XCTAssertEqual(d.thisMonth.map(\.amount), [75, 22, 135, 22])
         XCTAssertEqual(d.receivedThisMonth, 398)
@@ -212,6 +212,22 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(d.monthEnd.count, 0)
         XCTAssertEqual(d.weekLessons.count, 6)
         XCTAssertEqual(d.money(13.5), "13.5 €")
+        // The money cards: this year's paid invoices, what is owed, and this month so far from the note.
+        XCTAssertEqual(d.receivedThisYear, 1138)
+        XCTAssertEqual(d.owedAmount, 405)
+        XCTAssertEqual(d.earnedThisMonth, 254)
+        XCTAssertEqual(d.toComeThisYear, 659)
+        XCTAssertEqual(d.studentName("EM"), "Emma Martin")
+        XCTAssertEqual(d.studentHistory("LR"), "Since Oct 2026 · 6 lessons · 132 €")
+        // With the archive and the note's lesson dates: every payment in the table, and the week from the note.
+        var richer = data
+        richer.tutoring.archive = [Payment(month: "2025-06", initials: "AB", lessons: 4, hours: 4, amount: 88, sent: nil, paid: Parse.day("2025-06-30", cal))]
+        richer.tutoring.lessonDates = [LessonDate(date: try XCTUnwrap(Parse.day("2026-11-09", cal)), initials: "AB", hours: 1),
+                                       LessonDate(date: try XCTUnwrap(Parse.day("2026-11-10", cal)), initials: "EM", hours: 1.5)]
+        let unified = Derived(data: richer, now: demoNow)
+        XCTAssertEqual(unified.paymentsTable.count, d.paymentsTable.count + 1)
+        XCTAssertEqual(unified.weekLessons.prefix(2).map(\.detail), ["1 h", "1.5 h"])
+        XCTAssertTrue(unified.weekLessons.dropFirst(2).allSatisfy { !$0.past }, "the calendar adds only lessons still to come")
         // On 1 December, November becomes a finished month that has not been sent.
         let december = at("2026-12-01T09:00:00+01:00")
         XCTAssertEqual(december.monthEnd.count, 4)

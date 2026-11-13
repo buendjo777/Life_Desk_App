@@ -78,7 +78,7 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 - **Projects:** four board columns; the inspector shows the project's linked doc and the checklist.
 - **Internship apps:** a row of stat cards (Open, Applied, Interview, Rejected); counted tabs Apply now · All targets; the table.
 - **Uni apps:** a horizontal deadline runway with a today marker; a grid of programme cards (steel) with a progress bar and days left; the Contacts Board section below.
-- **Tutoring:** the billing layout: donut and three money cards on the left; Waiting for payment cards with Send reminder; Month end; the payments table; right rail with this week's lessons.
+- **Tutoring:** the billing layout: this year's donut (received against still to come) and three money cards (this month so far, owed, hours) on the left; rows carry the student's name; Waiting for payment cards with Send reminder; Month end; the payments table; right rail with this week's lessons.
 - **History:** four stat cards (this year and last year in steel, all time in moss, best month in ochre); 24 monthly bars (steel, this month in the deep tone, the year under each January); By year and By student lists side by side.
 - **Health:** stat cards (sessions, time, distance); the streak grid; 12-week bars (moss); the activity list.
 - **System:** navy cards with light text for the latest run and the models; the 14-day run strip; the history table with status chips.
