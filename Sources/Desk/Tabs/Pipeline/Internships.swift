@@ -137,7 +137,9 @@ struct TargetStatusMenu: View {
             } label: {
                 chip
             }
-            .menuStyle(.borderlessButton)
+            // The button style keeps the chip drawn as the menu's face; borderless would flatten it to text.
+            .menuStyle(.button)
+            .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .fixedSize()
             .help("Set the status")
