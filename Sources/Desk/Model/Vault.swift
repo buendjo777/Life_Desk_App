@@ -70,8 +70,9 @@ struct VaultData {
     static let decisionsFile = "desk/decisions.jsonl"
     static let eventsFile = "calendar/events.json"
     static let targetsFile = "internships/targets.json"
-    /// The Internship Target Board's own export, "openings" and "targets" as the board stores them. Wins over targets.json.
-    static let boardFile = "internships/board.json"
+    /// The Internship Target Board's own export, "openings" and "targets" as the board stores them, written each
+    /// morning by the agent (it writes only `agent/`). Wins over targets.json.
+    static let boardFile = "agent/board.json"
     static let peopleFile = "contacts/people.json"
     static let studentsFile = "tutoring/students.md"
     static let paymentsFile = "tutoring/payments.csv"

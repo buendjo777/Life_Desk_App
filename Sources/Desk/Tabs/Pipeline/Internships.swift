@@ -35,7 +35,7 @@ struct TargetList: View {
         VStack(alignment: .leading, spacing: t.sp8) {
             if d.data.targets == nil {
                 SectionHeader(title: "Targets")
-                EmptyState(line: "The internship board has not moved into the vault yet.", hint: "It appears here once internships/board.json exists.")
+                EmptyState(line: "The internship board has not moved into the vault yet.", hint: "The morning run exports it to agent/board.json.")
                 LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard), primary: true)
             } else {
                 let rows = all ? d.allTargets : d.applyNow
@@ -114,6 +114,6 @@ struct TargetInspector: View {
         if let notes = target.notes { InspectorField(label: "Notes", value: notes) } else if let next = target.next { InspectorField(label: "Next step", value: next) }
         LinkButton(title: target.list == "apply_now" ? "Apply" : "Open posting", url: Links.web(target.url), primary: true)
         LinkButton(title: "Open board", url: Links.web(d.data.settings.links.internshipBoard))
-        LinkButton(title: "Open in Claude", url: Links.safeID(target.id).flatMap { Links.claude(seed: "Help me with internship target \($0) in internships/board.json in my vault.") })
+        LinkButton(title: "Open in Claude", url: Links.safeID(target.id).flatMap { Links.claude(seed: "Help me with internship target \($0) in agent/board.json in my vault.") })
     }
 }
