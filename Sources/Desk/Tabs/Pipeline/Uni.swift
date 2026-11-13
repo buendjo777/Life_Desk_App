@@ -155,7 +155,7 @@ struct UniInspector: View {
         let d = store.d
         InspectorTitle(text: card.school)
         Text(verbatim: card.degree).style(\.small, \.inkMuted)
-        Chip(text: card.status, accent: card.status == "Submitted" ? .good : .info)
+        Chip(text: card.status, accent: card.isSubmitted ? .good : .info)
         if let deadline = card.deadline, let days = card.daysLeft {
             InspectorField(label: "Deadline", value: "\(d.cal.format(deadline, "EEE d MMM yyyy, HH:mm")) · \(days < 0 ? "closed" : Derived.plural(days, "day"))")
         }
@@ -180,7 +180,7 @@ struct UniInspector: View {
 struct ContactsBoard: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
-    @State private var status: String?
+    @State private var status: PersonStatus?
     @State private var expanded = false
 
     var body: some View {
@@ -190,12 +190,12 @@ struct ContactsBoard: View {
                 let rows = status.map(d.people) ?? d.sortedPeople
                 let shown = expanded ? rows.count : min(rows.count, t.listRows - 2)
                 SectionHeader(title: "Contacts") {
-                    CountedTabs(items: [.init(id: String?.none, title: "All", count: people.count)]
-                        + Derived.personStatuses.map { .init(id: String?.some($0), title: Derived.label($0), count: d.people(status: $0).count) },
+                    CountedTabs(items: [.init(id: PersonStatus?.none, title: "All", count: people.count)]
+                        + PersonStatus.allCases.map { .init(id: PersonStatus?.some($0), title: $0.label, count: d.people(status: $0).count) },
                         selection: $status)
                 }
                 .padding(.bottom, t.sp2)
-                if rows.isEmpty { EmptyState(line: "Nobody with this status.", hint: d.data.hint(VaultData.peopleFile)) }
+                if rows.isEmpty { EmptyState(line: "Nobody with this status.", hint: d.data.hint(VaultData.contactsBoardFile)) }
                 ForEach(rows.prefix(shown)) { person in
                     ListRow(leading: .initials(initials(of: person.name), .info), title: person.name,
                             subtitle: [person.role, person.programme].compactMap { $0 }.joined(separator: " · "),
@@ -212,20 +212,11 @@ struct ContactsBoard: View {
                 }
             } else {
                 SectionHeader(title: "Contacts")
-                EmptyState(line: "The contacts board has not moved into the vault yet.", hint: "It appears here once contacts/board.json exists.")
+                EmptyState(line: "The contacts board has not moved into the vault yet.", hint: "It appears here once \(VaultData.contactsBoardFile) exists.")
                 LinkButton(title: "Open board", url: Links.web(d.data.settings.links.contactsBoard), primary: true)
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
-    }
-
-    static func accent(_ status: String) -> Accent {
-        switch status {
-        case "replied", "call_booked": .good
-        case "sent", "drafted": .info
-        case "no_reply": .alert
-        default: .neutral
-        }
     }
 }
 
@@ -236,12 +227,12 @@ struct PersonStatusMenu: View {
     var onAccent = false
 
     var body: some View {
-        let chip = Chip(text: person.statusLabel ?? Derived.label(person.status), accent: ContactsBoard.accent(person.status), onAccent: onAccent)
+        let chip = Chip(text: person.statusLabel ?? person.status.label, accent: person.status.accent, onAccent: onAccent)
         if store.isSnapshot || person.sourceID == nil {
             chip
         } else {
             Menu {
-                ForEach(Derived.personStatusWords, id: \.self) { status in
+                ForEach(PersonStatus.allCases.map(\.boardWord), id: \.self) { status in
                     Button {
                         store.setPersonStatus(person, to: status)
                     } label: {
@@ -256,7 +247,7 @@ struct PersonStatusMenu: View {
             .menuIndicator(.hidden)
             .fixedSize()
             .help("Set the status")
-            .accessibilityLabel(Text(verbatim: "Status: \(person.statusLabel ?? Derived.label(person.status)). Change it"))
+            .accessibilityLabel(Text(verbatim: "Status: \(person.statusLabel ?? person.status.label). Change it"))
         }
     }
 }
@@ -282,6 +273,6 @@ struct PersonInspector: View {
             InspectorField(label: "Last contact", value: "\(d.cal.weekdayDay(last)) · \(Derived.plural(d.cal.days(from: last, to: d.today), "day")) ago")
         }
         if person.notes == nil, let next = person.next { InspectorField(label: "Next step", value: next) }
-        LinkButton(title: "Open in Claude", url: Links.safeID(person.id).flatMap { Links.claude(seed: "Help me plan my next message to contact \($0) in contacts/board.json in my vault.") }, primary: true)
+        LinkButton(title: "Open in Claude", url: Links.safeID(person.id).flatMap { Links.claude(seed: "Help me plan my next message to contact \($0) in \(VaultData.contactsBoardFile) in my vault.") }, primary: true)
     }
 }

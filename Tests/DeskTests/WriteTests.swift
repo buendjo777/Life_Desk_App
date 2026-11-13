@@ -51,10 +51,10 @@ final class WriteTests: XCTestCase {
         XCTAssertEqual(store.d.student("AB")?.subject, "Maths II and Physics")
         XCTAssertEqual(store.d.student("AB")?.rate, 25, "the rate is kept")
         // An internship status is set from Desk, in memory in Demo.
-        let opening = try XCTUnwrap(store.d.applyNow.first { $0.status == "open" })
+        let opening = try XCTUnwrap(store.d.applyNow.first { $0.status == .open })
         store.setTargetStatus(opening, to: "Applied")
         XCTAssertEqual(store.data.targets?.first { $0.id == opening.id }?.statusLabel, "Applied")
-        XCTAssertEqual(store.d.targets(status: "applied").count, 3)
+        XCTAssertEqual(store.d.targets(status: .applied).count, 3)
         // A list item in the study file ticks like a topic.
         let list = try XCTUnwrap(store.d.openLists.first)
         let item = try XCTUnwrap(list.open.first)
@@ -166,10 +166,10 @@ final class WriteTests: XCTestCase {
         let prefs = Preferences(defaults: nil)
         let ids = TabLayout.ordered(.today, prefs: nil).map(\.id)
         prefs.move(ids[1], by: -1, tab: .today, current: ids)
-        prefs.setHidden(true, section: "today.health", tab: .today)
+        prefs.setHidden(true, section: SectionID.todayHealth, tab: .today)
         let layout = prefs.layouts[Tab.today.rawValue]
         XCTAssertEqual(TabLayout.ordered(.today, prefs: layout).map(\.id).prefix(2), [ids[1], ids[0]])
-        XCTAssertFalse(TabLayout.arranged(.today, .main, prefs: layout).contains { $0.id == "today.health" })
+        XCTAssertFalse(TabLayout.arranged(.today, .main, prefs: layout).contains { $0.id == SectionID.todayHealth })
         XCTAssertEqual(TabLayout.arranged(.today, .rail, prefs: layout).count, 4)
         prefs.density = .comfortable
         XCTAssertEqual(Theme(density: prefs.density).rowHeight, 60)

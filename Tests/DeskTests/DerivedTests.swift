@@ -151,8 +151,8 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(d.allTargets.count, 12)
         XCTAssertEqual(d.applyNow.first?.company, "Meridian Health AI")
         // A status card shows its targets, in the Apply now order.
-        XCTAssertEqual(d.filteredTargets(status: "applied").map(\.company), ["Helix Diagnostics", "Pulsewave"])
-        XCTAssertEqual(d.filteredTargets(status: "rejected").count, 1)
+        XCTAssertEqual(d.filteredTargets(status: .applied).map(\.company), ["Helix Diagnostics", "Pulsewave"])
+        XCTAssertEqual(d.filteredTargets(status: .rejected).count, 1)
         // Today's summary carries today's study share.
         XCTAssertTrue(d.todaySummary.map(\.text).joined().contains("2 study items today."))
         XCTAssertEqual(Derived.label("not_contacted"), "Not contacted")
@@ -176,7 +176,7 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(cards[0].status, "In progress")
         XCTAssertEqual(cards[4].status, "Not started")
         XCTAssertTrue(d.comparison(for: cards[0].programme)?.contains("90 ECTS") == true)
-        XCTAssertEqual(Derived.personStatuses.map { d.people(status: $0).count }.reduce(0, +), d.data.people?.count)
+        XCTAssertEqual(PersonStatus.allCases.map { d.people(status: $0).count }.reduce(0, +), d.data.people?.count)
     }
 
     /// Markdown is parsed in exactly one file, used only for trusted `nini/` docs.
@@ -268,9 +268,9 @@ final class DerivedTests: XCTestCase {
         empty.activities = []
         let none = Derived(data: empty, now: demoNow)
         XCTAssertFalse(none.hasHealthData)
-        XCTAssertFalse(none.shows("today.health"))
-        XCTAssertTrue(none.shows("today.list"))
-        XCTAssertTrue(d.shows("today.health"))
+        XCTAssertFalse(none.shows(SectionID.todayHealth))
+        XCTAssertTrue(none.shows(SectionID.todayList))
+        XCTAssertTrue(d.shows(SectionID.todayHealth))
     }
 
     func testHistoryFromTheClassesNote() {

@@ -309,11 +309,11 @@ struct StudentInspector: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(t.surface, in: RoundedRectangle(cornerRadius: t.radiusNav))
             if notes.count > 1 {
-                Text(verbatim: "\(notes.count - 1) earlier \(notes.count == 2 ? "note" : "notes") in tutoring/notes/\(student.initials).md").style(\.small, \.inkMuted)
+                Text(verbatim: "\(notes.count - 1) earlier \(notes.count == 2 ? "note" : "notes") in \(VaultData.notesFile(student.initials))").style(\.small, \.inkMuted)
             }
         } else {
-            EmptyState(line: "No lesson notes yet.", hint: "tutoring/notes/\(student.initials).md")
+            EmptyState(line: "No lesson notes yet.", hint: VaultData.notesFile(student.initials))
         }
-        LinkButton(title: "Open notes in Obsidian", url: Links.obsidian(vault: store.vaultName, file: "tutoring/notes/\(student.initials).md"), primary: true)
+        LinkButton(title: "Open notes in Obsidian", url: Links.obsidian(vault: store.vaultName, file: VaultData.notesFile(student.initials)), primary: true)
     }
 }

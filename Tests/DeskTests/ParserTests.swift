@@ -230,9 +230,10 @@ final class ParserTests: XCTestCase {
 
     func testBoards() {
         XCTAssertEqual(data.targets?.count, 12)
-        XCTAssertEqual(data.targets?.filter { $0.list == "apply_now" }.count, 7)
+        XCTAssertEqual(data.targets?.filter { $0.list == .applyNow }.count, 7)
         XCTAssertEqual(data.people?.count, 10)
-        XCTAssertEqual(data.people?.first?.lastContact.map { cal.isoDay($0.date) }, "2026-11-10")
+        XCTAssertEqual(data.people?.first?.status, .replied)
+        XCTAssertEqual(data.people?.first?.statusLabel, "Replied")
     }
 
     func testDecisionsAndEvents() {
@@ -293,8 +294,8 @@ final class ParserTests: XCTestCase {
         let targets = try XCTUnwrap(Parse.board(json, cal))
         // Openings in the board's order, then the targets; a target without a name is skipped.
         XCTAssertEqual(targets.map(\.company), ["Pulsewave", "Helix Diagnostics", "Corvid Lab"])
-        XCTAssertEqual(targets.map(\.list), ["apply_now", "apply_now", "target"])
-        XCTAssertEqual(targets.map(\.status), ["open", "applied", "interview"])
+        XCTAssertEqual(targets.map(\.list), [.applyNow, .applyNow, .target])
+        XCTAssertEqual(targets.map(\.status), [.open, .applied, .interview])
         XCTAssertEqual(targets[1].statusLabel, "Applied")
         XCTAssertEqual(targets[1].next, "Sent 3 Nov")
         XCTAssertEqual(targets.map(\.graduateOk), [false, true, nil])
@@ -331,7 +332,7 @@ final class ParserTests: XCTestCase {
         XCTAssertTrue(last.contains("\"status\": \"Rejected / closed\"\n"))
         XCTAssertTrue(last.contains("\"status\": \"Not started\","))
         XCTAssertNil(Parse.setBoardStatus(text, id: "o2", status: "Applied"))
-        XCTAssertEqual(Parse.board(changed, DeskCalendar(timeZone: "Europe/Madrid"))?.first?.status, "interview")
+        XCTAssertEqual(Parse.board(changed, DeskCalendar(timeZone: "Europe/Madrid"))?.first?.status, .interview)
     }
 
     func testStudentRowAndContactsWrites() throws {

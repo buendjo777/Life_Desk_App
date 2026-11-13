@@ -216,16 +216,18 @@ struct UniProgramme: Identifiable, Hashable {
     var comparisonHeading: String
     var items: [Check]
     var id: String { path }
+    /// Ticked "Submitted …" in its checklist.
+    var isSubmitted: Bool { items.contains { $0.done && $0.title.lowercased().hasPrefix("submitted") } }
 }
 
-struct Target: Decodable, Identifiable, Hashable {
+struct Target: Identifiable, Hashable {
     var id: String
     var company: String
     var role: String?
     var city: String?
     var country: String?
-    var list: String
-    var status: String
+    var list: TargetList
+    var status: TargetStatus
     var graduateOk: Bool?
     var deadline: Stamp?
     var next: String?
@@ -246,12 +248,12 @@ struct Target: Decodable, Identifiable, Hashable {
     var added: Date?
 }
 
-struct Person: Decodable, Identifiable, Hashable {
+struct Person: Identifiable, Hashable {
     var id: String
     var name: String
     var programme: String?
     var role: String?
-    var status: String
+    var status: PersonStatus
     var lastContact: Stamp?
     var next: String?
     /// From the contacts board (`contacts/board.json`): its status words and the details behind each person.
