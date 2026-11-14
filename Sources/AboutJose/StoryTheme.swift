@@ -38,6 +38,8 @@ extension Theme {
     /// The tide on the first scene; it reaches 1 on the last.
     var tideStart: Double { 0.14 }
     var pageTurn: Double { 0.55 }
+    /// How long the scroll view must stand still on a scene before that scene becomes the chapter.
+    var pageRest: Double { 0.12 }
     var revealStagger: Double { 0.08 }
 
     // MARK: ECG strip

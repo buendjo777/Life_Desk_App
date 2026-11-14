@@ -60,6 +60,10 @@ struct StoryView: View {
 /// The scenes stacked in one scroll view that settles on a whole scene, so scroll, keys and the rail all move the same thing.
 private struct Pager: View {
     @Environment(Reader.self) private var reader
+    @Environment(\.theme) private var t
+    @State private var resting: Task<Void, Never>?
+
+    private static let space = "pager"
 
     var body: some View {
         GeometryReader { proxy in
@@ -72,9 +76,29 @@ private struct Pager: View {
                     }
                 }
                 .scrollTargetLayout()
+                .background(GeometryReader { content in
+                    let offset = -content.frame(in: .named(Self.space)).minY
+                    Color.clear.onChange(of: offset) { _, offset in rest(at: offset, page: proxy.size.height) }
+                })
             }
+            .coordinateSpace(name: Self.space)
             .scrollTargetBehavior(.paging)
+            // Chapter to scroll: the keys, the rail and the menu set the chapter, and the scroll view follows.
             .scrollPosition(id: Binding(get: { Optional(reader.chapter) }, set: { if let chapter = $0 { reader.chapter = chapter } }))
+        }
+    }
+
+    /// Scroll to chapter: once the scroll view has come to rest on a scene, that scene is the chapter.
+    /// A scroll still on its way (an animated jump passes over the scenes between) is not at rest.
+    private func rest(at offset: CGFloat, page: CGFloat) {
+        resting?.cancel()
+        guard page > 0 else { return }
+        let index = (offset / page).rounded()
+        guard abs(offset - index * page) < t.hairline, let chapter = Chapter(rawValue: Int(index)), chapter != reader.chapter else { return }
+        resting = Task {
+            try? await Task.sleep(for: .seconds(t.pageRest))
+            guard !Task.isCancelled else { return }
+            reader.chapter = chapter
         }
     }
 }
