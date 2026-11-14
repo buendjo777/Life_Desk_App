@@ -49,12 +49,12 @@ struct ChapterHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: t.sp8) {
             Eyebrow(chapter: chapter)
-            Text(verbatim: headline).style(\.display, \.ink).fixedSize(horizontal: false, vertical: true)
+            Text(verbatim: headline).style(\.headline, \.ink).fixedSize(horizontal: false, vertical: true)
             if let note {
                 Text(verbatim: note).style(\.body, \.inkMuted)
             }
         }
-        .frame(maxWidth: t.leadWidth + t.leadWidth / 4, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
@@ -67,6 +67,13 @@ struct Eyebrow: View {
 
     var body: some View {
         Text(verbatim: "\(chapter.number) · \(reader.story.rail(chapter))").style(\.label, \.focus)
+    }
+}
+
+extension Story.Figure {
+    /// A unit that is a word ("years") stands a space away from its number; a sign ("%", "€") does not.
+    var spacedUnit: String? {
+        unit.map { $0.first?.isLetter == true ? " \($0)" : $0 }
     }
 }
 

@@ -93,14 +93,13 @@ struct Story: Decodable {
         let rail: String
         let headline: String
         let figures: [Figure]
-        let subjectsTitle: String
         let subjects: [Subject]
         let factsTitle: String
         let facts: [Item]
 
         struct Subject: Decodable, Hashable {
             let name: String
-            let detail: String
+            var detail: String?
             let symbol: String
         }
     }

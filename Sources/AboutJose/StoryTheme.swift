@@ -5,7 +5,8 @@ import DeskKit
 extension Theme {
     // MARK: Type
 
-    var hero: TextStyle { .init(size: 68, weight: .semibold, tracking: -1.4) }
+    var hero: TextStyle { .init(size: 68, weight: .semibold, tracking: -2) }
+    var headline: TextStyle { .init(size: 32, weight: .semibold, tracking: -0.8) }
     var lead: TextStyle { .init(size: 21, weight: .regular, tracking: -0.2) }
     var stepNumber: TextStyle { .init(size: 13, weight: .bold, monoDigits: true) }
 
@@ -24,8 +25,13 @@ extension Theme {
     var swatchCore: CGFloat { 10 }
     var stepBadge: CGFloat { 28 }
     var ecgHeight: CGFloat { 150 }
-    var screenHeight: CGFloat { 372 }
-    var goalHeight: CGFloat { 150 }
+    var screenHeight: CGFloat { 330 }
+    /// Desk is drawn at 1440 × 900.
+    var screenAspect: CGFloat { designSize.width / designSize.height }
+    var stepHeight: CGFloat { 96 }
+    var contactWidth: CGFloat { 560 }
+    var tutoringCard: CGFloat { 300 }
+    var goalHeight: CGFloat { 168 }
 
     // MARK: Story
 

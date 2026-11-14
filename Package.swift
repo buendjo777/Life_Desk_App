@@ -14,6 +14,7 @@ let package = Package(
     targets: [
         .target(name: "DeskKit", path: "Sources/DeskKit", swiftSettings: settings),
         .executableTarget(name: "Desk", dependencies: ["DeskKit"], path: "Sources/Desk", swiftSettings: settings),
+        .executableTarget(name: "AboutJose", dependencies: ["DeskKit"], path: "Sources/AboutJose", swiftSettings: settings),
         .testTarget(name: "DeskTests", dependencies: ["Desk"], path: "Tests/DeskTests"),
     ]
 )
