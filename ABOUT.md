@@ -25,7 +25,7 @@ swift run AboutJose
 ```
 Writes `docs/`: one static page with the same five chapters, the same words (`about/story.json`) and the same colours (read from the app). It works on a phone. Open `docs/index.html` to read it; nothing to install, no server.
 
-To put it online for free: push, then on GitHub go to Settings → Pages → Deploy from a branch → `main`, folder `/docs`. Run the script again after changing the words; a test fails if `docs/` is older than the story.
+**Live at https://buendjo777.github.io/Life_Desk_App/** (GitHub Pages, branch `main`, folder `/docs`, switched on 14 Nov 2026). To update it: change the words, run the script, commit and push to `main`. A test fails if `docs/` is older than the story.
 
 ## Snapshots
 ```bash
