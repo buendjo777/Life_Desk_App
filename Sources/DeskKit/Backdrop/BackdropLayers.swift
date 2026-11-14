@@ -1,7 +1,6 @@
 import SwiftUI
 
-// The two layers of the window background. Each app decides what the tide and the column of light mean:
-// in Desk, today's work and the time of day.
+// The window background. Each app decides what the tide means: in Desk, today's work.
 
 /// The field and the tide. `tide` is animatable, so a tick makes the glow rise smoothly instead of jumping.
 public struct BackdropField: View, Animatable {
@@ -51,47 +50,12 @@ public struct BackdropField: View, Animatable {
                        with: .radialGradient(Gradient(colors: [color, color.opacity(0)]), center: .zero, startRadius: 0, endRadius: radius))
         }
         // Two slow drifts, each on its own period so the field never repeats exactly.
-        glow(t.auroraCool, x: w * (0.24 + 0.08 * sin(time * 0.11)), y: h * (0.28 + 0.07 * cos(time * 0.09)), radius: w * 0.42)
-        glow(t.auroraWarm, x: w * (0.82 + 0.06 * cos(time * 0.07)), y: h * (0.16 + 0.05 * sin(time * 0.13)), radius: w * 0.34)
+        glow(t.auroraCool, x: w * (0.42 + 0.06 * sin(time * 0.11)), y: h * (0.10 + 0.05 * cos(time * 0.09)), radius: w * 0.55, stretch: 1.4)
+        glow(t.auroraWarm, x: w * (0.86 + 0.05 * cos(time * 0.07)), y: h * (0.22 + 0.05 * sin(time * 0.13)), radius: w * 0.30)
         // The tide: an ember under the window's edge at 0, a dawn filling the lower half at 1.
         let x = w * (0.54 + 0.04 * sin(time * 0.05))
-        let y = h * (1.20 - 0.42 * tide)
-        glow(t.tide(tide), x: x, y: y, radius: h * (0.50 + 0.22 * tide), stretch: 2.4)
-        glow(t.tideCore(tide), x: x, y: h * (1.10 - 0.16 * tide), radius: h * (0.16 + 0.10 * tide), stretch: 3.2)
-    }
-}
-
-/// Vertical ribs, like fluted glass in front of the light, with one column of light at `now` (0 left, 1 right).
-/// Drawn once; redrawn only when `now` moves.
-public struct FlutedGlass: View {
-    @Environment(\.theme) private var t
-    let now: Double
-
-    public init(now: Double) { self.now = now }
-
-    public var body: some View {
-        Canvas { context, size in
-            let rib = t.flute
-            var x: CGFloat = 0
-            while x < size.width {
-                context.fill(
-                    Path(CGRect(x: x, y: 0, width: rib, height: size.height)),
-                    with: .linearGradient(
-                        Gradient(stops: [.init(color: t.fluteShadow, location: 0), .init(color: .clear, location: 0.28),
-                                         .init(color: t.fluteLight, location: 0.7), .init(color: .clear, location: 1)]),
-                        startPoint: CGPoint(x: x, y: 0), endPoint: CGPoint(x: x + rib, y: 0)
-                    )
-                )
-                x += rib
-            }
-            // Where `now` stands.
-            let centre = size.width * now
-            let reach = rib * t.nowRibs
-            context.fill(
-                Path(CGRect(x: centre - reach, y: 0, width: reach * 2, height: size.height)),
-                with: .linearGradient(Gradient(colors: [.clear, t.nowLight, .clear]),
-                                      startPoint: CGPoint(x: centre - reach, y: 0), endPoint: CGPoint(x: centre + reach, y: 0))
-            )
-        }
+        let y = h * (1.24 - 0.30 * tide)
+        glow(t.tide(tide), x: x, y: y, radius: h * (0.46 + 0.16 * tide), stretch: 2.8)
+        glow(t.tideCore(tide), x: x, y: h * (1.12 - 0.10 * tide), radius: h * (0.14 + 0.06 * tide), stretch: 3.6)
     }
 }

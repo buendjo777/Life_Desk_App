@@ -28,6 +28,9 @@ struct CustomiseView: View {
                 Text(verbatim: "Colours").style(\.smallStrong, \.ink)
                 CountedTabs(items: Palette.allCases.map { .init(id: $0, title: $0.title) }, selection: $prefs.palette)
                 Spacer()
+                Toggle(isOn: $prefs.slimSidebar) { Text(verbatim: "Slim sidebar").style(\.small, \.ink) }
+                    .toggleStyle(.switch).controlSize(.small)
+                    .help("Icons only; the sidebar opens under the pointer")
                 Toggle(isOn: $prefs.motion) { Text(verbatim: "Motion").style(\.small, \.ink) }
                     .toggleStyle(.switch).controlSize(.small)
                     .help("The living background, hover lift, entrances and sparks")

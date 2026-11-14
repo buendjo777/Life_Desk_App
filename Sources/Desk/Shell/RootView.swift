@@ -11,12 +11,13 @@ struct RootView: View {
     var body: some View {
         let t = Theme(scheme: scheme, density: store.prefs.density, palette: store.prefs.palette,
                       solid: reduceTransparency || contrast == .increased)
-        HStack(spacing: 0) {
-            Sidebar().padding(t.sidebarInset)
+        // The content keeps clear of the sidebar's resting width; a slim sidebar opens over it without moving it.
+        ZStack(alignment: .topLeading) {
             TabHost()
-                .padding(.leading, t.columnGap - t.sidebarInset)
+                .padding(.leading, (store.prefs.slimSidebar ? t.sidebarSlim : t.sidebarWidth) + t.sidebarInset + t.columnGap)
                 .padding(.trailing, t.columnGap)
                 .padding(.top, t.columnGap)
+            Sidebar().padding(t.sidebarInset)
         }
         .background { Backdrop() }
         .background(t.canvas)

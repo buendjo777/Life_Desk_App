@@ -5,7 +5,7 @@ import DeskKit
 extension Theme {
     // MARK: Type
 
-    var hero: TextStyle { .init(size: 68, weight: .semibold, tracking: -1.4, serif: true) }
+    var hero: TextStyle { .init(size: 68, weight: .semibold, tracking: -1.4) }
     var lead: TextStyle { .init(size: 21, weight: .regular, tracking: -0.2) }
     var stepNumber: TextStyle { .init(size: 13, weight: .bold, monoDigits: true) }
 
@@ -31,9 +31,6 @@ extension Theme {
 
     /// The tide on the first scene; it reaches 1 on the last.
     var tideStart: Double { 0.14 }
-    /// The column of light crosses the window between these two points as the story goes on.
-    var lightStart: Double { 0.16 }
-    var lightEnd: Double { 0.9 }
     var pageTurn: Double { 0.55 }
     var revealStagger: Double { 0.08 }
 
