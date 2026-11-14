@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>About Jose</title>
+<meta name="description" content="A short story in five chapters: who, the thesis, Desk, tutoring, and what comes next.">
+<!--
+  The web copy of AboutJose. It holds no words and no colours of its own:
+  data.js carries about/story.json and the app's own theme (scripts/build-web.sh writes it).
+  Every sentence is put on the page as plain text.
+-->
+<style>
+  :root {
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --rail: 156px; --inset: 24px; --width: 1060px;
+    --r-card: 24px; --r-panel: 20px; --r-row: 18px; --r-nav: 12px;
+    --lift: .3s cubic-bezier(.3, 1.3, .5, 1);
+    color-scheme: light dark;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    font: 400 14px/1.5 var(--font); color: var(--ink); background: var(--canvas);
+    -webkit-font-smoothing: antialiased; overflow: hidden;
+  }
+  #backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+  /* The scenes: one scroll, settling on a whole scene. */
+  #pager {
+    position: relative; z-index: 1; height: 100vh; height: 100svh; overflow-y: auto;
+    scroll-snap-type: y mandatory; scroll-behavior: smooth; scrollbar-width: none; outline: none;
+  }
+  #pager::-webkit-scrollbar { display: none; }
+  .scene {
+    min-height: 100vh; min-height: 100svh; scroll-snap-align: start; scroll-snap-stop: always;
+    display: flex; align-items: center; justify-content: center;
+    padding: 64px 32px 52px calc(var(--inset) + var(--rail) + 32px);
+  }
+  .scene > .content { width: 100%; max-width: var(--width); display: flex; flex-direction: column; gap: 16px; }
+  .scene.roomy > .content { gap: 24px; }
+
+  /* Pieces of a scene come in one after another when the reader arrives. */
+  [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .25s ease-out, transform .25s ease-out; }
+  .scene.active [data-reveal] { opacity: 1; transform: none; transition: opacity .72s ease-out, transform .72s ease-out; transition-delay: calc(var(--i) * 80ms); }
+
+  /* Type */
+  .eyebrow { font-size: 10.5px; font-weight: 600; letter-spacing: .9px; text-transform: uppercase; color: var(--focus); }
+  .label { font-size: 10.5px; font-weight: 600; letter-spacing: .9px; text-transform: uppercase; color: var(--muted); }
+  .hero { font-size: clamp(38px, 6.2vw, 68px); font-weight: 600; letter-spacing: -.03em; line-height: 1.05; }
+  .headline { font-size: clamp(24px, 3.4vw, 32px); font-weight: 600; letter-spacing: -.025em; line-height: 1.15; }
+  .lead { font-size: clamp(17px, 2vw, 21px); letter-spacing: -.2px; line-height: 1.4; max-width: 760px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; font-weight: 500; }
+  .caption { font-size: 10px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); }
+  .card-title { font-size: 17px; font-weight: 600; }
+  .strong { font-weight: 600; }
+  .stack { display: flex; flex-direction: column; }
+  .gap8 { gap: 8px; } .gap12 { gap: 12px; }
+  .row { display: flex; gap: 12px; }
+  .grow { flex: 1 1 0; min-width: 0; }
+
+  /* Glass */
+  .glass {
+    background: var(--surface); border-radius: var(--r-card); position: relative;
+    box-shadow: inset 0 1px 0 var(--edge-soft), inset 0 0 0 1px var(--line-soft);
+    transition: transform var(--lift), box-shadow var(--lift);
+  }
+  .glass.lifts:hover { transform: translateY(-2px) scale(1.012); box-shadow: inset 0 1px 0 var(--edge), inset 0 0 0 1px var(--line-soft), 0 6px 18px rgba(0, 0, 0, .18); }
+  .raised { background: var(--raised); }
+  .pad16 { padding: 16px; } .pad20 { padding: 20px; }
+
+  .stat { padding: 20px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; overflow: hidden; min-height: 136px; }
+  .stat::after { content: ""; position: absolute; right: -48px; top: -58px; width: 176px; height: 176px; border-radius: 50%; background: var(--shape); pointer-events: none; }
+  .figure { display: flex; flex-direction: column; gap: 3px; }
+  .figure .value { font-size: 26px; font-weight: 700; letter-spacing: -.4px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .figure .unit { font-size: 15px; font-weight: 600; letter-spacing: 0; }
+  .figure .caption { color: inherit; opacity: .72; white-space: pre-line; line-height: 1.5; }
+  .figures { display: flex; gap: 24px; align-items: flex-start; }
+
+  .item { display: flex; align-items: center; gap: 11px; min-height: 52px; padding: 6px 12px 6px 9px; border-radius: var(--r-row); background: var(--surface); color: inherit; text-decoration: none; transition: background .18s ease-out; }
+  a.item:hover { background: var(--raised); }
+  .item .titles { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .item .title { font-size: 13.5px; font-weight: 600; }
+  .badge { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--tint-focus); font-size: 11.5px; font-weight: 600; }
+  .badge.caution { background: var(--tint-caution); }
+  .badge svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .chip { flex: none; font-size: 11.5px; font-weight: 600; padding: 4px 9px; border-radius: 99px; background: var(--tint); white-space: nowrap; }
+  .chip.caution { background: var(--tint-caution); }
+  .btn { align-self: flex-start; flex: none; font: 600 12px/1.4 var(--font); padding: 8px 15px; border-radius: 99px; background: var(--primary); color: var(--on-primary); text-decoration: none; border: 0; cursor: pointer; white-space: nowrap; transition: opacity .18s; }
+  .btn:hover { opacity: .82; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab { font: 600 11.5px/1.4 var(--font); padding: 5px 10px; border-radius: 99px; background: none; color: var(--ink); border: 0; box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; transition: background .18s, color .18s; }
+  .tab[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); box-shadow: none; }
+  .arrow { flex: none; align-self: center; color: var(--muted); font-size: 16px; font-weight: 700; }
+
+  /* The rail and the look controls */
+  #rail { position: fixed; z-index: 3; left: var(--inset); top: 50%; transform: translateY(-50%); width: var(--rail); padding: 10px; border-radius: var(--r-panel); display: flex; flex-direction: column; gap: 4px; }
+  #rail button { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border: 0; border-radius: var(--r-nav); background: none; color: var(--muted); font: 500 14px var(--font); cursor: pointer; text-align: left; transition: background .18s, color .18s; }
+  #rail button:hover { background: var(--raised); }
+  #rail button .n { font-size: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  #rail button[aria-current="true"] { background: var(--selection); color: var(--ink); }
+  #rail button[aria-current="true"] .n { color: var(--focus); }
+  #rail .track { height: 8px; margin: 8px 10px 4px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  #rail .track i { display: block; height: 100%; width: 100%; border-radius: 99px; background: var(--focus); transform-origin: left; transform: scaleX(0); }
+  #look { position: fixed; z-index: 3; top: 16px; right: var(--inset); display: flex; align-items: center; gap: 8px; }
+  #look .swatch { width: 26px; height: 26px; border-radius: 50%; border: 0; padding: 0; cursor: pointer; display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--line); }
+  #look .swatch i { width: 10px; height: 10px; border-radius: 50%; }
+  #look .swatch[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--ink); }
+  #look .mode { width: 44px; height: 44px; margin-left: 4px; border-radius: 50%; border: 0; cursor: pointer; background: var(--control); color: var(--control-ink); display: grid; place-items: center; }
+  #look .mode svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  #hint { position: fixed; z-index: 2; left: 0; right: 0; bottom: 16px; text-align: center; pointer-events: none; transition: opacity .3s; }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* Chapters */
+  .opening-top { gap: 12px; }
+  .opening-grid { display: flex; gap: 24px; align-items: flex-start; margin-top: 16px; }
+  .lived { display: flex; gap: 12px; }
+  .lived .stat { flex: 1 1 0; min-height: 214px; }
+  .languages { width: 330px; flex: none; }
+  .strip-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .strip-head .caption { margin-left: auto; }
+  #ecg { display: block; width: 100%; height: 150px; border-radius: 15px; }
+  .steps { display: flex; gap: 8px; align-items: stretch; }
+  .step { flex: 1 1 0; padding: 16px; border-radius: var(--r-row); display: flex; flex-direction: column; gap: 6px; }
+  .step .head { display: flex; align-items: center; gap: 8px; }
+  .step .n { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--focus); color: var(--on-focus); font-size: 13px; font-weight: 700; }
+  .result { display: flex; align-items: center; gap: 24px; }
+  .result .finding { flex: 1 1 0; min-width: 0; font-weight: 600; }
+  .result .btn { align-self: center; }
+  .desk-grid { display: flex; gap: 24px; align-items: stretch; }
+  .desk-words { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+  .desk-words .spring { flex: 1 1 auto; }
+  .desk-screens { flex: none; width: min(528px, 50%); display: flex; flex-direction: column; gap: 8px; }
+  .screen { padding: 4px; border-radius: var(--r-row); }
+  .screen img { display: block; width: 100%; aspect-ratio: 1440 / 900; border-radius: var(--r-nav); object-fit: cover; }
+  .arch-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .arch { display: flex; gap: 8px; align-items: stretch; }
+  .box { flex: 1 1 0; padding: 12px; border-radius: var(--r-row); display: flex; flex-direction: column; gap: 4px; min-height: 64px; }
+  .tutoring-grid { display: flex; gap: 16px; align-items: stretch; min-height: 214px; }
+  .tutoring-grid > .stat { width: 300px; flex: none; }
+  .subjects { flex: 1 1 0; display: flex; gap: 12px; }
+  .subject { flex: 1 1 0; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .subject .spring { flex: 1 1 auto; }
+  .facts { display: flex; gap: 12px; }
+  .facts .item { flex: 1 1 0; }
+  .goals { display: flex; gap: 16px; }
+  .goals .stat { flex: 1 1 0; min-height: 168px; }
+  .goals .value { font-size: 26px; font-weight: 700; letter-spacing: -.4px; }
+  .contact { max-width: 560px; }
+  .out { color: var(--muted); font-weight: 700; }
+
+  /* Narrow windows and phones: the rail becomes a bar on top, and rows become columns. */
+  @media (max-width: 900px) {
+    body { font-size: 15px; }
+    #pager { scroll-snap-type: y proximity; }
+    .scene { padding: 84px 16px 40px; align-items: flex-start; scroll-snap-stop: normal; }
+    #rail { top: 12px; left: 12px; transform: none; width: auto; flex-direction: row; padding: 6px; gap: 2px; }
+    #rail button { height: 32px; padding: 0 9px; }
+    #rail button .name, #rail .track, #hint { display: none; }
+    #rail button .n { font-size: 12px; }
+    #look { top: 12px; right: 12px; gap: 6px; }
+    #look .mode { width: 36px; height: 36px; margin-left: 2px; }
+    #look .swatch { width: 22px; height: 22px; }
+    .opening-grid, .desk-grid, .tutoring-grid, .steps, .arch, .facts, .goals, .result, .subjects { flex-direction: column; align-items: stretch; }
+    .lived { flex-wrap: wrap; } .lived .stat { min-height: 136px; flex-basis: 30%; }
+    .languages, .desk-screens, .tutoring-grid > .stat { width: auto; }
+    .arrow { transform: rotate(90deg); }
+    .strip-head .caption { margin-left: 0; }
+    .result .btn, .result .figures { align-self: flex-start; }
+    .subject { flex-direction: row; align-items: center; } .subject .spring { display: none; }
+  }
+  @media (max-width: 520px) { .lived .stat { flex-basis: 100%; } #rail button { padding: 0 7px; } }
+  @media (prefers-reduced-motion: reduce) {
+    #pager { scroll-behavior: auto; }
+    [data-reveal], .scene.active [data-reveal] { opacity: 1; transform: none; transition: none; }
+    .glass, .glass.lifts:hover { transition: none; transform: none; }
+  }
+</style>
+</head>
+<body>
+<div id="backdrop" aria-hidden="true"></div>
+<nav id="rail" class="glass" aria-label="Chapters"></nav>
+<div id="look"></div>
+<main id="pager" tabindex="-1"></main>
+<div id="hint" class="small muted" aria-hidden="true"></div>
+<noscript>This page needs JavaScript to show the story.</noscript>
+
+<script src="data.js"></script>
+<script>
+"use strict";
+(function () {
+  const story = window.STORY, theme = window.THEME;
+  const pager = document.getElementById("pager");
+  if (!story || !theme) { pager.textContent = "data.js is missing. Run scripts/build-web.sh."; return; }
+
+  // ---------- Small helpers. Text always goes in as text, never as HTML.
+  function el(tag, props, ...children) {
+    const node = document.createElement(tag);
+    for (const [key, value] of Object.entries(props || {})) {
+      if (value == null || value === false) continue;
+      if (key === "class") node.className = value;
+      else if (key === "text") node.textContent = value;
+      else if (key === "reveal") { node.dataset.reveal = ""; node.style.setProperty("--i", value); }
+      else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+      else node.setAttribute(key, value);
+    }
+    for (const child of children.flat()) if (child) node.append(child);
+    return node;
+  }
+  const NS = "http://www.w3.org/2000/svg";
+  function svg(shapes) {
+    const root = document.createElementNS(NS, "svg");
+    root.setAttribute("viewBox", "0 0 24 24");
+    root.setAttribute("aria-hidden", "true");
+    for (const [tag, attrs] of shapes) {
+      const shape = document.createElementNS(NS, tag);
+      for (const [key, value] of Object.entries(attrs)) shape.setAttribute(key, value);
+      root.append(shape);
+    }
+    return root;
+  }
+  // The story names SF Symbols; these are their stand-ins on the web.
+  const ICONS = {
+    "envelope": [["rect", { x: 3, y: 5, width: 18, height: 14, rx: 2.5 }], ["polyline", { points: "3.5,7.5 12,13.5 20.5,7.5" }]],
+    "person.crop.rectangle": [["rect", { x: 3, y: 4, width: 18, height: 16, rx: 2.5 }], ["circle", { cx: 12, cy: 10, r: 2.6 }], ["path", { d: "M7 17.5c1.2-3 8.8-3 10 0" }]],
+    "chevron.left.forwardslash.chevron.right": [["polyline", { points: "8,7 3,12 8,17" }], ["polyline", { points: "16,7 21,12 16,17" }], ["line", { x1: 13.8, y1: 5, x2: 10.2, y2: 19 }]],
+    "graduationcap": [["polygon", { points: "12,4.5 22,9.5 12,14.5 2,9.5" }], ["path", { d: "M6.5 12v4.2c3 2.4 8 2.4 11 0V12" }]],
+    "globe.europe.africa": [["circle", { cx: 12, cy: 12, r: 9 }], ["ellipse", { cx: 12, cy: 12, rx: 4, ry: 9 }], ["line", { x1: 3, y1: 12, x2: 21, y2: 12 }]],
+    "person.2": [["circle", { cx: 9, cy: 9, r: 3 }], ["path", { d: "M3 19c.4-4.6 11.6-4.6 12 0" }], ["circle", { cx: 17, cy: 8.5, r: 2.4 }], ["path", { d: "M16.5 14c2.6-.2 4.3 1.6 4.5 4" }]],
+    "function": [["path", { d: "M10.5 19.5c-1.6.3-2.2-.6-1.9-2.4l1.6-9.6c.4-2.2 1.6-3.2 3.6-2.8" }], ["line", { x1: 7.5, y1: 11, x2: 13.5, y2: 11 }], ["path", { d: "M14.5 14l4 5.5M18.5 14l-4 5.5" }]],
+    "atom": [["circle", { cx: 12, cy: 12, r: 1.4 }], ["ellipse", { cx: 12, cy: 12, rx: 9.5, ry: 3.8 }], ["ellipse", { cx: 12, cy: 12, rx: 9.5, ry: 3.8, transform: "rotate(60 12 12)" }], ["ellipse", { cx: 12, cy: 12, rx: 9.5, ry: 3.8, transform: "rotate(120 12 12)" }]],
+    "flask": [["path", { d: "M9 3.5h6M10 3.5v6l-5 8.6c-.8 1.4.2 2.9 1.8 2.9h10.4c1.6 0 2.6-1.5 1.8-2.9L14 9.5v-6" }], ["line", { x1: 7.6, y1: 15, x2: 16.4, y2: 15 }]],
+    "sun": [["circle", { cx: 12, cy: 12, r: 4 }], ["path", { d: "M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5" }]],
+    "moon": [["path", { d: "M20 14.2A8.3 8.3 0 0 1 9.8 4 8.3 8.3 0 1 0 20 14.2z" }]],
+  };
+  const icon = (name) => svg(ICONS[name] || [["circle", { cx: 12, cy: 12, r: 3 }]]);
+  const web = (text) => { try { const url = new URL(text); return url.protocol === "https:" ? url.href : null; } catch { return null; } };
+  const link = (label, url) => web(url) ? el("a", { class: "btn", href: web(url), target: "_blank", rel: "noopener", text: label }) : null;
+  const spaced = (unit) => unit ? (/^\p{L}/u.test(unit) ? " " + unit : unit) : null;
+  function figure(f) {
+    return el("div", { class: "figure" },
+      el("div", { class: "value" }, f.value, f.unit ? el("span", { class: "unit", text: spaced(f.unit) }) : null),
+      el("div", { class: "caption", text: f.caption }));
+  }
+  const figures = (list) => el("div", { class: "figures" }, list.map(figure));
+  function tabs(items, selected, choose) {
+    const row = el("div", { class: "tabs" });
+    const buttons = items.map((item) => el("button", { class: "tab", type: "button", text: item.title, "aria-pressed": String(item.id === selected),
+      onclick: () => { buttons.forEach((b, i) => b.setAttribute("aria-pressed", String(items[i].id === item.id))); choose(item.id); } }));
+    row.append(...buttons);
+    return row;
+  }
+  const withArrows = (nodes) => nodes.flatMap((node, i) => i ? [el("span", { class: "arrow", text: "→", "aria-hidden": "true" }), node] : [node]);
+
+  // ---------- Chapters
+  const chapters = ["opening", "thesis", "desk", "tutoring", "next"];
+  const number = (i) => String(i + 1).padStart(2, "0");
+  function header(i, headline, note) {
+    return el("div", { class: "stack gap8", reveal: 0 },
+      el("div", { class: "eyebrow", text: number(i) + " · " + story[chapters[i]].rail }),
+      el("h2", { class: "headline", text: headline }),
+      note ? el("div", { class: "muted", text: note }) : null);
+  }
+
+  function opening() {
+    const o = story.opening;
+    return [
+      el("div", { class: "stack opening-top" },
+        el("div", { class: "eyebrow", reveal: 0, text: number(0) + " · " + o.rail }),
+        el("h1", { class: "hero", reveal: 1, text: story.name }),
+        el("p", { class: "lead", reveal: 2, text: o.line }),
+        el("p", { class: "muted", reveal: 3, text: o.degree })),
+      el("div", { class: "opening-grid" },
+        el("div", { class: "stack gap8 grow", reveal: 4 },
+          el("div", { class: "label", text: o.livedTitle }),
+          el("div", { class: "lived" }, o.lived.map((p) => el("div", { class: "glass lifts stat" }, el("div", { class: "card-title", text: p.place }), figure(p))))),
+        el("div", { class: "stack gap8 languages", reveal: 5 },
+          el("div", { class: "label", text: o.languagesTitle }),
+          o.languages.map((l) => el("div", { class: "item" }, el("span", { class: "badge", text: l.code }),
+            el("div", { class: "titles" }, el("span", { class: "title", text: l.name })), el("span", { class: "chip", text: l.level }))))),
+    ];
+  }
+
+  let rhythm = "af", drawEcg = () => {};
+  function thesis() {
+    const t = story.thesis;
+    const note = el("span", { class: "small", text: t.strip.afNote });
+    const canvas = el("canvas", { id: "ecg", "aria-hidden": "true" });
+    return [
+      header(1, t.headline, t.context),
+      el("div", { class: "glass pad16 stack gap12", reveal: 1 },
+        el("div", { class: "strip-head" },
+          tabs([{ id: "normal", title: t.strip.normal }, { id: "af", title: t.strip.af }], rhythm, (id) => {
+            rhythm = id; note.textContent = id === "normal" ? t.strip.normalNote : t.strip.afNote; drawEcg();
+          }),
+          note, el("span", { class: "caption", text: t.strip.disclaimer })),
+        canvas),
+      el("div", { class: "steps", reveal: 2 }, withArrows(t.steps.map((s, i) => el("div", { class: "glass lifts step" },
+        el("div", { class: "head" }, el("span", { class: "n", text: String(i + 1) }), el("span", { class: "card-title", text: s.title })),
+        el("div", { class: "small muted", text: s.detail }))))),
+      el("div", { class: "glass lifts pad20 result", reveal: 3 },
+        el("span", { class: "eyebrow", text: t.resultTitle }), figures(t.figures),
+        el("p", { class: "finding", text: t.finding }), link(t.repoLabel, t.repoUrl)),
+    ];
+  }
+
+  let screen = null, showScreen = () => {};
+  function desk() {
+    const d = story.desk;
+    screen = d.screens[0] && d.screens[0].file;
+    const image = el("img", { alt: "A screenshot of Desk", loading: "lazy", decoding: "async" });
+    showScreen = () => { if (screen) image.src = "screens/" + screen + "-" + scheme() + ".jpg"; };
+    return [
+      header(2, d.headline),
+      el("div", { class: "desk-grid" },
+        el("div", { class: "desk-words", reveal: 1 },
+          el("p", { text: d.summary }), figures(d.figures), el("div", { class: "spring" }),
+          el("p", { class: "small muted", text: d.platformNote }), link(d.repoLabel, d.repoUrl)),
+        el("div", { class: "desk-screens", reveal: 2 },
+          tabs(d.screens.map((s) => ({ id: s.file, title: s.label })), screen, (id) => { screen = id; showScreen(); }),
+          el("div", { class: "glass lifts screen" }, image),
+          el("div", { class: "caption", text: d.screensNote }))),
+      el("div", { class: "glass pad16 stack gap12", reveal: 3 },
+        el("div", { class: "arch-head" }, el("span", { class: "eyebrow", text: d.architectureTitle }), el("span", { class: "small muted", text: d.architectureNote })),
+        el("div", { class: "arch" }, withArrows(d.architecture.map((b) => el("div", { class: "glass lifts raised box" },
+          el("div", { class: "strong", text: b.title }), el("div", { class: "small muted", text: b.detail })))))),
+    ];
+  }
+
+  function tutoring() {
+    const t = story.tutoring;
+    return [
+      header(3, t.headline),
+      el("div", { class: "tutoring-grid", reveal: 1 },
+        el("div", { class: "glass lifts stat" }, el("div", { class: "card-title", text: t.rail }), figures(t.figures)),
+        el("div", { class: "subjects" }, t.subjects.map((s) => el("div", { class: "glass lifts subject" },
+          el("span", { class: "badge" }, icon(s.symbol)), el("div", { class: "spring" }),
+          el("div", {}, el("div", { class: "card-title", text: s.name }), s.detail ? el("div", { class: "small muted", text: s.detail }) : null))))),
+      el("div", { class: "stack gap8", reveal: 2 },
+        el("div", { class: "label", text: t.factsTitle }),
+        el("div", { class: "facts" }, t.facts.map((f) => el("div", { class: "item" }, el("span", { class: "badge" }, icon(f.symbol)),
+          el("div", { class: "titles" }, el("span", { class: "title", text: f.title }), el("span", { class: "small muted", text: f.detail })))))),
+    ];
+  }
+
+  function next() {
+    const n = story.next;
+    return [
+      header(4, n.headline),
+      el("div", { class: "goals", reveal: 1 }, n.goals.map((g) => el("div", { class: "glass lifts stat" },
+        el("div", { class: "card-title", text: g.title }),
+        el("div", {}, el("div", { class: "value", text: g.value }), el("div", { text: g.detail }))))),
+      el("div", { class: "stack gap8 contact", reveal: 2 },
+        el("div", { class: "label", text: n.contactTitle }),
+        n.contact.map((c) => {
+          const empty = !c.value, url = web(c.url);
+          return el(url ? "a" : "div", { class: "item", href: url, target: url ? "_blank" : null, rel: url ? "noopener" : null },
+            el("span", { class: "badge" + (empty ? " caution" : "") }, icon(c.symbol)),
+            el("div", { class: "titles" }, el("span", { class: "title", text: c.label }), empty ? null : el("span", { class: "small muted", text: c.value })),
+            empty ? el("span", { class: "chip caution", text: story.placeholder }) : url ? el("span", { class: "out", text: "↗", "aria-hidden": "true" }) : null);
+        })),
+    ];
+  }
+
+  const build = { opening, thesis, desk, tutoring, next };
+  const scenes = chapters.map((name) => {
+    const scene = el("section", { class: "scene" + (name === "opening" || name === "tutoring" || name === "next" ? " roomy" : ""), id: name, "aria-label": story[name].rail },
+      el("div", { class: "content" }, build[name]()));
+    pager.append(scene);
+    return scene;
+  });
+
+  // ---------- The rail, the keys and the hint
+  const rail = document.getElementById("rail");
+  const go = (i) => scenes[Math.max(0, Math.min(scenes.length - 1, i))].scrollIntoView();
+  const railButtons = chapters.map((name, i) => el("button", { type: "button", onclick: () => go(i) },
+    el("span", { class: "n", text: number(i) }), el("span", { class: "name", text: story[name].rail })));
+  const fill = el("i");
+  rail.append(...railButtons, el("div", { class: "track" }, fill));
+  const hint = document.getElementById("hint");
+  hint.textContent = story.hint;
+
+  let current = -1;
+  function arrive(i) {
+    if (i === current) return;
+    current = i;
+    scenes.forEach((scene, j) => scene.classList.toggle("active", j === i));
+    railButtons.forEach((button, j) => button.setAttribute("aria-current", String(j === i)));
+    hint.style.opacity = i === scenes.length - 1 ? 0 : 1;
+    drawEcg();
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.metaKey || event.ctrlKey || event.altKey || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(event.target.tagName) && event.key === " ") return;
+    const step = { ArrowDown: 1, ArrowRight: 1, PageDown: 1, " ": 1, ArrowUp: -1, ArrowLeft: -1, PageUp: -1 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    go(current + step);
+  });
+
+  // ---------- The look: three colourways, light or dark, all from the app's own theme
+  const store = { get(key) { try { return localStorage.getItem(key); } catch { return null; } }, set(key, value) { try { localStorage.setItem(key, value); } catch {} } };
+  const system = window.matchMedia("(prefers-color-scheme: dark)");
+  let palette = theme.order.includes(store.get("palette")) ? store.get("palette") : theme.order[0];
+  let chosen = ["light", "dark"].includes(store.get("scheme")) ? store.get("scheme") : null;
+  const scheme = () => chosen || (system.matches ? "dark" : "light");
+  const css = (c, alpha) => "rgba(" + c[0] + "," + c[1] + "," + c[2] + "," + (alpha == null ? c[3] : alpha) + ")";
+  let colors = null;
+
+  const look = document.getElementById("look");
+  const swatches = theme.order.map((id) => {
+    const core = el("i");
+    return el("button", { class: "swatch", type: "button", title: theme.palettes[id].title, "aria-label": "Colours: " + theme.palettes[id].title,
+      onclick: () => { palette = id; store.set("palette", id); applyLook(); } }, core);
+  });
+  const mode = el("button", { class: "mode", type: "button", onclick: () => { chosen = scheme() === "dark" ? "light" : "dark"; store.set("scheme", chosen); applyLook(); } });
+  look.append(...swatches, mode);
+
+  function applyLook() {
+    colors = theme.palettes[palette].schemes[scheme()];
+    const root = document.documentElement.style;
+    const set = (name, value) => root.setProperty("--" + name, value);
+    for (const [name, key] of Object.entries({ canvas: "canvas", surface: "surface", raised: "raised", line: "line", edge: "edge", ink: "ink", muted: "muted",
+      focus: "focus", "on-focus": "onFocus", selection: "selection", primary: "primary", "on-primary": "onPrimary", control: "control",
+      "control-ink": "controlInk", tint: "tint", "tint-focus": "tintFocus", "tint-caution": "tintCaution", shape: "shape" })) set(name, css(colors[key]));
+    set("edge-soft", css(colors.edge, colors.edge[3] * 0.55));
+    set("line-soft", css(colors.line, colors.line[3] * 0.6));
+    document.documentElement.style.colorScheme = scheme();
+    theme.order.forEach((id, i) => {
+      const other = theme.palettes[id].schemes[scheme()];
+      swatches[i].style.background = css(other.deep);
+      swatches[i].firstChild.style.background = css(other.focus);
+      swatches[i].setAttribute("aria-pressed", String(id === palette));
+    });
+    mode.replaceChildren(icon(scheme() === "dark" ? "sun" : "moon"));
+    mode.setAttribute("aria-label", scheme() === "dark" ? "Switch to light" : "Switch to dark");
+    showScreen(); paint(); drawEcg();
+  }
+  system.addEventListener("change", () => { if (!chosen) applyLook(); });
+
+  // ---------- The backdrop: the tide is how far the reader is through the story
+  const backdrop = document.getElementById("backdrop");
+  let progress = 0;
+  function paint() {
+    if (!colors) return;
+    const tide = theme.tideStart + (1 - theme.tideStart) * progress;
+    const glow = (c, alpha, x, y, rx, ry) => "radial-gradient(" + rx + " " + ry + " at " + x + " " + y + "," + css(c, alpha) + "," + css(c, 0) + ")";
+    const mix = (a, b) => a + (b - a) * tide;
+    const high = 46 + 16 * tide, core = 14 + 6 * tide;
+    backdrop.style.backgroundImage = [
+      glow(colors.tideCore, colors.tideCore[3] * tide, "54%", (112 - 10 * tide) + "%", core * 3.6 + "vh", core + "vh"),
+      glow(colors.tideLow, mix(colors.tideLow[3], colors.tideHigh[3]), "54%", (124 - 30 * tide) + "%", high * 2.8 + "vh", high + "vh"),
+      glow(colors.auroraWarm, null, "86%", "22%", "30vw", "30vw"),
+      glow(colors.auroraCool, null, "42%", "10%", "77vw", "55vw"),
+      "linear-gradient(" + colors.field.map((c) => css(c)).join(",") + ")",
+    ].join(",");
+    fill.style.transform = "scaleX(" + progress + ")";
+  }
+  let queued = false;
+  pager.addEventListener("scroll", () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      const room = pager.scrollHeight - pager.clientHeight;
+      progress = room > 0 ? Math.max(0, Math.min(1, pager.scrollTop / room)) : 0;
+      paint();
+      // The chapter is the scene that holds the middle of the window.
+      const middle = pager.scrollTop + pager.clientHeight / 2;
+      arrive(Math.max(0, scenes.findIndex((scene) => middle >= scene.offsetTop && middle < scene.offsetTop + scene.offsetHeight)));
+    });
+  }, { passive: true });
+
+  // ---------- The ECG strip: the same made-up rhythms as the app, from a few bumps per beat
+  const RHYTHMS = { normal: [0.86], af: [0.52, 0.94, 0.63, 0.47, 0.81, 0.58, 1.02, 0.68, 0.49, 0.77] };
+  const Q = [-0.030, 0.010, -0.10], R = [0, 0.011, 1], S = [0.032, 0.012, -0.20], T = [0.25, 0.045, 0.26], P = [-0.17, 0.025, 0.13];
+  const RIPPLES = [[6.3, 0.035], [8.1, 0.02]];
+  function beats(name) { let time = 0; return RHYTHMS[name].map((gap) => { const start = time; time += gap; return start; }); }
+  const period = (name) => RHYTHMS[name].reduce((a, b) => a + b, 0);
+  function value(name, time) {
+    const span = period(name), local = time % span, waves = name === "normal" ? [P, Q, R, S, T] : [Q, R, S, T];
+    let v = 0;
+    for (const beat of beats(name)) for (const shift of [-span, 0, span]) {
+      const distance = local - beat - shift;
+      if (Math.abs(distance) >= 0.5) continue;
+      for (const [offset, width, height] of waves) { const x = (distance - offset) / width; v += height * Math.exp(-x * x / 2); }
+    }
+    if (name === "af") for (const [rate, height] of RIPPLES) v += height * Math.sin(2 * Math.PI * rate * time);
+    return v;
+  }
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const ecg = document.getElementById("ecg");
+  let frame = 0;
+  function strip(time) {
+    const ratio = window.devicePixelRatio || 1, width = ecg.clientWidth, height = ecg.clientHeight;
+    if (!width || !colors) return;
+    if (ecg.width !== Math.round(width * ratio)) { ecg.width = Math.round(width * ratio); ecg.height = Math.round(height * ratio); }
+    const g = ecg.getContext("2d"), e = theme.ecg;
+    g.setTransform(ratio, 0, 0, ratio, 0, 0);
+    g.clearRect(0, 0, width, height);
+    // A phone shows half as many seconds, so the beats stay readable.
+    const seconds = width < 520 ? e.seconds / 2 : e.seconds;
+    const perSecond = width / seconds, square = perSecond * e.grid;
+    g.beginPath();
+    for (let x = -(time % e.grid) * perSecond; x < width; x += square) { g.moveTo(x, 0); g.lineTo(x, height); }
+    for (let y = square; y < height; y += square) { g.moveTo(0, y); g.lineTo(width, y); }
+    g.strokeStyle = css(colors.line); g.lineWidth = 1; g.stroke();
+    g.beginPath();
+    for (let x = 0; x <= width; x += 1) {
+      const y = height * e.baseline - value(rhythm, time + x / perSecond) * height * e.gain;
+      if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.strokeStyle = css(colors.focus); g.lineWidth = 2; g.lineJoin = g.lineCap = "round"; g.stroke();
+    // A tick under every spike: evenly spaced, or not.
+    g.beginPath();
+    const span = period(rhythm);
+    for (let base = Math.floor(time / span) * span; base <= time + seconds; base += span) for (const beat of beats(rhythm)) {
+      const x = (base + beat - time) * perSecond;
+      if (x >= 0 && x <= width) { g.moveTo(x, height - 12); g.lineTo(x, height - 4); }
+    }
+    g.strokeStyle = css(colors.muted); g.stroke();
+  }
+  drawEcg = () => {
+    cancelAnimationFrame(frame);
+    const moving = current === chapters.indexOf("thesis") && !still.matches && !document.hidden;
+    if (!moving) { strip(0); return; }
+    const loop = (now) => { strip(now / 1000 % 3600); frame = requestAnimationFrame(loop); };
+    frame = requestAnimationFrame(loop);
+  };
+  document.addEventListener("visibilitychange", drawEcg);
+  window.addEventListener("resize", () => { paint(); drawEcg(); });
+
+  applyLook();
+  // The first scene plays its entrance too.
+  requestAnimationFrame(() => requestAnimationFrame(() => arrive(0)));
+})();
+</script>
+</body>
+</html>

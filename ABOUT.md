@@ -19,6 +19,14 @@ Installs `~/Applications/AboutJose.app`. To run from source instead:
 swift run AboutJose
 ```
 
+## Web copy (for people without a Mac)
+```bash
+./scripts/build-web.sh
+```
+Writes `docs/`: one static page with the same five chapters, the same words (`about/story.json`) and the same colours (read from the app). It works on a phone. Open `docs/index.html` to read it; nothing to install, no server.
+
+To put it online for free: push, then on GitHub go to Settings → Pages → Deploy from a branch → `main`, folder `/docs`. Run the script again after changing the words; a test fails if `docs/` is older than the story.
+
 ## Snapshots
 ```bash
 swift run AboutJose --render-snapshots design/about
@@ -32,6 +40,7 @@ Every chapter, light and dark, at 1440 × 900.
 | The app | `Sources/AboutJose/` (`Chapters/` has one file per chapter) |
 | Sizes and type only this app uses | `Sources/AboutJose/StoryTheme.swift` |
 | Colours, glass, motion, backdrop (shared with Desk) | `Sources/DeskKit/` |
+| The web page | `web/index.html` (layout and behaviour), built into `docs/` |
 | Tests | `Tests/AboutJoseTests/` |
 
 ## Rules it keeps

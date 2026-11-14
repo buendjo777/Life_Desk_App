@@ -32,6 +32,17 @@ final class StoryTests: XCTestCase {
         }
     }
 
+    /// The web copy in docs/ carries the same words as the app. If this fails, run scripts/build-web.sh.
+    func testTheWebCopyHasTheCurrentStory() throws {
+        let root = Resources.story.deletingLastPathComponent().deletingLastPathComponent()
+        let web = root.appendingPathComponent("docs/data.js")
+        guard FileManager.default.fileExists(atPath: web.path) else { throw XCTSkip("docs/ has not been built") }
+        let page = try String(contentsOf: web, encoding: .utf8)
+        let words = try String(contentsOf: Resources.story, encoding: .utf8)
+        XCTAssertTrue(page.contains(words), "docs/data.js is older than about/story.json")
+        for palette in Palette.allCases { XCTAssertTrue(page.contains("\"\(palette.rawValue)\""), palette.rawValue) }
+    }
+
     func testTheTideRisesWithTheChapters() throws {
         let reader = Reader(story: try story())
         XCTAssertEqual(reader.progress, 0)
