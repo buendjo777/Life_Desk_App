@@ -1,0 +1,116 @@
+{
+  "name": "José Alberto Buendía",
+  "hint": "Scroll, or press ↓",
+  "placeholder": "To be added",
+
+  "opening": {
+    "rail": "Opening",
+    "line": "Engineer aiming at MedTech: AI applied to medicine, in biomedical data, devices and software.",
+    "degree": "Industrial Technologies Engineering, Electronics. ICAI, Madrid.",
+    "livedTitle": "Lived in",
+    "lived": [
+      { "place": "Basel", "value": "8", "unit": "years", "caption": "Switzerland" },
+      { "place": "Brussels", "value": "3", "unit": "years", "caption": "Belgium" },
+      { "place": "Madrid", "value": "ICAI", "caption": "University" }
+    ],
+    "languagesTitle": "Languages",
+    "languages": [
+      { "code": "ES", "name": "Spanish", "level": "Native" },
+      { "code": "EN", "name": "English", "level": "Native" },
+      { "code": "FR", "name": "French", "level": "B2" },
+      { "code": "DE", "name": "German", "level": "C1" }
+    ]
+  },
+
+  "thesis": {
+    "rail": "Thesis",
+    "headline": "Can synthetic heartbeats help a model detect atrial fibrillation?",
+    "context": "Bachelor's thesis, done at IIT.",
+    "strip": {
+      "normal": "Normal rhythm",
+      "af": "Atrial fibrillation",
+      "normalNote": "Even beats, each with a P wave before the spike.",
+      "afNote": "Uneven beats, no P wave, a restless baseline.",
+      "disclaimer": "Illustrative trace drawn by this app. Not patient data."
+    },
+    "steps": [
+      { "title": "Wavelet domain", "detail": "The ECG is moved into an invertible wavelet domain, so whatever is generated there converts back to a signal." },
+      { "title": "WGAN-GP", "detail": "A WGAN-GP learns to generate synthetic ECG in that domain." },
+      { "title": "EfficientNet-B0", "detail": "A transfer-learning classifier for atrial fibrillation, on the MIT-BIH AF Database." }
+    ],
+    "resultTitle": "Result",
+    "figures": [
+      { "value": "≈86", "unit": "%", "caption": "Accuracy on\nunseen patients" },
+      { "value": "9", "unit": "/10", "caption": "Thesis\ngrade" }
+    ],
+    "finding": "The synthetic data gave no detectable gain. The classifier works; the generated heartbeats did not make it better. That is the result.",
+    "repoLabel": "Open the repo",
+    "repoUrl": "https://github.com/buendjo777/ecg-timescale-gan"
+  },
+
+  "desk": {
+    "rail": "Desk",
+    "headline": "Desk: a life desk run by nightly agents.",
+    "summary": "Cloud agents read the inbox and the calendar every night and write a brief into a private git vault. Desk is the native Mac app that reads it: what is due, what needs a reply, what to confirm. It holds no credentials, renders untrusted text as plain text, and changes nothing without a click.",
+    "figures": [
+      { "value": "9", "caption": "Tabs" },
+      { "value": "0", "unit": "€", "caption": "Running\ncost" },
+      { "value": "0", "caption": "Third-party\npackages" }
+    ],
+    "screensNote": "Screens drawn from invented demo data.",
+    "screens": [
+      { "label": "Today", "file": "today" },
+      { "label": "Studying", "file": "studying" },
+      { "label": "Projects", "file": "projects" },
+      { "label": "Tutoring", "file": "tutoring" },
+      { "label": "System", "file": "system" }
+    ],
+    "architectureTitle": "Architecture",
+    "architectureNote": "One writer per file · no server · no tokens in the app",
+    "architecture": [
+      { "title": "Nightly agents", "detail": "Read mail and calendar in the cloud" },
+      { "title": "Vault (git)", "detail": "A brief, a run log, drafts and notes" },
+      { "title": "Desk for Mac", "detail": "git pull · pure parsers · nine tabs" },
+      { "title": "Jose", "detail": "Ticks, Add, Dismiss: decisions the agents read back" }
+    ],
+    "platformNote": "This portfolio runs on the same theme, glass and motion code as Desk.",
+    "repoLabel": "Open the repo",
+    "repoUrl": "https://github.com/buendjo777/Life_Desk_App"
+  },
+
+  "tutoring": {
+    "rail": "Tutoring",
+    "headline": "Four years of tutoring, with a client base built from scratch.",
+    "figures": [
+      { "value": "4", "unit": "years", "caption": "Tutoring" },
+      { "value": "3", "caption": "Subjects" }
+    ],
+    "subjectsTitle": "Subjects",
+    "subjects": [
+      { "name": "Maths", "detail": "The main subject, including IB Maths IAs.", "symbol": "function" },
+      { "name": "Physics", "detail": "Alongside maths.", "symbol": "atom" },
+      { "name": "Chemistry", "detail": "Alongside maths.", "symbol": "flask" }
+    ],
+    "factsTitle": "Who",
+    "facts": [
+      { "title": "IB students", "detail": "Including their Maths Internal Assessments.", "symbol": "graduationcap" },
+      { "title": "Many nationalities", "detail": "Students from different countries and school systems.", "symbol": "globe.europe.africa" },
+      { "title": "Own client base", "detail": "Found and kept without an intermediary.", "symbol": "person.2" }
+    ]
+  },
+
+  "next": {
+    "rail": "Next",
+    "headline": "What comes next.",
+    "goals": [
+      { "title": "Master's", "value": "Autumn 2027", "detail": "A master's towards MedTech and AI applied to medicine." },
+      { "title": "Internship", "value": "From December 2026", "detail": "Until August 2027. Switzerland and Madrid first." }
+    ],
+    "contactTitle": "Get in touch",
+    "contact": [
+      { "label": "Email", "value": "", "url": "", "symbol": "envelope" },
+      { "label": "LinkedIn", "value": "", "url": "", "symbol": "person.crop.rectangle" },
+      { "label": "GitHub", "value": "github.com/buendjo777", "url": "https://github.com/buendjo777", "symbol": "chevron.left.forwardslash.chevron.right" }
+    ]
+  }
+}

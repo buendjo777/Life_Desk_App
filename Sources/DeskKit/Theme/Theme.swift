@@ -349,6 +349,17 @@ public struct TextStyle {
     /// Headlines are set in the system serif (New York).
     public var serif = false
 
+    public init(size: CGFloat, weight: Font.Weight, tracking: CGFloat = 0, uppercase: Bool = false,
+                monoDigits: Bool = false, monospaced: Bool = false, serif: Bool = false) {
+        self.size = size
+        self.weight = weight
+        self.tracking = tracking
+        self.uppercase = uppercase
+        self.monoDigits = monoDigits
+        self.monospaced = monospaced
+        self.serif = serif
+    }
+
     public var font: Font {
         let base = Font.system(size: size, weight: weight, design: monospaced ? .monospaced : serif ? .serif : .default)
         return monoDigits ? base.monospacedDigit() : base
