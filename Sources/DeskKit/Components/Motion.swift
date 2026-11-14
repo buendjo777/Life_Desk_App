@@ -1,11 +1,11 @@
 import SwiftUI
 
-// Depth and movement, in one place. Everything here is off in snapshots, with Reduce Motion,
-// and when Motion is switched off in Customise.
+// Depth and movement, in one place. Everything here is off with Reduce Motion and when the app
+// sets `motionOn` to false (Desk: in snapshots, and when Motion is switched off in Customise).
 
 /// Glass: a translucent fill, a lit edge, and on hover a small rise with a shadow.
 struct Glass: ViewModifier {
-    @Environment(Store.self) private var store
+    @Environment(\.motionOn) private var motionOn
     @Environment(\.theme) private var t
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hovering = false
@@ -16,7 +16,7 @@ struct Glass: ViewModifier {
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius ?? t.radiusCard)
-        let lifted = lifts && hovering && store.motion && !reduceMotion
+        let lifted = lifts && hovering && motionOn && !reduceMotion
         content
             .background(fill ?? t.surface, in: shape)
             .overlay(shape.strokeBorder(LinearGradient(colors: [t.glassEdge.opacity(lifted ? 1 : 0.55), t.line.opacity(0.4)],
@@ -31,14 +31,14 @@ struct Glass: ViewModifier {
 
 /// A section fading up when its tab opens, each a moment after the one before.
 struct Entrance: ViewModifier {
-    @Environment(Store.self) private var store
+    @Environment(\.motionOn) private var motionOn
     @Environment(\.theme) private var t
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
     let index: Int
 
     func body(content: Content) -> some View {
-        let animated = store.motion && !reduceMotion
+        let animated = motionOn && !reduceMotion
         content
             .opacity(shown || !animated ? 1 : 0)
             .offset(y: shown || !animated ? 0 : t.entranceRise)
@@ -50,16 +50,18 @@ struct Entrance: ViewModifier {
 }
 
 /// Sparks flying out from a tick. Invisible at rest; plays once each time `trigger` changes.
-struct Sparks: View {
+public struct Sparks: View {
     @Environment(\.theme) private var t
     let trigger: Int
+
+    public init(trigger: Int) { self.trigger = trigger }
 
     private struct Flight {
         var distance: CGFloat = 0
         var opacity = 0.0
     }
 
-    var body: some View {
+    public var body: some View {
         ZStack {
             ForEach(0..<t.sparks, id: \.self) { index in
                 let angle = Double(index) / Double(t.sparks) * 2 * .pi
@@ -85,7 +87,7 @@ struct Sparks: View {
     }
 }
 
-extension View {
+public extension View {
     /// A glass surface with a lit edge. `lifts`: it rises under the pointer.
     func glass(radius: CGFloat? = nil, fill: Color? = nil, lifts: Bool = true) -> some View {
         modifier(Glass(radius: radius, fill: fill, lifts: lifts))
@@ -98,21 +100,21 @@ extension View {
 
 /// A bar or a ring drawn from a 0…1 value: it grows from empty when it appears, then follows its value.
 /// `FilledIn(progress) { shown in Capsule().frame(width: shown * width) }`
-struct FilledIn<Content: View>: View {
-    @Environment(Store.self) private var store
+public struct FilledIn<Content: View>: View {
+    @Environment(\.motionOn) private var motionOn
     @Environment(\.theme) private var t
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
     let value: Double
     @ViewBuilder var content: (Double) -> Content
 
-    init(_ value: Double, @ViewBuilder content: @escaping (Double) -> Content) {
+    public init(_ value: Double, @ViewBuilder content: @escaping (Double) -> Content) {
         self.value = value
         self.content = content
     }
 
-    var body: some View {
-        let animated = store.motion && !reduceMotion
+    public var body: some View {
+        let animated = motionOn && !reduceMotion
         content(shown || !animated ? value : 0)
             .onAppear {
                 guard animated else { return }

@@ -2,12 +2,12 @@ import SwiftUI
 
 /// A colourway: two strong colours (the field and the glow), one bright accent, and four signal colours.
 /// Theme.swift turns these into the tokens the views read. To add a colourway, add a case here.
-enum Palette: String, CaseIterable, Codable, Identifiable {
+public enum Palette: String, CaseIterable, Codable, Identifiable {
     case ember, oxblood, saffron
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var title: String {
+    public var title: String {
         switch self {
         case .ember: "Midnight Ember"
         case .oxblood: "Oxblood Marigold"
@@ -15,30 +15,30 @@ enum Palette: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    struct Colors {
+    public struct Colors {
         /// The dark field, top to bottom, and the light one.
-        let field: [UInt32]
-        let fieldLight: [UInt32]
+        public let field: [UInt32]
+        public let fieldLight: [UInt32]
         /// Strong colour one: the sidebar and the primary button in light mode.
-        let deep: UInt32
+        public let deep: UInt32
         /// Strong colour two: the glow that rises from the bottom of the window.
-        let glow: UInt32
-        let glowLight: UInt32
+        public let glow: UInt32
+        public let glowLight: UInt32
         /// The bright accent: focus, selection and the full tide. On a light field its stand-in is `focusLight`.
-        let bright: UInt32
-        let focusLight: UInt32
-        let ink: UInt32
-        let muted: UInt32
-        let inkLight: UInt32
-        let mutedLight: UInt32
+        public let bright: UInt32
+        public let focusLight: UInt32
+        public let ink: UInt32
+        public let muted: UInt32
+        public let inkLight: UInt32
+        public let mutedLight: UInt32
         /// Signals as (dark mode, light mode): light mode needs darker tones to stay legible on white glass.
-        let good: (UInt32, UInt32)
-        let caution: (UInt32, UInt32)
-        let alert: (UInt32, UInt32)
-        let info: (UInt32, UInt32)
+        public let good: (UInt32, UInt32)
+        public let caution: (UInt32, UInt32)
+        public let alert: (UInt32, UInt32)
+        public let info: (UInt32, UInt32)
     }
 
-    var colors: Colors {
+    public var colors: Colors {
         switch self {
         case .ember:
             Colors(field: [0x06051A, 0x0D0B38, 0x1B1668], fieldLight: [0xF3F1FF, 0xE4DEFF, 0xFFE0D6],

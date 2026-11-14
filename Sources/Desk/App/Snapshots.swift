@@ -27,7 +27,7 @@ enum Snapshots {
             for scheme in [ColorScheme.light, .dark] {
                 let store = Store(isSnapshot: true)
                 let theme = Theme(scheme: scheme, density: .compact)
-                try render(CustomiseView().environment(store).environment(\.theme, theme), scheme: scheme, size: theme.customiseSize,
+                try render(CustomiseView().platform(store).environment(\.theme, theme), scheme: scheme, size: theme.customiseSize,
                            to: folder.appendingPathComponent("customise-\(scheme == .dark ? "dark" : "light").png"))
                 store.prefs.density = .comfortable
                 try render(RootView().environment(store), scheme: scheme,
@@ -41,16 +41,6 @@ enum Snapshots {
     }
 
     static func render(_ view: some View, scheme: ColorScheme, size: CGSize = Theme().designSize, to url: URL) throws {
-        let renderer = ImageRenderer(
-            content: view
-                .frame(width: size.width, height: size.height)
-                .environment(\.colorScheme, scheme)
-        )
-        renderer.scale = 2
-        guard let image = renderer.nsImage,
-              let tiff = image.tiffRepresentation,
-              let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:])
-        else { throw CocoaError(.fileWriteUnknown) }
-        try png.write(to: url)
+        try Snapshot.render(view, scheme: scheme, size: size, to: url)
     }
 }

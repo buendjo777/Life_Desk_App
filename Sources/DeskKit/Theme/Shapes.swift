@@ -1,11 +1,11 @@
 import SwiftUI
 
 /// The large geometric shape behind each stat card (DESIGN.md, "Stat card").
-enum CardShape {
+public enum CardShape: Sendable {
     case circle, triangle, star, heart, hexagon, square, chevron, ring, cog
 
     /// Size, offset from the anchor corner, rotation and anchor of the shape inside its card.
-    var placement: (size: CGSize, offset: CGSize, degrees: Double, anchor: Alignment) {
+    public var placement: (size: CGSize, offset: CGSize, degrees: Double, anchor: Alignment) {
         switch self {
         case .circle: (CGSize(width: 176, height: 176), CGSize(width: 48, height: -58), 0, .topTrailing)
         case .triangle: (CGSize(width: 150, height: 150), CGSize(width: 34, height: -26), 14, .topTrailing)
@@ -19,7 +19,7 @@ enum CardShape {
         }
     }
 
-    func path(in rect: CGRect) -> Path {
+    public func path(in rect: CGRect) -> Path {
         switch self {
         case .circle: Path(ellipseIn: rect)
         case .triangle: polygon(in: rect, points: [(0.5, 0.04), (0.98, 0.96), (0.02, 0.96)])
@@ -102,16 +102,21 @@ enum CardShape {
 }
 
 /// A `CardShape` as a SwiftUI `Shape`. Rings and cogs use even-odd fill so their holes stay open.
-struct CardShapeView: View {
+public struct CardShapeView: View {
     let shape: CardShape
     let color: Color
+
+    public init(shape: CardShape, color: Color) {
+        self.shape = shape
+        self.color = color
+    }
 
     private struct Outline: Shape {
         let shape: CardShape
         func path(in rect: CGRect) -> Path { shape.path(in: rect) }
     }
 
-    var body: some View {
+    public var body: some View {
         Outline(shape: shape)
             .fill(color, style: FillStyle(eoFill: true))
             .accessibilityHidden(true)

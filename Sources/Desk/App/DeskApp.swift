@@ -15,7 +15,7 @@ struct DeskApp: App {
         .commands { DeskCommands(store: store) }
 
         Settings {
-            SettingsView().environment(store)
+            SettingsView().platform(store)
         }
     }
 }

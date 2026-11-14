@@ -1,19 +1,19 @@
 // swift-tools-version:5.9
 import PackageDescription
 
-// One executable target, as SPEC.md requires. Warnings are errors, so the build stays warning-free.
+// Two apps on one platform. DeskKit holds what they share (theme, palettes, glass, motion, backdrop);
+// Desk is the dashboard, AboutJose the storytelling portfolio. Warnings are errors, so the build stays warning-free.
+let settings: [SwiftSetting] = [
+    .enableUpcomingFeature("BareSlashRegexLiterals"),
+    .unsafeFlags(["-warnings-as-errors"]),
+]
+
 let package = Package(
     name: "Desk",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(
-            name: "Desk",
-            path: "Sources/Desk",
-            swiftSettings: [
-                .enableUpcomingFeature("BareSlashRegexLiterals"),
-                .unsafeFlags(["-warnings-as-errors"]),
-            ]
-        ),
+        .target(name: "DeskKit", path: "Sources/DeskKit", swiftSettings: settings),
+        .executableTarget(name: "Desk", dependencies: ["DeskKit"], path: "Sources/Desk", swiftSettings: settings),
         .testTarget(name: "DeskTests", dependencies: ["Desk"], path: "Tests/DeskTests"),
     ]
 )

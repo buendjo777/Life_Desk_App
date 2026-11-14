@@ -2,8 +2,8 @@ import SwiftUI
 
 /// A stat card: glass washed with its accent, a title, figures, and one large shape in the accent,
 /// anchored to a corner and clipped by the card. The shape drifts towards the pointer, which gives the card depth.
-struct StatCard<Content: View>: View {
-    @Environment(Store.self) private var store
+public struct StatCard<Content: View>: View {
+    @Environment(\.motionOn) private var motionOn
     @Environment(\.theme) private var t
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The pointer's place over the card, -1…1 from its centre.
@@ -16,7 +16,16 @@ struct StatCard<Content: View>: View {
     var tall = false
     @ViewBuilder var content: Content
 
-    var body: some View {
+    public init(title: String, subtitle: String? = nil, accent: Accent, shape: CardShape, tall: Bool = false, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.subtitle = subtitle
+        self.accent = accent
+        self.shape = shape
+        self.tall = tall
+        self.content = content()
+    }
+
+    public var body: some View {
         let placement = shape.placement
         VStack(alignment: .leading, spacing: t.sp16) {
             HStack(alignment: .firstTextBaseline, spacing: t.sp10) {
@@ -41,7 +50,7 @@ struct StatCard<Content: View>: View {
         .clipShape(RoundedRectangle(cornerRadius: t.radiusCard))
         .glass()
         .onContinuousHover(coordinateSpace: .local) { phase in
-            guard store.motion, !reduceMotion else { return }
+            guard motionOn, !reduceMotion else { return }
             withAnimation(.spring(response: t.liftResponse, dampingFraction: t.liftDamping)) {
                 switch phase {
                 case .active(let point): pointer = CGSize(width: point.x / max(size.width, 1) * 2 - 1, height: point.y / max(size.height, 1) * 2 - 1)
@@ -56,27 +65,32 @@ struct StatCard<Content: View>: View {
 }
 
 /// A big number with an uppercase caption. Units ("d", "h", "km") are drawn smaller.
-struct Figure: View {
-    struct Part: Hashable {
+public struct Figure: View {
+    public struct Part: Hashable {
         let text: String
         var unit = false
+
+        public init(text: String, unit: Bool = false) {
+            self.text = text
+            self.unit = unit
+        }
     }
 
     @Environment(\.theme) private var t
     let parts: [Part]
     let caption: String
 
-    init(_ value: String, unit: String? = nil, caption: String) {
+    public init(_ value: String, unit: String? = nil, caption: String) {
         parts = [Part(text: value)] + (unit.map { [Part(text: $0, unit: true)] } ?? [])
         self.caption = caption
     }
 
-    init(parts: [Part], caption: String) {
+    public init(parts: [Part], caption: String) {
         self.parts = parts
         self.caption = caption
     }
 
-    var body: some View {
+    public var body: some View {
         VStack(alignment: .leading, spacing: t.sp4 - t.hairline) {
             HStack(alignment: .firstTextBaseline, spacing: t.sp2) {
                 ForEach(Array(parts.enumerated()), id: \.offset) { _, part in
@@ -98,11 +112,13 @@ struct Figure: View {
 }
 
 /// A neutral card on `surface`, for content that is not a colour-block stat.
-struct SurfaceCard<Content: View>: View {
+public struct SurfaceCard<Content: View>: View {
     @Environment(\.theme) private var t
     @ViewBuilder var content: Content
 
-    var body: some View {
+    public init(@ViewBuilder content: () -> Content) { self.content = content() }
+
+    public var body: some View {
         content
             .padding(t.sp20)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -111,7 +127,7 @@ struct SurfaceCard<Content: View>: View {
 }
 
 /// What sits at the left of a list row.
-enum RowLeading {
+public enum RowLeading {
     case symbol(String, Accent)
     case initials(String, Accent)
     /// A tick circle; tapping it calls `toggle`.
@@ -120,7 +136,7 @@ enum RowLeading {
 
 /// A list row: icon badge, semibold title, muted subtitle, chip on the right.
 /// It brightens under the pointer; the selected row is washed with the accent and edged in it.
-struct ListRow<Trailing: View>: View {
+public struct ListRow<Trailing: View>: View {
     @Environment(\.theme) private var t
     @State private var hovering = false
     let leading: RowLeading
@@ -131,7 +147,18 @@ struct ListRow<Trailing: View>: View {
     var action: (() -> Void)?
     @ViewBuilder var trailing: (_ selected: Bool) -> Trailing
 
-    var body: some View {
+    public init(leading: RowLeading, title: String, subtitle: String? = nil, selected: Bool = false, done: Bool = false,
+                action: (() -> Void)? = nil, @ViewBuilder trailing: @escaping (_ selected: Bool) -> Trailing) {
+        self.leading = leading
+        self.title = title
+        self.subtitle = subtitle
+        self.selected = selected
+        self.done = done
+        self.action = action
+        self.trailing = trailing
+    }
+
+    public var body: some View {
         HStack(spacing: t.sp10 + t.hairline) {
             leadingView
             VStack(alignment: .leading, spacing: t.sp2) {
@@ -184,14 +211,14 @@ struct ListRow<Trailing: View>: View {
     }
 }
 
-extension ListRow where Trailing == EmptyView {
+public extension ListRow where Trailing == EmptyView {
     init(leading: RowLeading, title: String, subtitle: String? = nil, selected: Bool = false, done: Bool = false, action: (() -> Void)? = nil) {
         self.init(leading: leading, title: title, subtitle: subtitle, selected: selected, done: done, action: action) { _ in EmptyView() }
     }
 }
 
 /// Initials for a badge: "Maya Chen · Corvid MedTech" → "MC".
-func initials(of name: String) -> String {
+public func initials(of name: String) -> String {
     let words = name.split(whereSeparator: { !$0.isLetter && $0 != "." })
         .filter { !["Prof.", "Dr.", "Mr.", "Ms.", "Mrs."].contains(String($0)) }
     return words.prefix(2).compactMap(\.first).map { String($0).uppercased() }.joined()

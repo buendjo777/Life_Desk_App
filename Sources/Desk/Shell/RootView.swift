@@ -30,9 +30,10 @@ struct RootView: View {
         }
         .ignoresSafeArea()
         .sheet(isPresented: Binding(get: { store.showCustomise }, set: { store.showCustomise = $0 })) {
-            CustomiseView().environment(store).environment(\.theme, t)
+            CustomiseView().platform(store).environment(\.theme, t)
         }
         .environment(\.theme, t)
+        .platform(store)
         .preferredColorScheme(store.isSnapshot ? nil : store.prefs.appearance.scheme)
         .task {
             // Launch, then every 15 minutes: pull the vault (Live). The clock moves every minute.
