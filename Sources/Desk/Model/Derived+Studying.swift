@@ -173,11 +173,6 @@ extension Derived {
         return done >= total ? "Today's work is done." : "\(done) of \(total) done today"
     }
 
-    /// Where the day stands between its first and last hour, 0…1 (the column of light in the backdrop).
-    var dayFraction: Double {
-        min(1, max(0, Self.stripFraction(cal.hours(now))))
-    }
-
     /// A deadline within two days: the backdrop drifts faster.
     var deadlineIsClose: Bool { (distinctDeadlines.first?.daysLeft ?? .max) <= 2 }
 

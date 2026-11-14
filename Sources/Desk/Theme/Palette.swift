@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// A colourway: two strong colours (the field and the glow), one bright accent, and four signal colours.
+/// A colourway: two strong colours (the field and the glow), one accent in the glow's own hue, and four signal colours.
+/// Everything else is neutral glass and white, so the window reads as one piece.
 /// Theme.swift turns these into the tokens the views read. To add a colourway, add a case here.
 enum Palette: String, CaseIterable, Codable, Identifiable {
     case ember, oxblood, saffron
@@ -41,9 +42,9 @@ enum Palette: String, CaseIterable, Codable, Identifiable {
     var colors: Colors {
         switch self {
         case .ember:
-            Colors(field: [0x06051A, 0x0D0B38, 0x1B1668], fieldLight: [0xF3F1FF, 0xE4DEFF, 0xFFE0D6],
-                   deep: 0x14124A, glow: 0xFF5A3C, glowLight: 0xFFAE99, bright: 0xE8FF6A, focusLight: 0xE8432A,
-                   ink: 0xFFFFFF, muted: 0xDAD7F6, inkLight: 0x14124A, mutedLight: 0x4A4780,
+            Colors(field: [0x04060D, 0x070D1F, 0x0D1836], fieldLight: [0xF6F8FC, 0xECF0F9, 0xFFEADF],
+                   deep: 0x0B1533, glow: 0xFF6A3D, glowLight: 0xFFB79E, bright: 0xFF8A5C, focusLight: 0xE5532D,
+                   ink: 0xFFFFFF, muted: 0xB9C2D9, inkLight: 0x0B1226, mutedLight: 0x48516B,
                    good: (0x6EE7B7, 0x1F9D6B), caution: (0xFFD166, 0xB87D0A), alert: (0xFF7A7A, 0xD43D3D), info: (0x9CB8FF, 0x4B6FD6))
         case .oxblood:
             Colors(field: [0x0B0709, 0x1E0811, 0x4A0E22], fieldLight: [0xF6EEE8, 0xEFDDD6, 0xEBC7BF],

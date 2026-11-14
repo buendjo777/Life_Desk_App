@@ -85,6 +85,8 @@ final class Store {
     init(prefs: Preferences? = nil, isSnapshot: Bool = false, demoVault: URL = DemoVault.url, calendar: CalendarSource? = nil) {
         self.prefs = prefs ?? Preferences(defaults: nil)
         self.isSnapshot = isSnapshot
+        // Snapshots show the app as it ships: with the slim sidebar.
+        if isSnapshot { self.prefs.slimSidebar = true }
         self.demoVault = demoVault
         self.calendar = calendar
         resolveMode()

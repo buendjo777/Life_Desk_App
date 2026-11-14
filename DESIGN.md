@@ -15,13 +15,15 @@ Two strong colours and one bright accent, in three colourways (Customise → Col
 
 | Colourway | Field (strong 1) | Glow (strong 2) | Bright accent |
 |---|---|---|---|
-| **Midnight Ember** (default) | indigo `#14124A` | coral `#FF5A3C` | lime `#E8FF6A` |
+| **Midnight Ember** (default) | blue-black `#070D1F` | coral `#FF6A3D` | light coral `#FF8A5C` |
 | **Oxblood Marigold** | burgundy `#6E1230` | crimson `#C8324A` | marigold `#FFC21A` |
 | **Ink Saffron** | deep teal `#0E4D4F` | burnt orange `#E8742A` | saffron `#FF9E1B` |
 
-- **Backdrop.** The field runs dark at the top to the glow at the bottom, under vertical fluted-glass ribs. Light mode uses a pale version of the same two colours.
+- **Backdrop.** One calm surface: the field runs dark at the top into a low glow at the bottom, with a cool light at the top centre. No texture, no stripes. Light mode uses a pale version of the same two colours.
 - **Glass.** Cards and rows are smoked glass in dark mode (the field colour at 50%) and white glass in light mode (66%), with a hairline edge lit from above. Panels that float over content (inspector, search results) are opaque.
-- **Accent.** `focus` is the bright accent in dark mode and the hot strong colour in light mode, where lime would not read. It marks one thing at a time: today, the selection, the primary button.
+- **Accent.** `focus` is the bright accent in dark mode and the hot strong colour in light mode. In Ember it is the glow's own hue, so the window reads as two colours, not three. It marks one thing at a time: today, the selection, the focus row.
+- **Primary buttons and chosen pills** are the ink colour: white in dark mode, near-black in light mode.
+- **Stat cards** are all the same neutral glass, with a faint corner wash of their signal colour (10% light, 6% dark) and an ink watermark shape at 4%.
 - **Signals.** `good`, `caution`, `info`, `alert`, each with a darker light-mode tone. They appear as chips, dots and a faint wash on stat cards, never as a block of colour.
 - **Accessibility.** Reduce Transparency or Increase Contrast makes every surface opaque. Text on glass must reach 4.5:1 where the glow is brightest.
 
@@ -41,7 +43,7 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 
 ## Layout
 - Designed at 1440×900; minimum window 1280×800. Hidden title bar; the traffic lights sit on the sidebar.
-- **Sidebar:** floating graphite panel, inset 12 pt from the window edges, 232 pt wide, 24 pt corners. The "Desk" wordmark and a mode chip (LIVE or DEMO). Groups with small uppercase labels: **Focus** (Today, Studying) · **Pipeline** (Projects, Internship apps, Uni apps) · **Life** (Tutoring, History, Health) · **Machine** (System). Rows 36 pt with an SF Symbol, the label and a muted ⌘ shortcut. The selected row: a 3 pt rust bar on the left and a faint light fill. At the bottom: sync time, vault and run status.
+- **Sidebar:** floating panel, inset 12 pt from the window edges, 24 pt corners. Slim by default: a 76 pt rail of icons that opens to 232 pt over the page while the pointer is on it, and closes when it leaves (Customise → Slim sidebar turns this off). Open, it shows: The "Desk" wordmark and a mode chip (LIVE or DEMO). Groups with small uppercase labels: **Focus** (Today, Studying) · **Pipeline** (Projects, Internship apps, Uni apps) · **Life** (Tutoring, History, Health) · **Machine** (System). Rows 36 pt with an SF Symbol, the label and a muted ⌘ shortcut. The selected row: a 3 pt rust bar on the left and a faint light fill. At the bottom: sync time, vault and run status.
 - **Content column:** a 24 pt gap after the sidebar. A search field across the top (⌘F) with scope chips; the greeting; the summary sentence; then the tab's content.
 - **Right rail** (Today, Tutoring): 336 pt, 24 pt from the right edge. Status chip and round `control` icon buttons on top.
 - **Inspector:** a raised panel that slides over the right rail when a row is selected; Esc closes it.
@@ -75,7 +77,6 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 ## Motion and accessibility
 All motion is off with Reduce Motion, in Low Power Mode, in snapshots, and when Motion is switched off in Customise. The backdrop also stops while Desk is not the active app.
 - **The day's tide.** The glow at the bottom of the window is a meter, not decoration: it rises and brightens as today's work gets done (today's study share plus the tasks due today), and a bright core appears on the horizon. The same number is written under the greeting on Today.
-- **The time of day.** A soft column of light sits on the ribs where the day stands, 07:00 at the left edge and 22:00 at the right, as on the day strip.
 - **Drift.** Two colour fields move slowly (20 frames a second, no blur). They move faster when a deadline is within two days.
 - **Depth.** A card rises 2 pt under the pointer with a shadow; the shape inside a stat card drifts towards the pointer; rows brighten.
 - **Entrance.** Opening a tab, sections fade up one after another (360 ms, 45 ms apart).

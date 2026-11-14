@@ -1,33 +1,44 @@
 import SwiftUI
 
-/// The floating graphite panel: wordmark, mode chip, tab groups and the sync box.
+/// The floating panel: wordmark, mode chip, tab groups and the sync box.
+/// Slim (the default), it shows icons only and opens under the pointer, over the content.
 struct Sidebar: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
+    @State private var hovering = false
 
     var body: some View {
+        let slim = store.prefs.slimSidebar
+        let open = !slim || hovering
+        let shape = RoundedRectangle(cornerRadius: t.radiusCard)
         VStack(alignment: .leading, spacing: 0) {
             lights
-            brand
+            brand.opacity(open ? 1 : 0)
             ForEach(TabGroup.allCases) { group in
                 Text(verbatim: group.rawValue)
                     .style(\.label, \.panelMuted)
                     .padding(.leading, t.sp12)
                     .padding(.top, t.sp20 + t.sp2)
                     .padding(.bottom, t.sp6)
+                    .opacity(open ? 1 : 0)
                 // Health waits for its data (an activity export).
                 ForEach(group.tabs.filter { $0 != .health || store.d.hasHealthData }) { tab in
-                    NavRow(tab: tab)
+                    NavRow(tab: tab, open: open)
                 }
             }
             Spacer(minLength: t.sp16)
-            SyncBox()
+            SyncBox(open: open)
         }
         .padding(.horizontal, t.sidebarPadding)
         .padding(.vertical, t.sp16 + t.sp2)
-        .frame(width: t.sidebarWidth)
+        .frame(width: open ? t.sidebarWidth : t.sidebarSlim, alignment: .leading)
         .frame(maxHeight: .infinity, alignment: .top)
-        .background(t.panel, in: RoundedRectangle(cornerRadius: t.radiusCard))
+        // Open over the content it is nearly opaque, so the cards behind do not show through.
+        .background(slim && open ? t.panelOpen : t.panel, in: shape)
+        .clipShape(shape)
+        .shadow(color: .black.opacity(slim && open ? t.shadowOpacity : 0), radius: t.shadowRadius, y: t.shadowY)
+        .onHover { hovering = $0 }
+        .animation(.spring(response: t.liftResponse, dampingFraction: t.sidebarDamping), value: open)
         .overlay(RoundedRectangle(cornerRadius: t.radiusCard).strokeBorder(t.panelBorder, lineWidth: t.hairline))
     }
 
@@ -63,6 +74,8 @@ private struct NavRow: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
     let tab: Tab
+    /// Closed: the icon alone.
+    let open: Bool
 
     var body: some View {
         let selected = store.tab == tab
@@ -73,9 +86,11 @@ private struct NavRow: View {
                 Image(systemName: tab.symbol)
                     .font(.system(size: t.symbol, weight: .medium))
                     .frame(width: t.navIcon)
-                Text(verbatim: tab.title).style(selected ? \.bodyStrong : \.nav).lineLimit(1).minimumScaleFactor(t.tightScale)
-                Spacer(minLength: 0)
-                Text(verbatim: "⌘\(tab.shortcut)").style(\.small, \.panelMuted)
+                if open {
+                    Text(verbatim: tab.title).style(selected ? \.bodyStrong : \.nav).lineLimit(1).minimumScaleFactor(t.tightScale)
+                    Spacer(minLength: 0)
+                    Text(verbatim: "⌘\(tab.shortcut)").style(\.small, \.panelMuted)
+                }
             }
             .foregroundStyle(t.panelText.opacity(selected ? 1 : t.navIdleOpacity))
             .padding(.leading, t.navGap)
@@ -92,6 +107,7 @@ private struct NavRow: View {
         }
         .buttonStyle(.plain)
         .deskAnimation(selected)
+        .help(open ? "" : tab.title)
         .accessibilityLabel(tab.title)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
@@ -101,17 +117,23 @@ private struct NavRow: View {
 private struct SyncBox: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
+    /// Closed: the status dot alone.
+    let open: Bool
 
     var body: some View {
         let status = store.d.runStatus
         VStack(alignment: .leading, spacing: t.sp4) {
             HStack(spacing: t.sp6) {
                 Circle().fill(store.banner == nil ? t.good : t.alert).frame(width: t.dot, height: t.dot)
-                Text(verbatim: store.lastSync.map { "Synced \(store.cal.time($0))" } ?? "Not synced yet").style(\.small, \.panelText)
+                if open {
+                    Text(verbatim: store.lastSync.map { "Synced \(store.cal.time($0))" } ?? "Not synced yet").style(\.small, \.panelText).lineLimit(1)
+                }
             }
-            Text(verbatim: "Vault · \(store.vaultName)").style(\.small, \.panelMuted).lineLimit(1)
-            Text(verbatim: status.lastRunText.map { "Last run \($0) · \(status.level.rawValue)" } ?? "No run yet · red")
-                .style(\.small, \.panelMuted).lineLimit(1)
+            if open {
+                Text(verbatim: "Vault · \(store.vaultName)").style(\.small, \.panelMuted).lineLimit(1)
+                Text(verbatim: status.lastRunText.map { "Last run \($0) · \(status.level.rawValue)" } ?? "No run yet · red")
+                    .style(\.small, \.panelMuted).lineLimit(1)
+            }
         }
         .padding(.horizontal, t.sp12 + t.sp2)
         .padding(.vertical, t.sp12)

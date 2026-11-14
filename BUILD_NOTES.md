@@ -166,3 +166,7 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - **Refactor:** done on a separate branch by a helper while the visual work went on, then merged with no conflicts. 88 tests before and after.
 - **Not done:** `Store.swift` is still one file (decision 108). The "show 30 more" pattern is still repeated in eight lists.
 - **Checked:** 88 tests (1 opt-in skipped); every tab rendered in light and dark; the installed app idles at 0% CPU when it is not the active window.
+
+## 14 Nov — Calmer look, slim sidebar
+- Decisions 110 and 111: no stripes, two hues, white pills, neutral stat cards, and a sidebar rail that opens on hover.
+- **Checked:** 88 tests (1 opt-in skipped); every tab rendered in light and dark.
