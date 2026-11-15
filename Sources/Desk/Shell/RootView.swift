@@ -18,21 +18,29 @@ struct RootView: View {
                 .padding(.trailing, t.columnGap)
                 .padding(.top, t.columnGap)
             Sidebar().padding(t.sidebarInset)
+            if store.showCustomise {
+                CustomiseView()
+                    .padding(t.sidebarInset)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
         }
+        .deskAnimation(store.showCustomise)
+        .overlay {
+            if store.showWelcome { WelcomeView().transition(.opacity) }
+        }
+        .deskAnimation(store.showWelcome)
         .background { Backdrop() }
         .background(t.canvas)
         .background {
             if !store.isSnapshot {
                 WindowChrome(
-                    origin: CGPoint(x: t.sidebarInset + t.sp12 + t.sp2 + t.sp6, y: t.sidebarInset + t.sp16 + t.sp2),
+                    origin: CGPoint(x: t.sidebarInset + t.sidebarPadding, y: t.sidebarInset + t.sp16 + t.sp2),
                     spacing: t.lightGap - t.sp2
                 )
             }
         }
         .ignoresSafeArea()
-        .sheet(isPresented: Binding(get: { store.showCustomise }, set: { store.showCustomise = $0 })) {
-            CustomiseView().platform(store).environment(\.theme, t)
-        }
         .environment(\.theme, t)
         .platform(store)
         .preferredColorScheme(store.isSnapshot ? nil : store.prefs.appearance.scheme)
@@ -59,6 +67,10 @@ struct RootView: View {
         .focused($keysFocused)
         .onAppear { keysFocused = true }
         .onKeyPress(.escape) {
+            if store.showCustomise {
+                store.showCustomise = false
+                return .handled
+            }
             guard store.inspectorOpen else { return .ignored }
             store.inspectorOpen = false
             return .handled

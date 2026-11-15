@@ -45,6 +45,8 @@ final class Preferences {
     var motion: Bool { didSet { defaults?.set(motion, forKey: "motion") } }
     /// The sidebar shows icons only and opens under the pointer.
     var slimSidebar: Bool { didSet { defaults?.set(slimSidebar, forKey: "slimSidebar") } }
+    /// The Welcome screen has been answered. It is shown once, and only where no vault exists yet.
+    var onboarded: Bool { didSet { defaults?.set(onboarded, forKey: "onboarded") } }
     var dayStart: DayStart? { didSet { defaults?.set(try? JSONEncoder().encode(dayStart), forKey: "dayStart") } }
     var layouts: [String: TabPrefs] {
         didSet { defaults?.set(try? JSONEncoder().encode(layouts), forKey: "layouts") }
@@ -62,6 +64,7 @@ final class Preferences {
         // Without stored preferences (tests, snapshots) nothing moves: clicks land where the layout says.
         motion = defaults.map { $0.object(forKey: "motion") as? Bool ?? true } ?? false
         slimSidebar = defaults.map { $0.object(forKey: "slimSidebar") as? Bool ?? true } ?? false
+        onboarded = defaults.map { $0.bool(forKey: "onboarded") } ?? true
         dayStart = defaults?.data(forKey: "dayStart").flatMap { try? JSONDecoder().decode(DayStart.self, from: $0) }
         layouts = defaults?.data(forKey: "layouts").flatMap { try? JSONDecoder().decode([String: TabPrefs].self, from: $0) } ?? [:]
     }

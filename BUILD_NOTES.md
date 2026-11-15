@@ -170,3 +170,9 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 ## 14 Nov — Calmer look, slim sidebar
 - Decisions 110 and 111: no stripes, two hues, white pills, neutral stat cards, and a sidebar rail that opens on hover.
 - **Checked:** 88 tests (1 opt-in skipped); every tab rendered in light and dark.
+
+## 15 Nov — Customise drawer, aligned sidebar, install for anyone
+- Decisions 115–119: Customise as an in-window drawer (⌘K), the sidebar rail centred on the traffic lights, a Welcome screen with a starter vault, git-free plain-folder vaults, and GitHub releases with a one-line installer.
+- **Checked:** 97 tests (1 opt-in skipped); every tab plus the drawer and Welcome rendered in light and dark; a universal release build made and verified locally (arm64 and x86_64, signature valid).
+- **Not done:** the first release is not published. `gh` is not signed in on this Mac, so `dist/Desk.zip` has to be uploaded by hand or `scripts/release.sh` run after `gh auth login`. Until then `install.sh` has nothing to download.
+- **Not checked:** the installer on a second Mac, and an Intel Mac.

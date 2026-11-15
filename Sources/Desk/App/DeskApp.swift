@@ -38,7 +38,7 @@ struct DeskCommands: Commands {
     var body: some Commands {
         CommandGroup(replacing: .newItem) {}
         CommandGroup(after: .sidebar) {
-            Button("Customise…") { store.showCustomise = true }
+            Button("Customise…") { store.showCustomise.toggle() }.keyboardShortcut("k", modifiers: .command)
             Divider()
             Button("Sync Now") {
                 store.sync()

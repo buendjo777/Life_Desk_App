@@ -23,17 +23,25 @@ enum Snapshots {
                 try render(RootView().environment(store), scheme: scheme,
                            to: folder.appendingPathComponent("inspector-\(scheme == .dark ? "dark" : "light").png"))
             }
-            // The Customise panel, with Comfortable density on the Today tab behind it for comparison.
+            // The Customise drawer over Today, then Comfortable density on the Today tab behind it for comparison.
             for scheme in [ColorScheme.light, .dark] {
                 let store = Store(isSnapshot: true)
-                let theme = Theme(scheme: scheme, density: .compact)
-                try render(CustomiseView().platform(store).environment(\.theme, theme), scheme: scheme, size: theme.customiseSize,
+                store.showCustomise = true
+                try render(RootView().environment(store), scheme: scheme,
                            to: folder.appendingPathComponent("customise-\(scheme == .dark ? "dark" : "light").png"))
+                store.showCustomise = false
                 store.prefs.density = .comfortable
                 try render(RootView().environment(store), scheme: scheme,
                            to: folder.appendingPathComponent("comfortable-\(scheme == .dark ? "dark" : "light").png"))
             }
-            print("Rendered \(Tab.allCases.count * 2 + 6) snapshots to \(folder.path)")
+            // The Welcome screen a new person sees on first launch.
+            for scheme in [ColorScheme.light, .dark] {
+                let store = Store(isSnapshot: true)
+                store.showWelcome = true
+                try render(RootView().environment(store), scheme: scheme,
+                           to: folder.appendingPathComponent("welcome-\(scheme == .dark ? "dark" : "light").png"))
+            }
+            print("Rendered \(Tab.allCases.count * 2 + 8) snapshots to \(folder.path)")
         } catch {
             FileHandle.standardError.write(Data("Snapshot failed: \(error.localizedDescription)\n".utf8))
             exit(1)

@@ -126,7 +126,7 @@ A custom three-part layout (floating sidebar · content · right rail or inspect
 The Today mockup is V1 and a little dense, and Jose will keep changing the look. So:
 - Every colour, font size, radius and spacing value lives in `Theme.swift`. Views use tokens, never literals.
 - Every card and section is its own view, listed once per tab in a `TabLayout`. Adding, removing or reordering one is a one-line change.
-- **Customise** (View → Customise…): per tab, show or hide and reorder its cards and sections, and pick the density: Compact (the mockup) or Comfortable (more space, fewer rows). Saved as app preferences, not in the vault. Reset restores the defaults.
+- **Customise** (the sliders button in the top bar, ⌘K, or View → Customise…; a drawer on the right, not a sheet): per tab, show or hide and reorder its cards and sections, and pick the density: Compact (the mockup) or Comfortable (more space, fewer rows). Saved as app preferences, not in the vault. Reset restores the defaults.
 
 
 ## Integrations: what is possible and what is not
@@ -168,7 +168,7 @@ The Today mockup is V1 and a little dense, and Jose will keep changing the look.
 ## Portfolio mode
 - The demo vault plus a Portfolio screen: what the system does, an architecture diagram, the agents and their models, the evaluation result (missed-reply rate), the cost table, the failure log, a link to the thesis repo.
 - Never reads the live vault.
-- Distribution: the public repo plus a recorded demo and screenshots, not a download (unsigned apps are hard for others to run).
+- Distribution: the public repo, plus a GitHub release made by `scripts/release.sh` and installed with one Terminal line (`install.sh`). The app is signed ad hoc, not notarised; the installer downloads with `curl`, which sets no quarantine flag, so it opens without a Gatekeeper prompt.
 - Before the first public commit: run a secret scan and confirm no real names, emails or vault content anywhere in the history.
 
 ## Open questions (none blocks the build)

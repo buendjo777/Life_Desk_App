@@ -243,7 +243,9 @@ public struct Theme {
     /// Fixed in both densities: the sidebar keeps its width, so its insets do not scale.
     public let navGap: CGFloat = 12
     public let navIcon: CGFloat = 20
-    public let sidebarPadding: CGFloat = 14
+    public let sidebarPadding: CGFloat = 12
+    /// The slim rail's inner width: an icon cell, and exactly the span of the three traffic lights.
+    public var navCell: CGFloat { sidebarSlim - 2 * sidebarPadding }
     public let navBar: CGFloat = 3
     public let searchHeight: CGFloat = 46
     public let iconButton: CGFloat = 44
@@ -274,7 +276,9 @@ public struct Theme {
     public let lightGap: CGFloat = 8
     public let summaryWidth: CGFloat = 700
     public let settingsWidth: CGFloat = 520
-    public let customiseSize = CGSize(width: 680, height: 640)
+    public let customiseWidth: CGFloat = 372
+    public let welcomeWidth: CGFloat = 560
+    public let swatch: CGFloat = 18
     /// The icon tile as a share of the canvas, and its corner as a share of the tile (macOS icon grid).
     public let iconTile: CGFloat = 0.8
     public let iconCorner: CGFloat = 0.225
