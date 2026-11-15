@@ -1,6 +1,6 @@
 # AboutJose
 
-A storytelling portfolio for Mac, built on the same platform as Desk (`Sources/DeskKit`). One window, five chapters: Opening, Thesis, Desk, Tutoring, Next. Scroll, press the arrow keys, or click the rail on the left. The glow at the bottom rises as the story goes on. Top right: three colourways and light or dark.
+A storytelling portfolio for Mac, built on the same platform as Desk (`Sources/DeskKit`). One window, six chapters: Opening, Thesis, ICAI, Desk, Tutoring, Next. Scroll, press the arrow keys, or click the rail on the left. The ICAI chapter turns sideways: three coursework projects on a carousel in depth (← → to turn, Return to open a project's bench, Esc to close). The glow at the bottom rises as the story goes on. Top right: three colourways and light or dark.
 
 ## Change the words
 Everything the app says is in **`about/story.json`**. Edit it, then build again. No code needed.
@@ -8,6 +8,7 @@ Everything the app says is in **`about/story.json`**. Edit it, then build again.
 - A contact row with an empty `"value"` shows a **Placeholder** chip. Fill `"value"` (what is shown) and `"url"` (an `https://` link, or leave it empty).
 - `"symbol"` is an SF Symbol name.
 - Desk screens: `"file"` is a name from `design/screenshots/` without `-light.png`.
+- ICAI projects: `"kind"` picks the bench (`ultrasound`, `biosignal` or `balance`); a new kind needs code in `Chapters/Benches.swift`. The web copy does not show this chapter yet.
 - If the file has a mistake, the app opens with a sentence saying which key is wrong.
 
 ## Build

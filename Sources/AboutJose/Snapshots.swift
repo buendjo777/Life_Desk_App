@@ -16,7 +16,20 @@ enum Snapshots {
                     try Snapshot.render(StoryView().environment(reader), scheme: scheme, to: folder.appendingPathComponent(name))
                 }
             }
-            print("Rendered \(Chapter.allCases.count * 2) snapshots to \(folder.path)")
+            // The ICAI chapter twice more: another project facing the reader, and a bench open.
+            for scheme in [ColorScheme.light, .dark] {
+                let tone = scheme == .dark ? "dark" : "light"
+                let turned = Reader(story: story, chapter: .icai, isSnapshot: true)
+                turned.project = 0
+                try Snapshot.render(StoryView().environment(turned), scheme: scheme,
+                                    to: folder.appendingPathComponent("\(Chapter.icai.number)-icai-turned-\(tone).png"))
+                let opened = Reader(story: story, chapter: .icai, isSnapshot: true)
+                opened.project = 0
+                opened.projectOpen = true
+                try Snapshot.render(StoryView().environment(opened), scheme: scheme,
+                                    to: folder.appendingPathComponent("\(Chapter.icai.number)-icai-open-\(tone).png"))
+            }
+            print("Rendered \(Chapter.allCases.count * 2 + 4) snapshots to \(folder.path)")
         } catch {
             fail("Snapshot failed: \((error as? StoryError)?.message ?? error.localizedDescription)")
         }

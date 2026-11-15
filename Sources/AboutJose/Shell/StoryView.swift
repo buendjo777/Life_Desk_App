@@ -46,9 +46,28 @@ struct StoryView: View {
             keysFocused = true
             reader.started = true
         }
-        .onKeyPress(keys: [.downArrow, .rightArrow, .pageDown, .space]) { _ in turn(1) }
-        .onKeyPress(keys: [.upArrow, .leftArrow, .pageUp]) { _ in turn(-1) }
+        .onKeyPress(keys: [.downArrow, .pageDown, .space]) { _ in turn(1) }
+        .onKeyPress(keys: [.upArrow, .pageUp]) { _ in turn(-1) }
+        // Sideways: the next chapter, or the next project while the ICAI carousel is on screen.
+        .onKeyPress(keys: [.rightArrow]) { _ in side(1) }
+        .onKeyPress(keys: [.leftArrow]) { _ in side(-1) }
+        .onKeyPress(.return) {
+            guard reader.chapter == .icai else { return .ignored }
+            reader.projectOpen.toggle()
+            return .handled
+        }
+        .onKeyPress(.escape) {
+            guard reader.projectOpen else { return .ignored }
+            reader.projectOpen = false
+            return .handled
+        }
         .animation(reduceMotion ? nil : .easeInOut(duration: t.pageTurn), value: reader.chapter)
+    }
+
+    private func side(_ by: Int) -> KeyPress.Result {
+        guard reader.chapter == .icai else { return turn(by) }
+        if !reader.projectOpen { reader.turnProject(by) }
+        return .handled
     }
 
     private func turn(_ by: Int) -> KeyPress.Result {
@@ -114,6 +133,7 @@ struct ChapterScene: View {
             switch chapter {
             case .opening: OpeningChapter(story: reader.story)
             case .thesis: ThesisChapter(thesis: reader.story.thesis)
+            case .icai: IcaiChapter(icai: reader.story.icai)
             case .desk: DeskChapter(desk: reader.story.desk)
             case .tutoring: TutoringChapter(tutoring: reader.story.tutoring)
             case .next: NextChapter(story: reader.story)

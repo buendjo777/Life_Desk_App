@@ -92,6 +92,139 @@
     "repoLabel": "Open the repo",
     "repoUrl": "https://github.com/buendjo777/ecg-timescale-gan"
   },
+  "icai": {
+    "rail": "ICAI",
+    "headline": "Three labs worth opening.",
+    "note": "Team lab projects from four years at ICAI.",
+    "hint": "← → to turn · Return to open · Esc to close",
+    "openLabel": "Open the bench",
+    "closeLabel": "Close",
+    "projects": [
+      {
+        "kind": "ultrasound",
+        "course": "Circuitos Microelectrónicos II · Final project · April 2026",
+        "title": "An ultrasonic obstacle detector, stage by stage",
+        "summary": "A 40 kHz pulse-echo chain: send a burst, catch the echo, make it readable.",
+        "tools": [
+          "NE555",
+          "TL084",
+          "Sallen-Key"
+        ],
+        "figure": {
+          "value": "30 mV → ≈10 V",
+          "caption": "The echo, peak to peak"
+        },
+        "facts": [
+          {
+            "title": "Burst",
+            "detail": "NE555 and NE556 timers, a NOR gate and a CMOS driver generate the 40 kHz burst."
+          },
+          {
+            "title": "Amplify and filter",
+            "detail": "A non-inverting amplifier and a Sallen-Key band-pass: Q≈2, gain 20–50, on a TL084."
+          },
+          {
+            "title": "Detect",
+            "detail": "A precision full-wave rectifier and a second-order active low-pass follow the envelope."
+          }
+        ],
+        "bench": {
+          "labels": [
+            "Burst",
+            "Echo",
+            "Amplified",
+            "Envelope"
+          ],
+          "captions": [
+            "The transmitter sends a short 40 kHz burst.",
+            "The echo comes back at about 30 mV, close to the noise.",
+            "Amplified and band-passed: about 10 V peak to peak.",
+            "Rectified and low-pass filtered: the envelope of the echo."
+          ],
+          "note": "Illustrative traces drawn by this app. Not measurements."
+        }
+      },
+      {
+        "kind": "biosignal",
+        "course": "Biomedical Signal Processing · 4th year · Taught in English",
+        "title": "Cleaning real ECG, EMG and EEG",
+        "summary": "Three MATLAB practicals on real recordings: find the noise, pick the filter, keep the signal.",
+        "tools": [
+          "MATLAB",
+          "Butterworth",
+          "FFT"
+        ],
+        "figure": {
+          "value": "3",
+          "caption": "Practicals on real data"
+        },
+        "facts": [
+          {
+            "title": "ECG",
+            "detail": "PTB Diagnostic database. FFT spectra, R-peak detection, a healthy patient compared with a cardiac patient."
+          },
+          {
+            "title": "EMG",
+            "detail": "Motion below 20 Hz, 50 Hz mains, artefacts above 150 Hz. Rectification and envelope."
+          },
+          {
+            "title": "EEG",
+            "detail": "Eye, muscle, electrode and mains artefacts. Butterworth, Chebyshev and elliptic filters compared."
+          }
+        ],
+        "bench": {
+          "labels": [
+            "High-pass 0.55 Hz",
+            "Notch 50 Hz",
+            "Low-pass 42 Hz"
+          ],
+          "captions": [
+            "Baseline drift removed.",
+            "Mains hum removed.",
+            "High-frequency noise removed."
+          ],
+          "idle": "Raw signal: drift, hum and noise. Switch the ECG filters on.",
+          "note": "Illustrative trace drawn by this app. Not patient data."
+        }
+      },
+      {
+        "kind": "balance",
+        "course": "Control Digital · 4th year",
+        "title": "Keeping a two-wheeled vehicle upright",
+        "summary": "MATLAB control code for a self-balancing, Segway-type vehicle, with PID and deadbeat controllers.",
+        "tools": [
+          "MATLAB",
+          "Simulink",
+          "PID"
+        ],
+        "facts": [
+          {
+            "title": "Design",
+            "detail": "P, PI, PD and PID controllers designed by phase and gain margin."
+          },
+          {
+            "title": "Digital",
+            "detail": "Zero-order-hold discretisation, deadbeat control, state feedback and observers."
+          },
+          {
+            "title": "Models",
+            "detail": "Inverted-pendulum models in MATLAB and Simulink."
+          }
+        ],
+        "bench": {
+          "labels": [
+            "Controller on",
+            "Push"
+          ],
+          "captions": [
+            "A PID loop reads the tilt and moves the wheels back under it.",
+            "Without control, it falls."
+          ],
+          "note": "A toy model drawn by this app. Not the vehicle's code."
+        }
+      }
+    ]
+  },
   "desk": {
     "rail": "Desk",
     "headline": "Desk: a life desk run by nightly agents.",

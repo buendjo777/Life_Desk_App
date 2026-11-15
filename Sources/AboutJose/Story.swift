@@ -8,6 +8,7 @@ struct Story: Decodable {
     let placeholder: String
     let opening: Opening
     let thesis: Thesis
+    let icai: Icai
     let desk: DeskCase
     let tutoring: Tutoring
     let next: Next
@@ -65,6 +66,37 @@ struct Story: Decodable {
             let normalNote: String
             let afNote: String
             let disclaimer: String
+        }
+    }
+
+    struct Icai: Decodable {
+        let rail: String
+        let headline: String
+        let note: String
+        let hint: String
+        let openLabel: String
+        let closeLabel: String
+        let projects: [Project]
+
+        struct Project: Decodable, Hashable {
+            /// Which bench the project opens: "ultrasound", "biosignal" or "balance".
+            let kind: String
+            let course: String
+            let title: String
+            let summary: String
+            let tools: [String]
+            var figure: Figure?
+            let facts: [Item]
+            let bench: Bench
+        }
+
+        /// The words on a project's bench: one label per control, one caption per label.
+        struct Bench: Decodable, Hashable {
+            let labels: [String]
+            let captions: [String]
+            /// Shown while no control is on.
+            var idle: String?
+            let note: String
         }
     }
 
@@ -130,6 +162,7 @@ struct Story: Decodable {
         switch chapter {
         case .opening: opening.rail
         case .thesis: thesis.rail
+        case .icai: icai.rail
         case .desk: desk.rail
         case .tutoring: tutoring.rail
         case .next: next.rail
@@ -137,9 +170,9 @@ struct Story: Decodable {
     }
 }
 
-/// The five scenes, in reading order.
+/// The scenes, in reading order.
 enum Chapter: Int, CaseIterable, Identifiable {
-    case opening, thesis, desk, tutoring, next
+    case opening, thesis, icai, desk, tutoring, next
 
     var id: Int { rawValue }
     var number: String { String(format: "%02d", rawValue + 1) }

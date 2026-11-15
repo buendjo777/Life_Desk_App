@@ -54,6 +54,51 @@ final class StoryTests: XCTestCase {
         XCTAssertTrue(reader.isLast)
     }
 
+    /// The carousel stops at both ends, and leaving the chapter closes an open bench.
+    func testTheCarouselTurnsAndCloses() throws {
+        let reader = Reader(story: try story())
+        let count = reader.story.icai.projects.count
+        XCTAssertEqual(count, 3)
+        XCTAssertEqual(Set(reader.story.icai.projects.map(\.kind)), ["ultrasound", "biosignal", "balance"])
+        for project in reader.story.icai.projects { XCTAssertEqual(project.bench.labels.count, project.bench.captions.count, project.kind) }
+        for _ in 0..<5 { reader.turnProject(1) }
+        XCTAssertEqual(reader.project, count - 1)
+        for _ in 0..<5 { reader.turnProject(-1) }
+        XCTAssertEqual(reader.project, 0)
+        reader.chapter = .icai
+        reader.projectOpen = true
+        reader.chapter = .desk
+        XCTAssertFalse(reader.projectOpen)
+    }
+
+    /// The balance toy: pushed with the loop on, it comes back upright; with the loop off, it falls.
+    func testTheBalanceToyRecoversOnlyWithItsController() {
+        func tilt(controller: Bool) -> Double {
+            let model = BalanceModel()
+            var now = Date(timeIntervalSinceReferenceDate: 0)
+            model.advance(to: now, controller: controller, selfPush: false)
+            model.push()
+            for _ in 0..<240 {
+                now += 1.0 / 60
+                model.advance(to: now, controller: controller, selfPush: false)
+            }
+            return abs(model.tilt)
+        }
+        XCTAssertLessThan(tilt(controller: true), 0.05)
+        XCTAssertGreaterThan(tilt(controller: false), 1.2)
+    }
+
+    /// The filters on the biosignal bench each take something out of the trace.
+    func testEachFilterCleansTheTrace() {
+        func roughness(_ filters: Set<Int>) -> Double {
+            stride(from: 0.0, to: 3, by: 0.002).map { abs(BenchSignal.biosignal(filters: filters, at: $0) - Rhythm.normal.value(at: $0)) }.reduce(0, +)
+        }
+        XCTAssertEqual(roughness([0, 1, 2]), 0, accuracy: 1e-9)
+        XCTAssertGreaterThan(roughness([]), roughness([0]))
+        XCTAssertGreaterThan(roughness([0]), roughness([0, 1]))
+        XCTAssertGreaterThan(roughness([0, 1]), roughness([0, 1, 2]))
+    }
+
     /// The illustration: a normal rhythm is evenly spaced, atrial fibrillation is not.
     func testTheRhythmsDiffer() {
         func gaps(_ rhythm: Rhythm) -> [Double] {
@@ -93,11 +138,11 @@ final class StoryTests: XCTestCase {
         // The rail, the keys and the menu all do this.
         reader.chapter = .desk
         settle(1.2)
-        XCTAssertEqual(scroll.contentView.bounds.origin.y, page * 2, accuracy: 2)
+        XCTAssertEqual(scroll.contentView.bounds.origin.y, page * CGFloat(Chapter.desk.rawValue), accuracy: 2)
         XCTAssertEqual(reader.chapter, .desk, "passing over Thesis on the way must not make it the chapter")
 
         // The trackpad does this.
-        scroll.contentView.setBoundsOrigin(NSPoint(x: 0, y: page * 4))
+        scroll.contentView.setBoundsOrigin(NSPoint(x: 0, y: page * CGFloat(Chapter.next.rawValue)))
         scroll.reflectScrolledClipView(scroll.contentView)
         settle(1.2)
         XCTAssertEqual(reader.chapter, .next)

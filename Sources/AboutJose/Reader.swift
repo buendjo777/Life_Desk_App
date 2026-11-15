@@ -21,7 +21,12 @@ final class Reader {
     let story: Story
     /// Drawing to an image: no motion, no scroll view, nothing saved.
     let isSnapshot: Bool
-    var chapter: Chapter
+    var chapter: Chapter {
+        didSet { if chapter != .icai { projectOpen = false } }
+    }
+    /// The ICAI chapter: which project faces the reader, and whether its bench is open.
+    var project: Int
+    var projectOpen = false
     /// False until the window is on screen, so the first scene plays its entrance too.
     var started = false
     var palette: Palette {
@@ -43,6 +48,8 @@ final class Reader {
         self.chapter = chapter
         self.isSnapshot = isSnapshot
         self.defaults = defaults
+        // The middle project faces the reader first, so there is one waiting on each side.
+        project = story.icai.projects.count / 2
         palette = defaults?.string(forKey: Keys.palette).flatMap(Palette.init(rawValue:)) ?? .ember
         appearance = defaults?.string(forKey: Keys.appearance).flatMap(Appearance.init(rawValue:)) ?? .system
     }
@@ -53,6 +60,11 @@ final class Reader {
     }
 
     var isLast: Bool { chapter == Chapter.allCases.last }
+
+    /// Turns the ICAI carousel; it stops at both ends.
+    func turnProject(_ by: Int) {
+        project = max(0, min(story.icai.projects.count - 1, project + by))
+    }
 
     func step(_ by: Int) {
         guard let target = Chapter(rawValue: chapter.rawValue + by) else { return }
