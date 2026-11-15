@@ -8,7 +8,7 @@ Everything the app says is in **`about/story.json`**. Edit it, then build again.
 - A contact row with an empty `"value"` shows a **Placeholder** chip. Fill `"value"` (what is shown) and `"url"` (an `https://` link, or leave it empty).
 - `"symbol"` is an SF Symbol name.
 - Desk screens: `"file"` is a name from `design/screenshots/` without `-light.png`.
-- ICAI projects: `"kind"` picks the bench (`ultrasound`, `biosignal` or `balance`); a new kind needs code in `Chapters/Benches.swift`. The web copy does not show this chapter yet.
+- ICAI projects: `"kind"` picks the bench (`ultrasound`, `biosignal` or `balance`); a new kind needs code in `Chapters/Benches.swift`.
 - If the file has a mistake, the app opens with a sentence saying which key is wrong.
 
 ## Build

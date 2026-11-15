@@ -128,6 +128,39 @@
   .result { display: flex; align-items: center; gap: 24px; }
   .result .finding { flex: 1 1 0; min-width: 0; font-weight: 600; }
   .result .btn { align-self: center; }
+  /* ICAI: the story turns sideways. Cards stand in depth; the one facing the reader opens into a bench. */
+  .carousel { position: relative; height: 470px; perspective: 1500px; --step: 372px; }
+  .pcard {
+    position: absolute; left: 50%; top: 50%; width: 440px; height: 400px; margin: -200px 0 0 -220px; padding: 20px;
+    display: flex; flex-direction: column; gap: 10px; cursor: pointer; opacity: .62; z-index: calc(10 - var(--dist));
+    transform: translateY(calc(var(--away) * 54px)) rotateX(58deg);
+    transition: transform .9s cubic-bezier(.25, 1.15, .4, 1), opacity .4s ease-out, filter .4s ease-out, box-shadow .4s;
+  }
+  .scene.active .pcard { transform: translateX(calc(var(--away) * var(--step))) rotateY(calc(var(--away) * -42deg)) scale(calc(1 - var(--dist) * .2)); }
+  .pcard.facing { opacity: 1; background: var(--raised); box-shadow: inset 0 1px 0 var(--edge), inset 0 0 0 1px var(--line-soft), 0 18px 34px rgba(0, 0, 0, .34); }
+  .pcard .ptitle { font-size: 20px; font-weight: 600; letter-spacing: -.2px; line-height: 1.25; }
+  .pcard canvas { display: block; width: 100%; height: 118px; margin: auto 0; border-radius: 15px; }
+  .pfoot { display: flex; align-items: center; gap: 6px; min-height: 32px; }
+  .pcard:not(.facing) .btn { visibility: hidden; }
+  .carousel.open .pcard { opacity: .22; filter: blur(6px); pointer-events: none; }
+  .deep {
+    position: absolute; inset: 0; z-index: 20; padding: 24px; display: flex; gap: 24px; overflow: auto;
+    background: linear-gradient(var(--raised), var(--raised)), var(--canvas);
+    box-shadow: inset 0 1px 0 var(--edge), inset 0 0 0 1px var(--line-soft), 0 18px 34px rgba(0, 0, 0, .34);
+    opacity: 0; transform: scale(.86); pointer-events: none; transition: opacity .35s ease-out, transform .5s cubic-bezier(.25, 1.15, .4, 1);
+  }
+  .carousel.open .deep { opacity: 1; transform: none; pointer-events: auto; }
+  .deep .words { width: 360px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .deep .words .spring { flex: 1 1 auto; }
+  .deep .dtitle { font-size: 28px; font-weight: 600; letter-spacing: -.7px; line-height: 1.15; }
+  .deep .dfoot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+  .deep .bench { flex: 1 1 0; min-width: 0; padding: 16px; border-radius: var(--r-row); display: flex; flex-direction: column; gap: 10px; }
+  .deep .bench canvas { display: block; width: 100%; flex: 1 1 auto; min-height: 200px; border-radius: 15px; }
+  .btn.quiet { background: none; color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+  .cfoot { display: flex; align-items: center; justify-content: center; gap: 12px; }
+  .dots { display: flex; gap: 6px; }
+  .dots button { width: 7px; height: 7px; padding: 0; border: 0; border-radius: 99px; background: var(--line); cursor: pointer; transition: width .18s, background .18s; }
+  .dots button[aria-current="true"] { width: 22px; background: var(--focus); }
   .desk-grid { display: flex; gap: 24px; align-items: stretch; }
   .desk-words { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
   .desk-words .spring { flex: 1 1 auto; }
@@ -166,6 +199,15 @@
     .lived { flex-wrap: wrap; } .lived .stat { min-height: 136px; flex-basis: 30%; }
     .languages, .desk-screens, .tutoring-grid > .stat { width: auto; }
     .arrow { transform: rotate(90deg); }
+    .carousel { height: 560px; --step: 74vw; perspective: 900px; }
+    .pcard { width: 84vw; margin-left: -42vw; height: 420px; margin-top: -210px; }
+    .deep { flex-direction: column; padding: 16px; gap: 16px; }
+    .deep .words { width: auto; }
+    .deep .bench { flex: none; }
+    .deep .bench canvas { height: 200px; flex: none; }
+    .cfoot .small { display: none; }
+    .pfoot { flex-wrap: wrap; } .pfoot .grow { display: none; }
+    .pcard canvas { height: 96px; }
     .strip-head .caption { margin-left: 0; }
     .result .btn, .result .figures { align-self: flex-start; }
     .subject { flex-direction: row; align-items: center; } .subject .spring { display: none; }
@@ -175,6 +217,7 @@
     #pager { scroll-behavior: auto; }
     [data-reveal], .scene.active [data-reveal] { opacity: 1; transform: none; transition: none; }
     .glass, .glass.lifts:hover { transition: none; transform: none; }
+    .pcard, .deep { transition: none; }
   }
 </style>
 </head>
@@ -254,9 +297,10 @@
   const withArrows = (nodes) => nodes.flatMap((node, i) => i ? [el("span", { class: "arrow", text: "→", "aria-hidden": "true" }), node] : [node]);
 
   // ---------- Chapters
-  const chapters = ["opening", "thesis", "desk", "tutoring", "next"];
+  const chapters = ["opening", "thesis", "icai", "desk", "tutoring", "next"];
   const number = (i) => String(i + 1).padStart(2, "0");
-  function header(i, headline, note) {
+  function header(name, headline, note) {
+    const i = chapters.indexOf(name);
     return el("div", { class: "stack gap8", reveal: 0 },
       el("div", { class: "eyebrow", text: number(i) + " · " + story[chapters[i]].rail }),
       el("h2", { class: "headline", text: headline }),
@@ -288,7 +332,7 @@
     const note = el("span", { class: "small", text: t.strip.afNote });
     const canvas = el("canvas", { id: "ecg", "aria-hidden": "true" });
     return [
-      header(1, t.headline, t.context),
+      header("thesis", t.headline, t.context),
       el("div", { class: "glass pad16 stack gap12", reveal: 1 },
         el("div", { class: "strip-head" },
           tabs([{ id: "normal", title: t.strip.normal }, { id: "af", title: t.strip.af }], rhythm, (id) => {
@@ -305,6 +349,186 @@
     ];
   }
 
+  // ---------- ICAI: three projects on a carousel in depth, each with a bench to play with.
+  // Every trace is made up here to show the idea, and each bench says so.
+  let project = Math.floor(story.icai.projects.length / 2), projectOpen = false;
+  let drawIcai = () => {}, turnProject = () => {}, openProject = () => {};
+  const hiss = (t) => Math.sin(t * 731.3) * 0.5 + Math.sin(t * 1213.7 + 1) * 0.3 + Math.sin(t * 1987.1 + 2) * 0.2;
+  function ultrasound(stage, time) {
+    const local = time % 3, carrier = Math.sin(2 * Math.PI * 15 * local);
+    const win = (centre) => { const d = Math.abs(local - centre) / 0.21; return d < 1 ? 1 - Math.pow(d, 6) : 0; };
+    if (stage === 0) return 0.85 * win(0.55) * carrier;
+    if (stage === 1) return 0.07 * win(1.9) * carrier + 0.05 * hiss(time);
+    if (stage === 2) return 0.85 * win(1.9) * carrier + 0.015 * hiss(time);
+    return 0.9 * win(1.9);
+  }
+  function biosignal(filters, time) {
+    let v = value("normal", time);
+    if (!filters.has(0)) v += 0.38 * Math.sin(2 * Math.PI * 0.31 * time);
+    if (!filters.has(1)) v += 0.09 * Math.sin(2 * Math.PI * 50 * time);
+    if (!filters.has(2)) v += 0.07 * hiss(time);
+    return v;
+  }
+  // A rod on a wheel with a PID loop that can be switched off. A toy, not the vehicle's code.
+  function balanceModel() {
+    const m = { tilt: 0.14, rate: 0, sum: 0, last: null, pushes: 0, since: 0 };
+    m.stand = () => { m.tilt = 0.14; m.rate = 0; m.sum = 0; };
+    m.push = () => { if (Math.abs(m.tilt) >= 1.35) m.stand(); m.pushes += 1; m.rate += m.pushes % 2 ? 1.9 : -1.9; };
+    m.advance = (now, controller, selfPush) => {
+      const elapsed = m.last == null ? 0 : Math.min(now - m.last, 0.05);
+      m.last = now;
+      if (elapsed <= 0) return;
+      if (selfPush) { m.since += elapsed; if (m.since > 3.2) { m.since = 0; m.push(); } }
+      const dt = elapsed / 4;
+      for (let i = 0; i < 4; i++) {
+        if (Math.abs(m.tilt) >= 1.35) { m.rate = 0; break; }
+        m.sum += m.tilt * dt;
+        const control = controller ? 70 * m.tilt + 30 * m.sum + 13 * m.rate : 0;
+        m.rate += (14 * Math.sin(m.tilt) - control * Math.cos(m.tilt)) * dt;
+        m.tilt += m.rate * dt;
+      }
+      m.tilt = Math.max(-1.35, Math.min(1.35, m.tilt));
+    };
+    return m;
+  }
+  function fit(canvas) {
+    const ratio = window.devicePixelRatio || 1, width = canvas.clientWidth, height = canvas.clientHeight;
+    if (!width || !height) return null;
+    if (canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)) { canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio); }
+    const g = canvas.getContext("2d");
+    g.setTransform(ratio, 0, 0, ratio, 0, 0);
+    g.clearRect(0, 0, width, height);
+    return { g, width, height };
+  }
+  function scope(canvas, signal, baseline, gain, time) {
+    const fitted = fit(canvas);
+    if (!fitted || !colors) return;
+    const { g, width, height } = fitted, perSecond = width / 3, square = perSecond * theme.ecg.grid;
+    g.beginPath();
+    for (let x = -(time % theme.ecg.grid) * perSecond; x < width; x += square) { g.moveTo(x, 0); g.lineTo(x, height); }
+    for (let y = square; y < height; y += square) { g.moveTo(0, y); g.lineTo(width, y); }
+    g.strokeStyle = css(colors.line); g.lineWidth = 1; g.stroke();
+    g.beginPath();
+    for (let x = 0; x <= width; x += 0.5) {
+      const y = height * baseline - signal(time + x / perSecond) * height * gain;
+      if (x === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.strokeStyle = css(colors.focus); g.lineWidth = 2; g.lineJoin = g.lineCap = "round"; g.stroke();
+  }
+  function pendulum(canvas, tilt) {
+    const fitted = fit(canvas);
+    if (!fitted || !colors) return;
+    const { g, width, height } = fitted, ground = height * 0.86, wheel = height * 0.11, rod = height * 0.56;
+    const cx = width / 2 + Math.sin(tilt) * wheel * 2.2, cy = ground - wheel;
+    const tx = cx + Math.sin(tilt) * rod, ty = cy - Math.cos(tilt) * rod;
+    g.lineCap = "round";
+    g.beginPath(); g.moveTo(width * 0.08, ground); g.lineTo(width * 0.92, ground); g.strokeStyle = css(colors.line); g.lineWidth = 2; g.stroke();
+    g.beginPath(); g.setLineDash([4, 4]); g.moveTo(cx, cy); g.lineTo(cx, cy - rod); g.lineWidth = 1; g.stroke(); g.setLineDash([]);
+    g.beginPath(); g.moveTo(cx, cy); g.lineTo(tx, ty); g.strokeStyle = css(colors.ink); g.lineWidth = 6; g.stroke();
+    g.beginPath(); g.arc(tx, ty, wheel * 0.7, 0, 2 * Math.PI); g.fillStyle = css(colors.focus); g.fill();
+    g.beginPath(); g.arc(cx, cy, wheel, 0, 2 * Math.PI); g.fillStyle = css(colors.raised); g.fill(); g.lineWidth = 2; g.stroke();
+  }
+  // One bench: its picture, and for the open one its state. `live` is the open bench with controls.
+  function bench(kind, canvas, live) {
+    const b = { kind, canvas, live, stage: 3, filters: new Set(), controller: true, model: balanceModel() };
+    b.draw = (time, moving) => {
+      if (kind === "ultrasound") { const shown = live ? b.stage : 2; scope(canvas, (t) => ultrasound(shown, t), shown === 3 ? 0.84 : 0.5, shown === 3 ? 0.66 : 0.44, time); }
+      else if (kind === "biosignal") { const on = live ? b.filters : new Set([1, 2]); scope(canvas, (t) => biosignal(on, t), 0.64, 0.4, time); }
+      else { if (moving) b.model.advance(time, live ? b.controller : true, !live); else b.model.last = null; pendulum(canvas, b.model.tilt); }
+    };
+    return b;
+  }
+  function icai() {
+    const c = story.icai, stage = el("div", { class: "carousel", reveal: 1 }), deep = el("div", { class: "glass deep" });
+    let opened = null;
+    const previews = [], cards = c.projects.map((p, i) => {
+      const canvas = el("canvas", { "aria-hidden": "true" });
+      previews.push(bench(p.kind, canvas, false));
+      return el("div", { class: "glass pcard", role: "button", tabindex: "0", "aria-label": p.title, onclick: () => { if (i === project) openProject(true); else turnProject(i - project); } },
+        el("div", { class: "eyebrow", text: p.course }), el("div", { class: "ptitle", text: p.title }), el("div", { class: "muted", text: p.summary }),
+        canvas,
+        el("div", { class: "pfoot" }, p.tools.map((tool) => el("span", { class: "chip", text: tool })), el("span", { class: "grow" }), el("span", { class: "btn", text: c.openLabel })));
+    });
+    const dots = c.projects.map((p, i) => el("button", { type: "button", "aria-label": p.title, onclick: () => turnProject(i - project) }));
+    function place() {
+      cards.forEach((card, i) => {
+        card.style.setProperty("--away", i - project);
+        card.style.setProperty("--dist", Math.min(Math.abs(i - project), 2));
+        card.classList.toggle("facing", i === project);
+      });
+      dots.forEach((dot, i) => dot.setAttribute("aria-current", String(i === project)));
+    }
+    turnProject = (by) => { if (projectOpen) return; project = Math.max(0, Math.min(c.projects.length - 1, project + by)); place(); drawIcai(); };
+    openProject = (open) => {
+      if (open === projectOpen) return;
+      projectOpen = open;
+      if (open) {
+        const p = c.projects[project], words = p.bench, canvas = el("canvas", { "aria-hidden": "true" }), caption = el("div", { class: "small" });
+        opened = bench(p.kind, canvas, true);
+        const line = (i) => words.captions[i] || "";
+        const say = () => {
+          caption.textContent = p.kind === "ultrasound" ? line(opened.stage)
+            : p.kind === "biosignal" ? (opened.filters.size ? [...opened.filters].sort().map(line).join(" ") : words.idle || "")
+            : line(opened.controller ? 0 : 1);
+        };
+        let controls;
+        if (p.kind === "ultrasound") controls = tabs(words.labels.map((title, id) => ({ id, title })), opened.stage, (id) => { opened.stage = id; say(); });
+        else if (p.kind === "biosignal") controls = el("div", { class: "tabs" }, words.labels.map((title, id) => {
+          const chip = el("button", { class: "tab", type: "button", text: title, "aria-pressed": "false", onclick: () => {
+            if (opened.filters.has(id)) opened.filters.delete(id); else opened.filters.add(id);
+            chip.setAttribute("aria-pressed", String(opened.filters.has(id))); say();
+          } });
+          return chip;
+        }));
+        else {
+          const toggle = el("button", { class: "tab", type: "button", text: words.labels[0], "aria-pressed": "true", onclick: () => {
+            opened.controller = !opened.controller; if (opened.controller) opened.model.stand();
+            toggle.setAttribute("aria-pressed", String(opened.controller)); say();
+          } });
+          controls = el("div", { class: "tabs" }, toggle, el("button", { class: "tab", type: "button", text: words.labels[1], onclick: () => opened.model.push() }));
+        }
+        say();
+        deep.replaceChildren(
+          el("div", { class: "words" },
+            el("div", { class: "eyebrow", text: p.course }), el("div", { class: "dtitle", text: p.title }),
+            p.facts.map((f) => el("div", {}, el("div", { class: "strong", text: f.title }), el("div", { class: "small muted", text: f.detail }))),
+            el("div", { class: "spring" }),
+            el("div", { class: "dfoot" }, p.figure ? figure(p.figure) : el("span"), el("button", { class: "btn quiet", type: "button", text: c.closeLabel, onclick: () => openProject(false) }))),
+          el("div", { class: "glass bench" }, controls, caption, canvas, el("div", { class: "caption", text: words.note })));
+      } else opened = null;
+      stage.classList.toggle("open", open);
+      drawIcai();
+    };
+    let frame = 0;
+    drawIcai = () => {
+      cancelAnimationFrame(frame);
+      const here = current === chapters.indexOf("icai"), moving = here && !still.matches && !document.hidden;
+      previews.forEach((b) => b.draw(0, false));
+      if (!here && projectOpen) { openProject(false); return; }
+      if (!moving) { if (opened) opened.draw(0, false); return; }
+      const loop = (now) => {
+        const time = now / 1000 % 3600;
+        if (opened) opened.draw(time, true); else previews[project].draw(time, true);
+        frame = requestAnimationFrame(loop);
+      };
+      frame = requestAnimationFrame(loop);
+    };
+    // A sideways swipe turns the carousel on a phone.
+    let from = null;
+    stage.addEventListener("touchstart", (e) => { from = e.touches[0].clientX; }, { passive: true });
+    stage.addEventListener("touchend", (e) => {
+      if (from == null) return;
+      const moved = e.changedTouches[0].clientX - from; from = null;
+      if (Math.abs(moved) > 40) turnProject(moved < 0 ? 1 : -1);
+    }, { passive: true });
+    stage.append(...cards, deep);
+    place();
+    return [
+      header("icai", c.headline, c.note), stage,
+      el("div", { class: "cfoot", reveal: 2 }, el("div", { class: "dots" }, dots), el("span", { class: "small muted", text: c.hint })),
+    ];
+  }
+
   let screen = null, showScreen = () => {};
   function desk() {
     const d = story.desk;
@@ -312,7 +536,7 @@
     const image = el("img", { alt: "A screenshot of Desk", loading: "lazy", decoding: "async" });
     showScreen = () => { if (screen) image.src = "screens/" + screen + "-" + scheme() + ".jpg"; };
     return [
-      header(2, d.headline),
+      header("desk", d.headline),
       el("div", { class: "desk-grid" },
         el("div", { class: "desk-words", reveal: 1 },
           el("p", { text: d.summary }), figures(d.figures), el("div", { class: "spring" }),
@@ -331,7 +555,7 @@
   function tutoring() {
     const t = story.tutoring;
     return [
-      header(3, t.headline),
+      header("tutoring", t.headline),
       el("div", { class: "tutoring-grid", reveal: 1 },
         el("div", { class: "glass lifts stat" }, el("div", { class: "card-title", text: t.rail }), figures(t.figures)),
         el("div", { class: "subjects" }, t.subjects.map((s) => el("div", { class: "glass lifts subject" },
@@ -347,7 +571,7 @@
   function next() {
     const n = story.next;
     return [
-      header(4, n.headline),
+      header("next", n.headline),
       el("div", { class: "goals", reveal: 1 }, n.goals.map((g) => el("div", { class: "glass lifts stat" },
         el("div", { class: "card-title", text: g.title }),
         el("div", {}, el("div", { class: "value", text: g.value }), el("div", { text: g.detail }))))),
@@ -363,7 +587,7 @@
     ];
   }
 
-  const build = { opening, thesis, desk, tutoring, next };
+  const build = { opening, thesis, icai, desk, tutoring, next };
   const scenes = chapters.map((name) => {
     const scene = el("section", { class: "scene" + (name === "opening" || name === "tutoring" || name === "next" ? " roomy" : ""), id: name, "aria-label": story[name].rail },
       el("div", { class: "content" }, build[name]()));
@@ -388,10 +612,17 @@
     scenes.forEach((scene, j) => scene.classList.toggle("active", j === i));
     railButtons.forEach((button, j) => button.setAttribute("aria-current", String(j === i)));
     hint.style.opacity = i === scenes.length - 1 ? 0 : 1;
-    drawEcg();
+    drawEcg(); drawIcai();
   }
   document.addEventListener("keydown", (event) => {
     if (event.metaKey || event.ctrlKey || event.altKey || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(event.target.tagName) && event.key === " ") return;
+    // Sideways keys turn the ICAI carousel while it is on screen; Return opens a bench and Escape closes it.
+    if (current === chapters.indexOf("icai")) {
+      const turn = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
+      if (turn) { event.preventDefault(); turnProject(turn); return; }
+      if (event.key === "Enter" && !/^(BUTTON|A)$/.test(event.target.tagName)) { event.preventDefault(); openProject(!projectOpen); return; }
+      if (event.key === "Escape" && projectOpen) { event.preventDefault(); openProject(false); return; }
+    }
     const step = { ArrowDown: 1, ArrowRight: 1, PageDown: 1, " ": 1, ArrowUp: -1, ArrowLeft: -1, PageUp: -1 }[event.key];
     if (!step) return;
     event.preventDefault();
@@ -434,7 +665,7 @@
     });
     mode.replaceChildren(icon(scheme() === "dark" ? "sun" : "moon"));
     mode.setAttribute("aria-label", scheme() === "dark" ? "Switch to light" : "Switch to dark");
-    showScreen(); paint(); drawEcg();
+    showScreen(); paint(); drawEcg(); drawIcai();
   }
   system.addEventListener("change", () => { if (!chosen) applyLook(); });
 
@@ -527,8 +758,8 @@
     const loop = (now) => { strip(now / 1000 % 3600); frame = requestAnimationFrame(loop); };
     frame = requestAnimationFrame(loop);
   };
-  document.addEventListener("visibilitychange", drawEcg);
-  window.addEventListener("resize", () => { paint(); drawEcg(); });
+  document.addEventListener("visibilitychange", () => { drawEcg(); drawIcai(); });
+  window.addEventListener("resize", () => { paint(); drawEcg(); drawIcai(); });
 
   applyLook();
   // The first scene plays its entrance too.
