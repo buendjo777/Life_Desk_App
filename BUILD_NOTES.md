@@ -176,3 +176,7 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 - **Checked:** 97 tests (1 opt-in skipped); every tab plus the drawer and Welcome rendered in light and dark; a universal release build made and verified locally (arm64 and x86_64, signature valid).
 - **Not done:** the first release is not published. `gh` is not signed in on this Mac, so `dist/Desk.zip` has to be uploaded by hand or `scripts/release.sh` run after `gh auth login`. Until then `install.sh` has nothing to download.
 - **Not checked:** the installer on a second Mac, and an Intel Mac.
+
+## 16 Nov — Lit glass instead of shapes, overdue first
+- Decisions 121 and 122. The study file in the vault was rewritten to the catch-up order, 2 papers a day from 17 Nov, with four more sittings found in `13examenes.pdf`.
+- **Checked:** 98 tests (1 opt-in skipped); every tab rendered in light and dark.

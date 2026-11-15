@@ -124,10 +124,15 @@ final class DerivedTests: XCTestCase {
         var plain = data
         plain.study?.lists = []
         XCTAssertEqual(Derived(data: plain, now: demoNow).studyTarget?.headline, "Plan starts Mon 16 Nov")
-        XCTAssertEqual(at("2026-11-16T09:00:00+01:00").studyTarget?.headline, "On plan")
-        XCTAssertEqual(at("2026-11-17T09:00:00+01:00").studyTarget?.headline, "3 papers today")
+        func plainAt(_ iso: String) -> Derived { Derived(data: plain, now: Parse.stamp(iso, cal)!.date) }
+        XCTAssertEqual(plainAt("2026-11-16T09:00:00+01:00").studyTarget?.headline, "On plan")
+        XCTAssertEqual(plainAt("2026-11-17T09:00:00+01:00").studyTarget?.headline, "3 papers today")
         // Today's papers can be ticked from the card; an empty list never reads as "all done".
-        XCTAssertEqual(at("2026-11-17T09:00:00+01:00").studyTarget?.checks.map(\.title), ["January 2024", "June 2023", "January 2023"])
+        XCTAssertEqual(plainAt("2026-11-17T09:00:00+01:00").studyTarget?.checks.map(\.title), ["January 2024", "June 2023", "January 2023"])
+        // A list left unfinished past its due day leads the card, and the day's papers follow it.
+        let late = at("2026-11-17T09:00:00+01:00").studyTarget
+        XCTAssertEqual(late?.headline, "5 overdue")
+        XCTAssertEqual(late?.checks.count, 6)
         var noPapers = data
         noPapers.study?.papers = []
         noPapers.study?.lists = []
@@ -216,10 +221,11 @@ final class DerivedTests: XCTestCase {
         let sunday = at("2026-11-15T09:00:00+01:00")
         XCTAssertEqual(sunday.todaysShare(list).count, 5)
         XCTAssertEqual(sunday.listSubtitle(list), "Due Sun 15 Nov · due today · 5 to go")
-        // After it the list shows as late, and the paper plan sets the target again.
+        // After it the list shows as late and leads the target, ahead of the paper plan.
         let monday = at("2026-11-16T09:00:00+01:00")
         XCTAssertEqual(monday.listSubtitle(list), "Due Sun 15 Nov · 1 day late · 5 to go")
-        XCTAssertEqual(monday.studyTarget?.headline, "On plan")
+        XCTAssertEqual(monday.studyTarget?.headline, "5 overdue")
+        XCTAssertEqual(monday.studyTarget?.detail, "Next: Recorded lectures. Then the past papers.")
     }
 
     // MARK: Tutoring

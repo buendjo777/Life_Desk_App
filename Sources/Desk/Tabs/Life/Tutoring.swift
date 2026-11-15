@@ -62,18 +62,18 @@ struct MoneyCard: View {
         let month = d.thisMonth
         switch kind {
         case .month:
-            StatCard(title: "This month", accent: .good, shape: .ring) {
+            StatCard(title: "This month", accent: .good) {
                 Figure(d.money(d.earnedThisMonth), caption: Derived.plural(month.map(\.lessons).reduce(0, +), "lesson") + " so far")
             }
         case .owed:
             let invoices = d.waitingForPayment.count + d.monthEnd.count
-            StatCard(title: "Owed", accent: .caution, shape: .ring) {
+            StatCard(title: "Owed", accent: .caution) {
                 Figure(d.money(d.owedAmount), caption: invoices == 0 ? "Nothing owed" : Derived.plural(invoices, "invoice"))
             }
         case .hours:
             let taught = month.map(\.hours).reduce(0, +)
             let planned = month.map(\.plannedHours).reduce(0, +)
-            StatCard(title: "Hours", accent: .info, shape: .ring) {
+            StatCard(title: "Hours", accent: .info) {
                 Figure(Parse.number(taught), unit: "h", caption: planned > taught ? "of \(Parse.number(planned)) planned" : "taught this month")
             }
         }

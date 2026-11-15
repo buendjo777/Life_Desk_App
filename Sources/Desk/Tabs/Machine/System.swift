@@ -7,7 +7,7 @@ struct LatestRunCard: View {
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Latest run", subtitle: d.lastRun.map { d.cal.format($0.startedAt.date, "EEE d MMM · HH:mm") }, accent: .deep, shape: .cog, tall: true) {
+        StatCard(title: "Latest run", subtitle: d.lastRun.map { d.cal.format($0.startedAt.date, "EEE d MMM · HH:mm") }, accent: .deep, tall: true) {
             if let run = d.lastRun {
                 HStack(alignment: .top, spacing: t.sp24) {
                     Figure(run.isOK ? "OK" : Derived.label(run.status), caption: run.mode ?? "run")
@@ -36,7 +36,7 @@ struct ModelsCard: View {
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Models", subtitle: "Latest run", accent: .deep, shape: .cog, tall: true) {
+        StatCard(title: "Models", subtitle: "Latest run", accent: .deep, tall: true) {
             if d.modelsUsed.isEmpty { Text(verbatim: "No agents listed.").style(\.small) }
             ForEach(d.modelsUsed) { use in
                 VStack(alignment: .leading, spacing: t.sp2) {

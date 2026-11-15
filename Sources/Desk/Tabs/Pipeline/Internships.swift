@@ -12,7 +12,7 @@ struct TargetCountCard: View {
         Button {
             store.targetFilter = picked ? nil : status.rawValue
         } label: {
-            StatCard(title: status.label, subtitle: picked ? "Showing" : nil, accent: status.accent, shape: .square) {
+            StatCard(title: status.label, subtitle: picked ? "Showing" : nil, accent: status.accent) {
                 Figure(String(targets.count), caption: targets.count == 1 ? "target" : "targets")
             }
             .overlay(RoundedRectangle(cornerRadius: t.radiusCard).strokeBorder(t.ink, lineWidth: picked ? t.stroke + t.hairline : 0))

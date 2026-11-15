@@ -45,3 +45,36 @@ final class StarterVaultTests: XCTestCase {
         XCTAssertFalse(Git(root: folder).isRepo)
     }
 }
+
+/// A list past its due day comes first, in file order, and today's papers follow it.
+final class OverdueStudyTests: XCTestCase {
+    func testOverdueListLeadsTheTarget() throws {
+        let cal = DeskCalendar(timeZone: "Europe/Madrid")
+        let text = """
+        ---
+        exam: Test
+        date: 2026-11-27T10:30:00+01:00
+        plan_per_day: 2
+        plan_start: 2026-11-16
+        ---
+        ## Overdue — due 2026-11-15
+        ### 1 · Problems
+        - [ ] First
+        ### 2 · Sheets
+        - [ ] Second
+        - [ ] Third
+        - [ ] Fourth
+        ## Past papers
+        - [ ] Paper A
+        - [ ] Paper B
+        - [ ] Paper C
+        """
+        var data = VaultData.load(VaultReader(root: DemoVault.url))
+        data.study = Parse.study(text, cal)
+        let derived = Derived(data: data, now: try XCTUnwrap(Parse.stamp("2026-11-16T09:00:00+01:00", cal)).date)
+        let target = try XCTUnwrap(derived.studyTarget)
+        XCTAssertEqual(target.headline, "4 overdue")
+        XCTAssertTrue(target.detail.hasPrefix("Next: 1 · Problems. Then 2 papers today."))
+        XCTAssertEqual(target.checks.map(\.title), ["First", "Second", "Third", "Paper A", "Paper B"])
+    }
+}

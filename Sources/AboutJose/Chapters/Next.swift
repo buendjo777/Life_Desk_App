@@ -6,7 +6,6 @@ struct NextChapter: View {
     @Environment(\.theme) private var t
     let story: Story
 
-    private let shapes: [CardShape] = [.chevron, .star]
 
     var body: some View {
         let next = story.next
@@ -14,7 +13,7 @@ struct NextChapter: View {
             ChapterHeader(chapter: .next, headline: next.headline).reveal(0)
             HStack(spacing: t.sp16) {
                 ForEach(Array(next.goals.enumerated()), id: \.offset) { index, goal in
-                    StatCard(title: goal.title, accent: .focus, shape: shapes[index % shapes.count]) {
+                    StatCard(title: goal.title, accent: .focus) {
                         Spacer(minLength: 0)
                         Text(verbatim: goal.value).style(\.figure)
                         Text(verbatim: goal.detail).style(\.body).opacity(t.onAccentBlock).fixedSize(horizontal: false, vertical: true)

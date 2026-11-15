@@ -46,7 +46,7 @@ struct PortfolioIntro: View {
 
     var body: some View {
         let d = store.showcase
-        StatCard(title: "Desk: a life desk run by nightly agents", accent: .deep, shape: .cog, tall: true) {
+        StatCard(title: "Desk: a life desk run by nightly agents", accent: .deep, tall: true) {
             Text(verbatim: "Cloud agents read the inbox and the calendar every night and write a brief into a private git vault. "
                 + "Desk is the native Mac app that reads it: what is due, what needs a reply, what to confirm. "
                 + "It holds no credentials, renders untrusted text as plain text, and changes nothing without a click.")
@@ -70,7 +70,7 @@ struct PortfolioEvaluation: View {
     @Environment(\.theme) private var t
 
     var body: some View {
-        StatCard(title: "Evaluation", subtitle: "Missed-reply rate", accent: .caution, shape: .triangle, tall: true) {
+        StatCard(title: "Evaluation", subtitle: "Missed-reply rate", accent: .caution, tall: true) {
             if let evaluation = store.portfolio?.evaluation {
                 Figure(String(format: "%.1f", evaluation.missedReplyRate * 100), unit: "%",
                        caption: evaluation.sample.map { "of \($0) emails that needed a reply" } ?? "Missed replies")

@@ -23,7 +23,7 @@ Two strong colours and one bright accent, in three colourways (Customise → Col
 - **Glass.** Cards and rows are smoked glass in dark mode (the field colour at 50%) and white glass in light mode (66%), with a hairline edge lit from above. Panels that float over content (inspector, search results) are opaque.
 - **Accent.** `focus` is the bright accent in dark mode and the hot strong colour in light mode. In Ember it is the glow's own hue, so the window reads as two colours, not three. It marks one thing at a time: today, the selection, the focus row.
 - **Primary buttons and chosen pills** are the ink colour: white in dark mode, near-black in light mode.
-- **Stat cards** are all the same neutral glass, with a faint corner wash of their signal colour (10% light, 6% dark) and an ink watermark shape at 4%.
+- **Stat cards** are all the same neutral glass, with a faint corner wash of their signal colour (10% light, 6% dark). No shapes, no ornament: light does the work (see Stat card).
 - **Signals.** `good`, `caution`, `info`, `alert`, each with a darker light-mode tone. They appear as chips, dots and a faint wash on stat cards, never as a block of colour.
 - **Accessibility.** Reduce Transparency or Increase Contrast makes every surface opaque. Text on glass must reach 4.5:1 where the glow is brightest.
 
@@ -50,7 +50,7 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 - **Density:** Compact is the mockup. Comfortable multiplies spacing and padding by 1.25, makes rows 60 pt tall and shows up to two fewer rows per list. Both read their values from `Theme.swift`.
 
 ## Components
-- **Stat card.** 24 pt corners, 20 pt padding, accent background, card title, two to four figures with uppercase captions, an optional mini chart in `onAccent`. One large geometric shape in the accent's deep tone at about 55% opacity, anchored top right and clipped by the card. Shapes per card: Today → circle (a sun) · Deadlines → triangle · Inbox → eight-point star · Health → heart · Studying → triangle · Projects → hexagon · Internship apps → square rotated 15° · Uni apps → chevron · Tutoring → ring · History → eight-point star · System → twelve-tooth cog. Draw them as SwiftUI `Shape`s.
+- **Stat card.** 24 pt corners, 20 pt padding, a card title, two to four figures with uppercase captions, an optional mini chart. A slab of glass with three kinds of light: a soft highlight that rests at the top-left corner and follows the pointer; a 1 pt rim lit in the card's signal colour on the side away from the light, which slides round the edge as the pointer moves; and a shade towards the foot, so the slab reads as thick. The geometric shapes are gone (decision 121); `Shapes.swift` now only draws the app icon.
 - **List row.** `surface`, 18 pt corners, 52 pt tall: a 34 pt round icon badge (accent tint), a semibold title, a muted subtitle, a capsule chip on the right. Selected: `rust` background.
 - **Counted tabs.** Capsules such as "Focus 3 · Due 4 · Leftovers 3". Active: `primary` with `onPrimary`. Inactive: outlined.
 - **Buttons.** Primary: a `primary` capsule with `onPrimary` text. Secondary: an outlined capsule. Icon: a 44 pt `control` circle with a `panelText` symbol.
@@ -83,7 +83,7 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 All motion is off with Reduce Motion, in Low Power Mode, in snapshots, and when Motion is switched off in Customise. The backdrop also stops while Desk is not the active app.
 - **The day's tide.** The glow at the bottom of the window is a meter, not decoration: it rises and brightens as today's work gets done (today's study share plus the tasks due today), and a bright core appears on the horizon. The same number is written under the greeting on Today.
 - **Drift.** Two colour fields move slowly (20 frames a second, no blur). They move faster when a deadline is within two days.
-- **Depth.** A card rises 2 pt under the pointer with a shadow; the shape inside a stat card drifts towards the pointer; rows brighten.
+- **Depth.** A card rises 2 pt under the pointer with a shadow; the light on a stat card follows the pointer and its coloured rim slides round the edge; rows brighten.
 - **Entrance.** Opening a tab, sections fade up one after another (360 ms, 45 ms apart).
 - **Numbers.** Digits roll when a figure changes; bars and rings fill when they appear.
 - **A tick.** The checkmark bounces and eight sparks fly out.

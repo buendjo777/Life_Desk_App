@@ -123,6 +123,15 @@ public struct Theme {
     }
 
     /// The big shape in a stat card: a watermark in the ink, the same on every card.
+    /// The light resting on a stat card's glass.
+    public var cardLight: Color { Color.white.opacity(solid ? 0 : isDark ? cardLightDark : cardLightLight) }
+    /// The shade towards a stat card's foot: thickness.
+    public var cardShade: Color { Color.black.opacity(isDark ? cardShadeDark : cardShadeLight) }
+    /// A stat card's rim light, in its signal colour (the accent on a neutral card).
+    public func rim(_ accent: Accent) -> Color {
+        fill(accent == .neutral || accent == .deep ? .focus : accent).opacity(isDark ? rimDark : rimLight)
+    }
+
     public func shape(_ accent: Accent) -> Color {
         ink.opacity(shapeWash)
     }
@@ -157,6 +166,17 @@ public struct Theme {
     public let washStrong = 0.10
     public let washStrongDark = 0.06
     public let shapeWash = 0.04
+    public let cardLightDark = 0.10
+    public let cardLightLight = 0.70
+    public let cardShadeDark = 0.22
+    public let cardShadeLight = 0.035
+    public let rimDark = 0.75
+    public let rimLight = 0.55
+    public let rimWidth: CGFloat = 1
+    /// The light's resting place on a card, its travel under the pointer and its reach (in card sizes).
+    public let lightRest = UnitPoint(x: 0.12, y: 0)
+    public let lightTravel = 0.38
+    public let lightReach = 0.85
     public let deepShade = 0.78
     public let tideFloor = 0.34
     public let tideGain = 0.30
@@ -302,7 +322,6 @@ public struct Theme {
     public let liftResponse = 0.3
     public let liftDamping = 0.8
     /// The shape inside a stat card drifts this far towards the pointer.
-    public let parallax: CGFloat = 10
     /// Sections fade up one after another when a tab opens.
     public let entranceRise: CGFloat = 12
     public let entrance = 0.36

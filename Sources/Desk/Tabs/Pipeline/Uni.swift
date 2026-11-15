@@ -120,7 +120,7 @@ struct UniCardView: View {
     var body: some View {
         if let card = store.d.uniCards.first(where: { $0.id == path }) {
             let selected = store.selection == .uni(path)
-            StatCard(title: card.school, accent: selected ? .focus : .info, shape: .chevron) {
+            StatCard(title: card.school, accent: selected ? .focus : .info) {
                 Text(verbatim: card.degree).style(\.small).opacity(t.captionOpacity).lineLimit(1).padding(.top, -t.sp12)
                 HStack(alignment: .top, spacing: t.sp20) {
                     if let days = card.daysLeft {
