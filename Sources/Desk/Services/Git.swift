@@ -83,7 +83,9 @@ actor VaultGit {
         try ensureFree()
         guard git.hasRemote else { return }
         do {
-            try git.run(["pull", "--ff-only"])
+            // `--no-rebase`: with `pull.rebase` set, git refuses to pull while another tool has files staged,
+            // even when there is nothing to pull. A fast-forward never touches those files.
+            try git.run(["pull", "--ff-only", "--no-rebase"])
         } catch {
             let ahead = (try? git.run(["rev-list", "--count", "@{u}..HEAD"]))?.trimmingCharacters(in: .whitespacesAndNewlines)
             guard let ahead, let count = Int(ahead), count > 0 else { throw error }
