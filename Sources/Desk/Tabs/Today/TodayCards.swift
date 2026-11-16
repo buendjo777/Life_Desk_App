@@ -7,7 +7,7 @@ struct DeadlinesCard: View {
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Deadlines", accent: .caution, shape: .triangle, tall: true) {
+        StatCard(title: "Deadlines", accent: .caution, tall: true) {
             if d.deadlines.isEmpty {
                 Text(verbatim: d.data.hint(VaultData.snapshotFile) ?? "No upcoming deadlines.").style(\.small)
             } else {
@@ -72,7 +72,7 @@ struct TodayCard: View {
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Today", subtitle: d.cal.weekdayDay(d.now), accent: .focus, shape: .circle, tall: true) {
+        StatCard(title: "Today", subtitle: d.cal.weekdayDay(d.now), accent: .focus, tall: true) {
             HStack(alignment: .top, spacing: t.sp24 + t.sp2) {
                 Figure(String(d.focus.count), caption: "Focus")
                 Figure(String(d.dueToday.count), caption: "Due today")
@@ -169,7 +169,7 @@ struct InboxCard: View {
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Inbox", subtitle: d.scannedText, accent: .info, shape: .star) {
+        StatCard(title: "Inbox", subtitle: d.scannedText, accent: .info) {
             HStack(alignment: .top, spacing: t.sp24 + t.sp2) {
                 Figure(String(d.emails.count), caption: "Important")
                 Figure(String(d.emails(.needsReply).count), caption: "Need reply")
@@ -188,7 +188,7 @@ struct HealthCard: View {
         let d = store.d
         let week = d.weekActivities
         let (hours, minutes) = Derived.hoursMinutes(week.map(\.durationS).reduce(0, +))
-        StatCard(title: "Health", subtitle: "This week", accent: .good, shape: .heart) {
+        StatCard(title: "Health", subtitle: "This week", accent: .good) {
             HStack(alignment: .top, spacing: t.sp24) {
                 Figure(String(week.count), caption: "Sessions")
                 Figure(parts: [.init(text: String(hours)), .init(text: "h", unit: true), .init(text: String(format: " %02d", minutes))], caption: "Time")

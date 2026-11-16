@@ -74,6 +74,8 @@ final class Store {
     /// Bumped by ⌘F; the search field takes focus when it changes.
     var searchFocus = 0
     var showCustomise = false
+    /// First launch on a Mac with no vault: the Welcome screen.
+    var showWelcome = false
 
     /// Demo "writes" live here and never reach the disk.
     @ObservationIgnored private var overlay: [String: String] = [:]
@@ -89,6 +91,7 @@ final class Store {
         if isSnapshot { self.prefs.slimSidebar = true }
         self.demoVault = demoVault
         self.calendar = calendar
+        showWelcome = !isSnapshot && !self.prefs.onboarded && !self.prefs.vaultExists
         resolveMode()
         quitObserver = NotificationCenter.default.addObserver(forName: NSApplication.willTerminateNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.commitBeforeQuit() }
@@ -143,6 +146,34 @@ final class Store {
         resolveMode()
         sync()
         importClasses(explicit: false)
+    }
+
+    // MARK: Welcome
+
+    /// Welcome → Start my own desk: a starter vault in `~/Desk` with the person's name. A folder that already
+    /// holds a vault is opened instead. Returns what went wrong, if anything.
+    func startOwnDesk(name: String) -> String? {
+        let path = StarterVault.defaultPath
+        let folder = URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)
+        if !StarterVault.isVault(folder) {
+            do { try StarterVault.create(at: folder, name: name) } catch { return error.localizedDescription }
+        }
+        useVault(path)
+        return nil
+    }
+
+    /// Welcome → Open a folder I already have (a vault, or a clone of one from GitHub).
+    func useVault(_ path: String) {
+        prefs.vaultPath = path
+        prefs.wantsLive = true
+        leaveWelcome()
+        settingsChanged()
+    }
+
+    /// Welcome → Look around first: the demo vault. Nothing is written.
+    func leaveWelcome() {
+        prefs.onboarded = true
+        showWelcome = false
     }
 
     private var reader: VaultReader {
@@ -310,7 +341,7 @@ final class Store {
         guard mode == .live, !dirty.isEmpty, busy == 0 else { return }
         syncTimer?.cancel()
         let git = Git(root: prefs.vaultURL)
-        guard git.busyReason() == nil else { return }
+        guard git.isRepo, git.busyReason() == nil else { return }
         for path in dirty.sorted() {
             _ = try? git.run(["add", "--", path])
             _ = try? git.run(["commit", "-m", VaultWriter.commitMessage(for: path), "--", path])
@@ -544,8 +575,10 @@ final class Store {
     /// the banner only when Jose asked for the sync (⌘R).
     func importClasses(explicit: Bool) {
         guard mode == .live, !isSnapshot, !importing else { return }
-        importing = true
         let vault = prefs.vaultURL
+        // Only a vault set up for tutoring reads the Classes note: nobody else is asked for access to Notes.
+        guard FileManager.default.fileExists(atPath: vault.appendingPathComponent(ClassesImport.settingsFile).path) else { return }
+        importing = true
         let cal = cal
         let queuedIn = epoch
         Task { [weak self] in

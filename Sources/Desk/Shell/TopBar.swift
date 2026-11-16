@@ -148,7 +148,6 @@ extension Derived.RunLevel {
 struct RailTop: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
-    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         HStack(spacing: t.sp8) {
@@ -156,7 +155,7 @@ struct RailTop: View {
             Spacer(minLength: 0)
             IconButton(symbol: "arrow.triangle.2.circlepath", label: "Sync now") { store.sync() }
             IconButton(symbol: "play.fill", label: "Run now") { Links.open(Links.web(store.data.settings.links.runNow)) }
-            IconButton(symbol: "gearshape", label: "Settings") { openSettings() }
+            IconButton(symbol: "slider.horizontal.3", label: "Customise") { store.showCustomise.toggle() }
         }
         .frame(width: t.railWidth, height: t.searchHeight)
     }

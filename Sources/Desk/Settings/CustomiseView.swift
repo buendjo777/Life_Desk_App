@@ -1,92 +1,219 @@
 import SwiftUI
+import DeskKit
 
-/// View → Customise…: per tab, show or hide and reorder its cards and sections, and pick the density.
-/// Saved as app preferences, never in the vault. Reset restores the defaults.
+/// Customise: a drawer on the right edge of the window, so every change shows on the tab behind it at once.
+/// Look (appearance, colours, density, sidebar, motion) and the sections of the tab on screen: show, hide, reorder.
+/// Saved as app preferences, never in the vault. It is always a dark panel, like the sidebar.
 struct CustomiseView: View {
     @Environment(Store.self) private var store
     @Environment(\.theme) private var t
-    @State private var tab: Tab = .today
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        @Bindable var prefs = store.prefs
-        let saved = prefs.layouts[tab.rawValue]
-        let sections = TabLayout.ordered(tab, prefs: saved)
-        VStack(alignment: .leading, spacing: t.sp16) {
+        // The drawer keeps the dark tokens in light mode too: one readable panel, whatever is behind it.
+        let dark = Theme(scheme: .dark, density: t.density, palette: store.prefs.palette, solid: t.solid)
+        let shape = RoundedRectangle(cornerRadius: dark.radiusCard)
+        VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text(verbatim: "Customise").style(\.title, \.ink)
+                Text(verbatim: "Customise").style(\.section, \.panelText)
                 Spacer()
-                Button("Reset") { prefs.resetLayout() }.buttonStyle(.deskSecondary)
-                Button("Done") { store.showCustomise = false }.buttonStyle(.deskPrimary).keyboardShortcut(.defaultAction)
+                IconButton(symbol: "xmark", label: "Close Customise") { store.showCustomise = false }
             }
-            HStack(spacing: t.sp12) {
-                Text(verbatim: "Density").style(\.smallStrong, \.ink)
-                CountedTabs(items: Density.allCases.map { .init(id: $0, title: $0.title) }, selection: $prefs.density)
-                Spacer()
-                Text(verbatim: prefs.density == .compact ? "The mockup's spacing." : "More space, fewer rows.").style(\.small, \.inkMuted)
-            }
-            HStack(spacing: t.sp12) {
-                Text(verbatim: "Colours").style(\.smallStrong, \.ink)
-                CountedTabs(items: Palette.allCases.map { .init(id: $0, title: $0.title) }, selection: $prefs.palette)
-                Spacer()
-                Toggle(isOn: $prefs.slimSidebar) { Text(verbatim: "Slim sidebar").style(\.small, \.ink) }
-                    .toggleStyle(.switch).controlSize(.small)
-                    .help("Icons only; the sidebar opens under the pointer")
-                Toggle(isOn: $prefs.motion) { Text(verbatim: "Motion").style(\.small, \.ink) }
-                    .toggleStyle(.switch).controlSize(.small)
-                    .help("The living background, hover lift, entrances and sparks")
-            }
-            CountedTabs(items: Tab.sidebar.map { .init(id: $0, title: $0.title) }, selection: $tab)
+            .padding(.bottom, dark.sp12)
             Scroller {
+                VStack(alignment: .leading, spacing: dark.sp20) {
+                    look
+                    sections
+                }
+                .padding(.bottom, dark.sp12)
+            }
+            HStack(spacing: dark.sp8) {
+                Button("Reset layout") { store.prefs.resetLayout() }.buttonStyle(.deskSecondary)
+                Spacer()
+                Button("Vault and sync…") { openSettings() }.buttonStyle(.deskSecondary)
+            }
+            .padding(.top, dark.sp12)
+        }
+        .padding(dark.sp20)
+        .frame(width: dark.customiseWidth)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .background(dark.canvas, in: shape)
+        .overlay(shape.strokeBorder(dark.line, lineWidth: dark.hairline))
+        .shadow(color: .black.opacity(dark.shadowOpacity), radius: dark.shadowRadius, y: dark.shadowY)
+        .environment(\.theme, dark)
+        .environment(\.colorScheme, .dark)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Customise")
+    }
+
+    // MARK: Look
+
+    private var look: some View {
+        @Bindable var prefs = store.prefs
+        return VStack(alignment: .leading, spacing: t.sp12) {
+            heading("Look")
+            field("Appearance") {
+                CountedTabs(items: Appearance.allCases.map { .init(id: $0, title: $0.title) }, selection: $prefs.appearance)
+            }
+            field("Colours") {
                 VStack(spacing: t.sp6) {
-                    ForEach(Array(sections.enumerated()), id: \.element.id) { index, section in
-                        let hidden = saved?.hidden.contains(section.id) == true
-                        HStack(spacing: t.sp10) {
-                            Button {
-                                prefs.setHidden(!hidden, section: section.id, tab: tab)
-                            } label: {
-                                Image(systemName: hidden ? "eye.slash" : "eye")
-                                    .font(.system(size: t.symbol, weight: .medium))
-                                    .foregroundStyle(hidden ? t.inkMuted : t.ink)
-                                    .frame(width: t.badgeSmall, height: t.badgeSmall)
-                                    .background(t.tint(hidden ? .neutral : .good), in: Circle())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(Text(verbatim: hidden ? "Show \(section.title)" : "Hide \(section.title)"))
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text(verbatim: section.title).style(\.rowTitle, hidden ? \.inkMuted : \.ink)
-                                Text(verbatim: section.slot == .rail ? "Right rail" : "Main column").style(\.small, \.inkMuted)
-                            }
-                            Spacer()
-                            mover("chevron.up", "Move \(section.title) up", enabled: index > 0) {
-                                prefs.move(section.id, by: -1, tab: tab, current: sections.map(\.id))
-                            }
-                            mover("chevron.down", "Move \(section.title) down", enabled: index < sections.count - 1) {
-                                prefs.move(section.id, by: 1, tab: tab, current: sections.map(\.id))
-                            }
-                        }
-                        .padding(.horizontal, t.sp10)
-                        .frame(height: t.rowHeight - t.sp8)
-                        .background(t.surface, in: RoundedRectangle(cornerRadius: t.radiusNav))
+                    ForEach(Palette.allCases) { palette in
+                        PaletteRow(palette: palette, chosen: prefs.palette == palette) { prefs.palette = palette }
                     }
                 }
             }
+            field("Density") {
+                CountedTabs(items: Density.allCases.map { .init(id: $0, title: $0.title) }, selection: $prefs.density)
+            }
+            VStack(spacing: t.sp6) {
+                switchRow("Slim sidebar", "Icons only; it opens under the pointer.", $prefs.slimSidebar)
+                switchRow("Motion", "The living background, hover lift and entrances.", $prefs.motion)
+            }
         }
-        .padding(t.sp24)
-        .frame(width: t.customiseSize.width, height: t.customiseSize.height)
-        .background(t.canvas)
+    }
+
+    // MARK: Sections of the tab on screen
+
+    private var sections: some View {
+        let tab = Tab.sidebar.contains(store.tab) ? store.tab : .today
+        let saved = store.prefs.layouts[tab.rawValue]
+        let ordered = TabLayout.ordered(tab, prefs: saved)
+        return VStack(alignment: .leading, spacing: t.sp12) {
+            HStack {
+                heading("Sections on")
+                Menu {
+                    ForEach(Tab.sidebar) { other in
+                        Button(other.title) { store.show(other) }
+                    }
+                } label: {
+                    HStack(spacing: t.sp4) {
+                        Text(verbatim: tab.title).style(\.smallStrong, \.panelText)
+                        Image(systemName: "chevron.down").font(.system(size: t.symbolSmall, weight: .bold)).foregroundStyle(t.panelText)
+                    }
+                    .padding(.horizontal, t.sp10)
+                    .padding(.vertical, t.sp6)
+                    .background(t.control, in: Capsule())
+                    .contentShape(Capsule())
+                }
+                .menuStyle(.button)
+                .buttonStyle(.plain)
+                .fixedSize()
+                .accessibilityLabel("Tab to customise")
+                Spacer()
+            }
+            VStack(spacing: t.sp6) {
+                ForEach(Array(ordered.enumerated()), id: \.element.id) { index, section in
+                    let hidden = saved?.hidden.contains(section.id) == true
+                    HStack(spacing: t.sp10) {
+                        Button {
+                            store.prefs.setHidden(!hidden, section: section.id, tab: tab)
+                        } label: {
+                            Image(systemName: hidden ? "eye.slash" : "eye")
+                                .font(.system(size: t.symbol, weight: .medium))
+                                .foregroundStyle(hidden ? t.panelMuted : t.panelText)
+                                .frame(width: t.badgeSmall, height: t.badgeSmall)
+                                .background(t.tint(hidden ? .neutral : .good), in: Circle())
+                                .contentShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(Text(verbatim: hidden ? "Show \(section.title)" : "Hide \(section.title)"))
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(verbatim: section.title).style(\.rowTitle, hidden ? \.panelMuted : \.panelText).lineLimit(1)
+                            Text(verbatim: section.slot == .rail ? "Right rail" : "Main column").style(\.small, \.panelMuted)
+                        }
+                        Spacer(minLength: 0)
+                        mover("chevron.up", "Move \(section.title) up", enabled: index > 0) {
+                            store.prefs.move(section.id, by: -1, tab: tab, current: ordered.map(\.id))
+                        }
+                        mover("chevron.down", "Move \(section.title) down", enabled: index < ordered.count - 1) {
+                            store.prefs.move(section.id, by: 1, tab: tab, current: ordered.map(\.id))
+                        }
+                    }
+                    .padding(.horizontal, t.sp10)
+                    .frame(height: t.rowHeight - t.sp4)
+                    .background(Color.white.opacity(t.panelBoxFill), in: RoundedRectangle(cornerRadius: t.radiusNav))
+                }
+            }
+        }
+    }
+
+    // MARK: Pieces
+
+    private func heading(_ text: String) -> some View {
+        Text(verbatim: text).style(\.label, \.panelMuted)
+    }
+
+    private func field(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: t.sp6) {
+            Text(verbatim: title).style(\.smallStrong, \.panelText)
+            content()
+        }
+    }
+
+    private func switchRow(_ title: String, _ hint: String, _ isOn: Binding<Bool>) -> some View {
+        HStack(spacing: t.sp10) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(verbatim: title).style(\.rowTitle, \.panelText)
+                Text(verbatim: hint).style(\.small, \.panelMuted).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+            Toggle(isOn: isOn) { EmptyView() }
+                .toggleStyle(.switch).controlSize(.small).labelsHidden()
+                .accessibilityLabel(title)
+        }
+        .padding(.horizontal, t.sp12)
+        .padding(.vertical, t.sp8)
+        .background(Color.white.opacity(t.panelBoxFill), in: RoundedRectangle(cornerRadius: t.radiusNav))
     }
 
     private func mover(_ symbol: String, _ label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: t.symbolSmall, weight: .bold))
-                .foregroundStyle(t.ink)
+                .foregroundStyle(t.panelText)
                 .frame(width: t.sp24, height: t.sp24)
                 .background(t.line, in: Circle())
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
         .opacity(enabled ? 1 : t.outOfMonthOpacity)
         .accessibilityLabel(label)
+    }
+}
+
+/// One colourway: its two strong colours and its accent as dots, then its name.
+private struct PaletteRow: View {
+    @Environment(\.theme) private var t
+    let palette: Palette
+    let chosen: Bool
+    let action: () -> Void
+
+    var body: some View {
+        let c = palette.colors
+        Button(action: action) {
+            HStack(spacing: t.sp10) {
+                HStack(spacing: -t.sp4) {
+                    ForEach([c.deep, c.glow, c.bright], id: \.self) { hex in
+                        Circle().fill(Color(hex: hex))
+                            .frame(width: t.swatch, height: t.swatch)
+                            .overlay(Circle().strokeBorder(Color.white.opacity(t.lineGlass), lineWidth: t.hairline))
+                    }
+                }
+                Text(verbatim: palette.title).style(\.rowTitle, \.panelText)
+                Spacer(minLength: 0)
+                Image(systemName: "checkmark")
+                    .font(.system(size: t.symbolSmall, weight: .bold))
+                    .foregroundStyle(t.panelText)
+                    .opacity(chosen ? 1 : 0)
+            }
+            .padding(.horizontal, t.sp12)
+            .frame(height: t.navRow)
+            .background(Color.white.opacity(chosen ? t.navSelectedFill : t.panelBoxFill), in: RoundedRectangle(cornerRadius: t.radiusNav))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(palette.title)
+        .accessibilityAddTraits(chosen ? .isSelected : [])
     }
 }

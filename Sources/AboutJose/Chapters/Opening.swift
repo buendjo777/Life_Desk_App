@@ -6,7 +6,6 @@ struct OpeningChapter: View {
     @Environment(\.theme) private var t
     let story: Story
 
-    private let shapes: [CardShape] = [.hexagon, .circle, .square]
 
     var body: some View {
         let opening = story.opening
@@ -25,7 +24,7 @@ struct OpeningChapter: View {
                     GroupLabel(text: opening.livedTitle)
                     HStack(spacing: t.sp12) {
                         ForEach(Array(opening.lived.enumerated()), id: \.offset) { index, place in
-                            StatCard(title: place.place, accent: .neutral, shape: shapes[index % shapes.count]) {
+                            StatCard(title: place.place, accent: .neutral) {
                                 Spacer(minLength: 0)
                                 Figure(place.value, unit: place.unit.map { " \($0)" }, caption: place.caption)
                             }

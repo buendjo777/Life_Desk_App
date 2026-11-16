@@ -10,16 +10,16 @@ struct HealthStat: View {
         let d = store.d
         switch kind {
         case .sessions:
-            StatCard(title: "Sessions", subtitle: "This week", accent: .good, shape: .heart) {
+            StatCard(title: "Sessions", subtitle: "This week", accent: .good) {
                 Figure(String(d.weekActivities.count), caption: "W\(d.cal.weekNumber(d.now))")
             }
         case .time:
             let (hours, minutes) = Derived.hoursMinutes(d.weekSeconds)
-            StatCard(title: "Time", subtitle: "This week", accent: .good, shape: .heart) {
+            StatCard(title: "Time", subtitle: "This week", accent: .good) {
                 Figure(parts: [.init(text: String(hours)), .init(text: "h", unit: true), .init(text: String(format: " %02d", minutes))], caption: "Moving time")
             }
         case .distance:
-            StatCard(title: "Distance", subtitle: "This week", accent: .good, shape: .heart) {
+            StatCard(title: "Distance", subtitle: "This week", accent: .good) {
                 Figure(Derived.kilometres(d.weekMetres), unit: "km", caption: "Run, ride, swim")
             }
         }

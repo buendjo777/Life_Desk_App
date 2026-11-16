@@ -53,20 +53,6 @@ enum Tab: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var shape: CardShape {
-        switch self {
-        case .today: .circle
-        case .studying: .triangle
-        case .projects: .hexagon
-        case .internships: .square
-        case .uni: .chevron
-        case .tutoring: .ring
-        case .history: .star
-        case .health: .heart
-        case .system, .portfolio: .cog
-        }
-    }
-
     /// The ⌘ number: 1 to 9 in the sidebar, 0 for Portfolio.
     var shortcut: Int { (Tab.sidebar.firstIndex(of: self) ?? -1) + 1 }
 }

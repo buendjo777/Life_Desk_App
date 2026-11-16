@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// A stat card: glass washed with its accent, a title, figures, and one large shape in the accent,
-/// anchored to a corner and clipped by the card. The shape drifts towards the pointer, which gives the card depth.
+/// A stat card: a slab of glass with a title and figures. No ornament: its depth comes from light.
+/// - a soft light on the glass that rests at the top corner and follows the pointer;
+/// - a rim lit in the card's signal colour, which slides round the edge as the pointer moves;
+/// - a shade towards the bottom, so the slab reads as thick.
 public struct StatCard<Content: View>: View {
     @Environment(\.motionOn) private var motionOn
     @Environment(\.theme) private var t
@@ -12,21 +14,21 @@ public struct StatCard<Content: View>: View {
     let title: String
     var subtitle: String?
     let accent: Accent
-    let shape: CardShape
     var tall = false
     @ViewBuilder var content: Content
 
-    public init(title: String, subtitle: String? = nil, accent: Accent, shape: CardShape, tall: Bool = false, @ViewBuilder content: () -> Content) {
+    public init(title: String, subtitle: String? = nil, accent: Accent, tall: Bool = false, @ViewBuilder content: () -> Content) {
         self.title = title
         self.subtitle = subtitle
         self.accent = accent
-        self.shape = shape
         self.tall = tall
         self.content = content()
     }
 
     public var body: some View {
-        let placement = shape.placement
+        let outline = RoundedRectangle(cornerRadius: t.radiusCard)
+        // Where the light falls, 0…1 across the card: the top corner at rest, the pointer on hover.
+        let light = UnitPoint(x: t.lightRest.x + pointer.width * t.lightTravel, y: t.lightRest.y + pointer.height * t.lightTravel)
         VStack(alignment: .leading, spacing: t.sp16) {
             HStack(alignment: .firstTextBaseline, spacing: t.sp10) {
                 Text(verbatim: title).style(\.cardTitle).lineLimit(1)
@@ -39,16 +41,15 @@ public struct StatCard<Content: View>: View {
         .foregroundStyle(t.on(accent))
         .padding(t.sp20)
         .frame(maxWidth: .infinity, minHeight: tall ? t.cardTall : t.cardShort, maxHeight: .infinity, alignment: .topLeading)
-        .background(alignment: placement.anchor) {
-            CardShapeView(shape: shape, color: t.shape(accent))
-                .frame(width: placement.size.width, height: placement.size.height)
-                .rotationEffect(.degrees(placement.degrees))
-                .offset(placement.offset)
-                .offset(x: pointer.width * t.parallax, y: pointer.height * t.parallax)
-        }
+        .background(RadialGradient(colors: [t.cardLight, .clear], center: light, startRadius: 0, endRadius: max(size.width, size.height) * t.lightReach))
+        .background(LinearGradient(colors: [.clear, t.cardShade], startPoint: .top, endPoint: .bottom))
         .background(LinearGradient(colors: t.wash(accent), startPoint: .topLeading, endPoint: .bottomTrailing))
-        .clipShape(RoundedRectangle(cornerRadius: t.radiusCard))
+        .clipShape(outline)
         .glass()
+        // The rim: dark where the light is, lit in the signal colour on the far side.
+        .overlay(outline.strokeBorder(
+            LinearGradient(colors: [.clear, .clear, t.rim(accent)], startPoint: light,
+                           endPoint: UnitPoint(x: 1 - light.x, y: 1 - light.y)), lineWidth: t.rimWidth))
         .onContinuousHover(coordinateSpace: .local) { phase in
             guard motionOn, !reduceMotion else { return }
             withAnimation(.spring(response: t.liftResponse, dampingFraction: t.liftDamping)) {

@@ -25,7 +25,25 @@ These are mine; they are written down in [SPEC.md](SPEC.md) and [DESIGN.md](DESI
 ## Built with Claude
 I wrote the spec, the design brief and the mockup. Claude Code wrote the Swift in one session, following them, and logged every choice I had left open in [DECISIONS.md](DECISIONS.md). The step-by-step story is in [BUILD_NOTES.md](BUILD_NOTES.md).
 
-## Run it
+## Install it
+Open Terminal, paste this line and press Return. No Xcode and no account are needed.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/buendjo777/Life_Desk_App/main/install.sh | bash
+```
+
+It downloads the latest release, puts `Desk.app` in Applications and opens it. Needs macOS 14 or newer; works on Apple silicon and Intel.
+
+The first launch shows a Welcome screen with three ways in:
+- **Start my own desk:** type your name; Desk creates `~/Desk` with a few starter files (plain text you can edit in any editor).
+- **Open a folder I already have:** a Desk vault, or a clone of one from GitHub.
+- **Look around first:** the demo, with invented data. Nothing is saved.
+
+Make it yours in **Customise** (the sliders button at the top right, or ⌘K): appearance, colours, density, and which sections each tab shows. To back the vault up or use it on two Macs, make the folder a private GitHub repository; Desk pulls and pushes it with the `git` already on the Mac. A plain folder works too: then Desk never runs git.
+
+To publish a new version: `scripts/release.sh v1.2`. It builds `Desk.zip` and creates the GitHub release (the GitHub CLI must be signed in once with `gh auth login`).
+
+## Run it from source
 Needs macOS 14 or later and Xcode.
 
 ```bash

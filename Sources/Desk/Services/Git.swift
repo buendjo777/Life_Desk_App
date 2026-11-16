@@ -5,6 +5,13 @@ struct Git: Sendable {
     let root: URL
     static let timeout: TimeInterval = 90
 
+    /// A vault that is a plain folder is never touched with git, so a Mac without git is never asked to install it.
+    var isRepo: Bool { FileManager.default.fileExists(atPath: root.appendingPathComponent(".git").path) }
+    /// A repository with nowhere to push: Desk commits, and leaves pull and push alone.
+    var hasRemote: Bool {
+        !((try? run(["remote"])) ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     struct Failure: Error, LocalizedError {
         let message: String
         var errorDescription: String? { message }
@@ -71,9 +78,14 @@ actor VaultGit {
     /// If an earlier push failed, the clone is ahead of the remote and a fast-forward is impossible:
     /// then the unpushed Desk commits are rebased and pushed, as after a write.
     func pull() throws {
+        guard git.isRepo else { return }
+        // Checked before anything else: another tool's rebase is left alone even in a vault with no remote.
         try ensureFree()
+        guard git.hasRemote else { return }
         do {
-            try git.run(["pull", "--ff-only"])
+            // `--no-rebase`: with `pull.rebase` set, git refuses to pull while another tool has files staged,
+            // even when there is nothing to pull. A fast-forward never touches those files.
+            try git.run(["pull", "--ff-only", "--no-rebase"])
         } catch {
             let ahead = (try? git.run(["rev-list", "--count", "@{u}..HEAD"]))?.trimmingCharacters(in: .whitespacesAndNewlines)
             guard let ahead, let count = Int(ahead), count > 0 else { throw error }
@@ -101,6 +113,7 @@ actor VaultGit {
     /// After writes to Jose's files: commit each file that changed (one commit per file), then `pull --rebase`
     /// and `push` once.
     func commitAndSync(paths: [String]) throws {
+        guard git.isRepo else { return }
         try ensureFree()
         for path in paths {
             precondition(VaultWriter.isCommitted(path), "Desk never commits \(path)")
@@ -109,6 +122,6 @@ actor VaultGit {
                 try git.run(["commit", "-m", VaultWriter.commitMessage(for: path), "--", path])
             }
         }
-        try rebaseAndPush()
+        if git.hasRemote { try rebaseAndPush() }
     }
 }

@@ -11,22 +11,22 @@ struct HistoryStat: View {
         switch kind {
         case .thisYear:
             let year = d.earnings(inYear: d.currentYear)
-            StatCard(title: "This year", subtitle: d.currentYear, accent: .info, shape: .star) {
+            StatCard(title: "This year", subtitle: d.currentYear, accent: .info) {
                 Figure(d.money(year.amount), caption: Derived.plural(year.lessons, "lesson"))
             }
         case .lastYear:
             let year = d.earnings(inYear: d.previousYear)
-            StatCard(title: "Last year", subtitle: d.previousYear, accent: .info, shape: .star) {
+            StatCard(title: "Last year", subtitle: d.previousYear, accent: .info) {
                 Figure(d.money(year.amount), caption: Derived.plural(year.lessons, "lesson"))
             }
         case .allTime:
             let all = d.allTime
-            StatCard(title: "All time", accent: .good, shape: .star) {
+            StatCard(title: "All time", accent: .good) {
                 Figure(d.money(all.amount), caption: all.months.min().map { "Since \(d.monthName($0, pattern: "MMM yyyy"))" } ?? "No lessons yet")
             }
         case .best:
             let best = d.bestMonth
-            StatCard(title: "Best month", accent: .caution, shape: .star) {
+            StatCard(title: "Best month", accent: .caution) {
                 Figure(best.map { d.money($0.amount) } ?? "—", caption: best.map { d.monthName($0.key) } ?? "No lessons yet")
             }
         }

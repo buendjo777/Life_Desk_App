@@ -10,7 +10,7 @@ struct TutoringChapter: View {
         VStack(alignment: .leading, spacing: t.sp24) {
             ChapterHeader(chapter: .tutoring, headline: tutoring.headline).reveal(0)
             HStack(alignment: .top, spacing: t.sp16) {
-                StatCard(title: tutoring.rail, accent: .focus, shape: .ring, tall: true) {
+                StatCard(title: tutoring.rail, accent: .focus, tall: true) {
                     Spacer(minLength: 0)
                     HStack(alignment: .top, spacing: t.sp24) {
                         ForEach(tutoring.figures, id: \.self) { figure in

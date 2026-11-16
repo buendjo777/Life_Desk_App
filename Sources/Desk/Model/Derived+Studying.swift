@@ -211,6 +211,25 @@ extension Derived {
                 checks: share
             )
         }
+        let papers = paperTarget(study)
+        // Past its due day, a list comes first, in file order; today's papers follow it.
+        guard let late = overdueLists.first, let next = late.open.first else { return papers }
+        let group = late.groups.first { $0.items.contains(next) }?.title ?? late.title
+        return StudyTarget(
+            headline: "\(late.open.count) overdue",
+            detail: "Next: \(group). " + (papers.checks.isEmpty ? "Then the past papers." : "Then \(Self.plural(papers.checks.count, "paper")) today."),
+            checks: Array(late.open.prefix(Self.overdueShown)) + papers.checks
+        )
+    }
+
+    /// How many overdue items the target card shows at once.
+    static let overdueShown = 3
+
+    /// Lists past their due day with something left, the oldest first.
+    var overdueLists: [StudyList] { openLists.filter { (daysLeft($0) ?? 1) < 1 } }
+
+    /// The paper plan's target; before `plan_start`, the next open topics.
+    private func paperTarget(_ study: StudyFile) -> StudyTarget {
         let openPapers = study.papers.filter { !$0.done }
         let openTopics = (study.theory.filter { !$0.done }.map { "Theory · \($0.title)" })
         if let start = study.planStart, today < start {

@@ -8,7 +8,7 @@ struct StudyHero: View {
     var body: some View {
         let d = store.d
         StatCard(title: d.study?.exam ?? d.data.settings.exam?.title ?? "Exam", subtitle: d.examMode ? "Exam mode" : nil,
-                 accent: .caution, shape: .triangle, tall: true) {
+                 accent: .caution, tall: true) {
             HStack(alignment: .center, spacing: t.sp24) {
                 VStack(alignment: .leading, spacing: t.sp12) {
                     if let days = d.examDaysLeft {
@@ -238,7 +238,7 @@ struct PlanChartCard: View {
 
     var body: some View {
         let d = store.d
-        StatCard(title: "Past papers", subtitle: "Done against the plan", accent: .info, shape: .star, tall: true) {
+        StatCard(title: "Past papers", subtitle: "Done against the plan", accent: .info, tall: true) {
             if let chart = d.planChart {
                 HStack(alignment: .top, spacing: t.sp20) {
                     Figure(String(chart.done.last ?? 0), caption: "Done")

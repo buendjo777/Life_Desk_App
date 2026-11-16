@@ -49,7 +49,6 @@ struct Sidebar: View {
                 Circle().fill(store.isSnapshot ? color : .clear).frame(width: t.lightSize, height: t.lightSize)
             }
         }
-        .padding(.leading, t.sp6)
         .accessibilityHidden(true)
     }
 
@@ -82,10 +81,11 @@ private struct NavRow: View {
         Button {
             store.show(tab)
         } label: {
-            HStack(spacing: t.navGap) {
+            HStack(spacing: 0) {
+                // The icon sits in the middle of the slim rail, open or closed, so it never moves.
                 Image(systemName: tab.symbol)
                     .font(.system(size: t.symbol, weight: .medium))
-                    .frame(width: t.navIcon)
+                    .frame(width: t.navCell)
                 if open {
                     Text(verbatim: tab.title).style(selected ? \.bodyStrong : \.nav).lineLimit(1).minimumScaleFactor(t.tightScale)
                     Spacer(minLength: 0)
@@ -93,8 +93,7 @@ private struct NavRow: View {
                 }
             }
             .foregroundStyle(t.panelText.opacity(selected ? 1 : t.navIdleOpacity))
-            .padding(.leading, t.navGap)
-            .padding(.trailing, t.sp8)
+            .padding(.trailing, open ? t.sp8 : 0)
             .frame(height: t.navRow)
             .background(Color.white.opacity(selected ? t.navSelectedFill : 0), in: RoundedRectangle(cornerRadius: t.radiusNav))
             .overlay(alignment: .leading) {
@@ -137,7 +136,7 @@ private struct SyncBox: View {
         }
         .padding(.horizontal, t.sp12 + t.sp2)
         .padding(.vertical, t.sp12)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: open ? .leading : .center)
         .background(Color.white.opacity(t.panelBoxFill), in: RoundedRectangle(cornerRadius: t.radiusPanel - t.sp4))
     }
 }
