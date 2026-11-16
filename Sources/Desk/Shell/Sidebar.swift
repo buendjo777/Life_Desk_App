@@ -14,15 +14,15 @@ struct Sidebar: View {
         VStack(alignment: .leading, spacing: 0) {
             lights
             brand.opacity(open ? 1 : 0)
-            ForEach(TabGroup.allCases) { group in
+            // A group whose tabs are all switched off disappears with them.
+            ForEach(TabGroup.allCases.filter { group in group.tabs.contains { store.visibleTabs.contains($0) } }) { group in
                 Text(verbatim: group.rawValue)
                     .style(\.label, \.panelMuted)
                     .padding(.leading, t.sp12)
                     .padding(.top, t.sp20 + t.sp2)
                     .padding(.bottom, t.sp6)
                     .opacity(open ? 1 : 0)
-                // Health waits for its data (an activity export).
-                ForEach(group.tabs.filter { $0 != .health || store.d.hasHealthData }) { tab in
+                ForEach(group.tabs.filter { store.visibleTabs.contains($0) }) { tab in
                     NavRow(tab: tab, open: open)
                 }
             }

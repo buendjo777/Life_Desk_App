@@ -6,8 +6,18 @@ enum StarterVault {
     static let folderName = "starter-vault"
     /// Where a new desk goes. The home folder needs no macOS permission, unlike Documents.
     static let defaultPath = "~/Desk"
-    static let nameToken = "{{name}}"
     static let todayToken = "{{today}}"
+    static let examDateToken = "{{exam_date}}"
+    static let weekEndToken = "{{week_end}}"
+    static let studyFile = "study/my-exam.md"
+    static let studyFolder = "study"
+    static let projectsFolder = "projects"
+    /// The sample exam sits this many days ahead, and its first list is due in this many.
+    static let examDays = 30
+    static let weekDays = 6
+    /// Setup → "Fill it in with Claude": the work order Claude opens with. It names the folder and the guide
+    /// in it, and carries nothing about the person.
+    static let claudeSeed = "Help me set up my Desk vault, the folder ~/Desk on my Mac. Its CLAUDE.md lists the file formats (also at github.com/buendjo777/Life_Desk_App, starter-vault/CLAUDE.md). Ask me what I study, my projects and my deadlines, one question at a time, then give me each file to save."
 
     struct Failure: Error, LocalizedError {
         let message: String
@@ -32,7 +42,7 @@ enum StarterVault {
     }
 
     /// Copies the starter into `folder`, which must be missing or empty, and fills in the name and today's date.
-    static func create(at folder: URL, name: String, today: Date = Date(), from source: URL = url) throws {
+    static func create(at folder: URL, name: String, tabs: Set<Tab> = Tab.starter, today: Date = Date(), from source: URL = url) throws {
         let files = FileManager.default
         let existing = (try? files.contentsOfDirectory(atPath: folder.path))?.filter { $0 != ".DS_Store" } ?? []
         guard existing.isEmpty else {
@@ -49,11 +59,23 @@ enum StarterVault {
         day.calendar = Calendar(identifier: .gregorian)
         day.locale = Locale(identifier: "en_US_POSIX")
         day.dateFormat = "yyyy-MM-dd"
-        // The name goes into JSON, so it is escaped as JSON.
+        // Settings are written as JSON, so the name is escaped as JSON.
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let encoded = String(decoding: try JSONEncoder().encode(clean.isEmpty ? "there" : clean), as: UTF8.self)
-        try fill(folder.appendingPathComponent(VaultData.settingsFile), "\"\(nameToken)\"", encoded)
+        var settings: [String: Any] = ["name": clean.isEmpty ? "there" : clean, "currency": "EUR"]
+        if tabs.contains(.studying) { settings["exam"] = ["title": "My exam", "file": studyFile] }
+        try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
+            .write(to: folder.appendingPathComponent(VaultData.settingsFile))
         try fill(folder.appendingPathComponent(VaultData.tasksFile), todayToken, day.string(from: today))
+
+        // Only the tabs that were chosen get their sample files.
+        if tabs.contains(.studying) {
+            let study = folder.appendingPathComponent(studyFile)
+            try fill(study, examDateToken, day.string(from: today.addingTimeInterval(Double(examDays) * 86_400)))
+            try fill(study, weekEndToken, day.string(from: today.addingTimeInterval(Double(weekDays) * 86_400)))
+        } else {
+            try files.removeItem(at: folder.appendingPathComponent(studyFolder))
+        }
+        if !tabs.contains(.projects) { try files.removeItem(at: folder.appendingPathComponent(projectsFolder)) }
     }
 
     private static func fill(_ file: URL, _ token: String, _ value: String) throws {

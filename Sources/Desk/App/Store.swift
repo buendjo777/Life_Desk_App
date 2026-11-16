@@ -76,6 +76,8 @@ final class Store {
     var showCustomise = false
     /// First launch on a Mac with no vault: the Welcome screen.
     var showWelcome = false
+    /// Which of Welcome's three steps is on screen.
+    var welcomeStep = 0
 
     /// Demo "writes" live here and never reach the disk.
     @ObservationIgnored private var overlay: [String: String] = [:]
@@ -152,13 +154,17 @@ final class Store {
 
     /// Welcome → Start my own desk: a starter vault in `~/Desk` with the person's name. A folder that already
     /// holds a vault is opened instead. Returns what went wrong, if anything.
-    func startOwnDesk(name: String) -> String? {
+    func startOwnDesk(name: String, tabs: Set<Tab> = Tab.starter, calendar: Bool = true, askClaude: Bool = false) -> String? {
         let path = StarterVault.defaultPath
         let folder = URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)
         if !StarterVault.isVault(folder) {
-            do { try StarterVault.create(at: folder, name: name) } catch { return error.localizedDescription }
+            do { try StarterVault.create(at: folder, name: name, tabs: tabs) } catch { return error.localizedDescription }
         }
+        prefs.hiddenTabs = Set(Tab.optional.filter { !tabs.contains($0) }.map(\.rawValue))
+        prefs.wantsCalendar = calendar
         useVault(path)
+        tab = .today
+        if askClaude { Links.open(Links.claude(seed: StarterVault.claudeSeed)) }
         return nil
     }
 
@@ -232,6 +238,15 @@ final class Store {
     func open(_ item: DeskItem) {
         selection = item
         inspectorOpen = true
+    }
+
+    /// The sidebar's tabs: those switched on, and Health only once it has data.
+    var visibleTabs: [Tab] { Tab.sidebar.filter { prefs.shows($0) && ($0 != .health || d.hasHealthData) } }
+
+    /// Customise → Tabs. Switching off the tab on screen goes back to Today.
+    func setTab(_ tab: Tab, shown: Bool) {
+        prefs.setShown(shown, tab: tab)
+        if !shown, self.tab == tab { show(.today) }
     }
 
     func show(_ tab: Tab) {
@@ -622,7 +637,7 @@ final class Store {
 
     /// Live: asks for calendar access once, then loads events around today.
     func refreshCalendar() {
-        guard mode == .live, let calendar else { return }
+        guard mode == .live, prefs.wantsCalendar, let calendar else { return }
         Task { [weak self] in
             let granted = await calendar.requestAccess()
             guard let self, self.mode == .live else { return }

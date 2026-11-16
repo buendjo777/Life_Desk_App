@@ -180,3 +180,8 @@ It also noted that Internship apps shows four count cards (Open, Applied, Interv
 ## 16 Nov — Lit glass instead of shapes, overdue first
 - Decisions 121 and 122. The study file in the vault was rewritten to the catch-up order, 2 papers a day from 17 Nov, with four more sittings found in `13examenes.pdf`.
 - **Checked:** 98 tests (1 opt-in skipped); every tab rendered in light and dark.
+
+## 16 Nov — Setup in three steps
+- Decisions 123 and 124: tab choice in Setup and in Customise, a calendar switch, a Claude hand-off and `starter-vault/CLAUDE.md`.
+- **Checked:** 99 tests (1 opt-in skipped); the three steps and every tab rendered in light and dark.
+- **Not checked:** the setup clicked through in the live app (this Mac has a vault, so Welcome never shows), and what claude.ai does with the seeded request.

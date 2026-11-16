@@ -53,6 +53,27 @@ enum Tab: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    /// The tabs a person may switch off. Today always stays; Health appears with its data.
+    static let optional: [Tab] = [.studying, .projects, .internships, .uni, .tutoring, .history, .system]
+    /// What a new desk starts with, until the person chooses.
+    static let starter: Set<Tab> = [.studying, .projects]
+
+    /// One line for Setup and Customise: what the tab is for.
+    var blurb: String {
+        switch self {
+        case .today: "Your day at a glance"
+        case .studying: "An exam, a study plan, past papers"
+        case .projects: "Projects and their next step"
+        case .internships: "Job and internship applications"
+        case .uni: "University applications and contacts"
+        case .tutoring: "Students, lessons and payments"
+        case .history: "What tutoring earned, by month"
+        case .health: "Training sessions"
+        case .system: "Runs of a nightly Claude agent"
+        case .portfolio: "The showcase"
+        }
+    }
+
     /// The ⌘ number: 1 to 9 in the sidebar, 0 for Portfolio.
     var shortcut: Int { (Tab.sidebar.firstIndex(of: self) ?? -1) + 1 }
 }
