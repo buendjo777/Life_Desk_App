@@ -34,12 +34,14 @@ curl -fsSL https://raw.githubusercontent.com/buendjo777/Life_Desk_App/main/insta
 
 It downloads the latest release, puts `Desk.app` in Applications and opens it. Needs macOS 14 or newer; works on Apple silicon and Intel.
 
-The first launch shows a Welcome screen with three ways in:
-- **Start my own desk:** type your name; Desk creates `~/Desk` with a few starter files (plain text you can edit in any editor).
-- **Open a folder I already have:** a Desk vault, or a clone of one from GitHub.
-- **Look around first:** the demo, with invented data. Nothing is saved.
+The first launch is a three-step setup:
+1. **Your name**, then *Set up my own desk* (or open a folder you already have, or look around the demo).
+2. **Which tabs you want:** Studying, Projects, Internship apps, Uni apps, Tutoring, History, System. Only those appear, and only those get sample files.
+3. **Connections, both optional:** your Mac's calendar, and *Fill it in with Claude*, which opens claude.ai with a ready request so Claude asks about your studies, projects and deadlines and gives you the files.
 
-Make it yours in **Customise** (the sliders button at the top right, or ⌘K): appearance, colours, density, and which sections each tab shows. To back the vault up or use it on two Macs, make the folder a private GitHub repository; Desk pulls and pushes it with the `git` already on the Mac. A plain folder works too: then Desk never runs git.
+Desk then creates `~/Desk`, plain text you can edit in any editor. Its `CLAUDE.md` tells any AI assistant the file formats.
+
+Make it yours in **Customise** (the sliders button at the top right, or ⌘K): appearance, colours, density, which tabs exist and which sections each one shows. To back the vault up or use it on two Macs, make the folder a private GitHub repository; Desk pulls and pushes it with the `git` already on the Mac. A plain folder works too: then Desk never runs git.
 
 To publish a new version: `scripts/release.sh v1.2`. It builds `Desk.zip` and creates the GitHub release (the GitHub CLI must be signed in once with `gh auth login`).
 

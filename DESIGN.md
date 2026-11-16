@@ -77,7 +77,8 @@ SF Pro (the system font). The mockup uses Inter as a stand-in.
 ## Customise and Welcome
 - **Customise** is a drawer on the right edge, 372 pt wide, always a dark opaque panel like the sidebar. The page stays live behind it, so a change shows at once. Top: Look (appearance, the three colourways as rows with their colour dots, density, switches for the slim sidebar and motion). Below: the sections of the tab on screen, each with an eye and up/down buttons; a menu switches tab. Foot: Reset layout, and Vault and sync… (Settings). Esc or the cross closes it.
 - **Sidebar geometry.** The slim rail's inner width (52 pt) is the span of the three traffic lights. Lights, icons and the sync dot share one centre line, and an icon does not move when the sidebar opens.
-- **Welcome** covers the window on first launch where no vault exists: a glass card with the name field and three choices (start my own desk, open a folder, look around). Shown once.
+- **Welcome** covers the window on first launch where no vault exists: a glass card in three steps with a progress mark. 1: the name and three ways in (set up my own desk, open a folder, look around). 2: the optional tabs as a two-column grid of switches, each with one line on what it is for. 3: two optional connections (the Mac's calendar, a Claude hand-off). Shown once.
+- **Customise → Tabs** is the same grid without the descriptions. Today cannot be switched off.
 
 ## Motion and accessibility
 All motion is off with Reduce Motion, in Low Power Mode, in snapshots, and when Motion is switched off in Customise. The backdrop also stops while Desk is not the active app.

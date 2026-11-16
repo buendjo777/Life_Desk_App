@@ -23,6 +23,7 @@ struct CustomiseView: View {
             Scroller {
                 VStack(alignment: .leading, spacing: dark.sp20) {
                     look
+                    tabs
                     sections
                 }
                 .padding(.bottom, dark.sp12)
@@ -72,17 +73,26 @@ struct CustomiseView: View {
         }
     }
 
+    // MARK: Tabs
+
+    private var tabs: some View {
+        VStack(alignment: .leading, spacing: t.sp12) {
+            heading("Tabs")
+            TabPicker(isOn: { store.prefs.shows($0) }) { tab in store.setTab(tab, shown: !store.prefs.shows(tab)) }
+        }
+    }
+
     // MARK: Sections of the tab on screen
 
     private var sections: some View {
-        let tab = Tab.sidebar.contains(store.tab) ? store.tab : .today
+        let tab = store.visibleTabs.contains(store.tab) ? store.tab : .today
         let saved = store.prefs.layouts[tab.rawValue]
         let ordered = TabLayout.ordered(tab, prefs: saved)
         return VStack(alignment: .leading, spacing: t.sp12) {
             HStack {
                 heading("Sections on")
                 Menu {
-                    ForEach(Tab.sidebar) { other in
+                    ForEach(store.visibleTabs) { other in
                         Button(other.title) { store.show(other) }
                     }
                 } label: {

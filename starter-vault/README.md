@@ -11,7 +11,9 @@ save it, and Desk picks the change up on the next sync (⌘R).
 | `study/*.md` | Optional: a study plan with checklists, shown on Studying |
 | `uni/*.md`, `internships/board.json`, `tutoring/` | Optional: the other tabs stay empty until these exist |
 
-Tabs with nothing to show can be hidden section by section in Customise (⌘K).
+Tabs you do not use are switched off in Customise (⌘K → Tabs).
+
+`CLAUDE.md` describes these formats for an AI assistant: open this folder in Claude and ask it to set your desk up.
 
 To keep a backup and use it on two Macs, make this folder a private GitHub repository. Desk then pulls and
 pushes it for you with the `git` already set up on your Mac. It never stores a password or a token.

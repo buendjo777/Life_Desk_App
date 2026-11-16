@@ -38,10 +38,13 @@ enum Snapshots {
             for scheme in [ColorScheme.light, .dark] {
                 let store = Store(isSnapshot: true)
                 store.showWelcome = true
-                try render(RootView().environment(store), scheme: scheme,
-                           to: folder.appendingPathComponent("welcome-\(scheme == .dark ? "dark" : "light").png"))
+                for step in 0..<WelcomeView.steps {
+                    store.welcomeStep = step
+                    try render(RootView().environment(store), scheme: scheme,
+                               to: folder.appendingPathComponent("welcome-\(step + 1)-\(scheme == .dark ? "dark" : "light").png"))
+                }
             }
-            print("Rendered \(Tab.allCases.count * 2 + 8) snapshots to \(folder.path)")
+            print("Rendered \(Tab.allCases.count * 2 + 6 + WelcomeView.steps * 2) snapshots to \(folder.path)")
         } catch {
             FileHandle.standardError.write(Data("Snapshot failed: \(error.localizedDescription)\n".utf8))
             exit(1)

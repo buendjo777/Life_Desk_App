@@ -23,6 +23,27 @@ final class StarterVaultTests: XCTestCase {
         let derived = Derived(data: data, now: today)
         XCTAssertEqual(derived.projects(.active).count, 1)
         XCTAssertTrue(derived.greeting.contains("Ana"))
+        // Studying was chosen: its sample exam is a month away and its first list is due this week.
+        XCTAssertEqual(derived.examDaysLeft, StarterVault.examDays)
+        XCTAssertEqual(derived.openLists.first?.title, "This week")
+    }
+
+    @MainActor func testOnlyChosenTabsGetFilesAndASidebarRow() throws {
+        let folder = scratch()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try StarterVault.create(at: folder, name: "Ana", tabs: [])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent(StarterVault.studyFolder).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.appendingPathComponent(StarterVault.projectsFolder).path))
+        XCTAssertNil(VaultData.load(VaultReader(root: folder)).settings.exam)
+
+        let store = Store()
+        store.setTab(.tutoring, shown: false)
+        store.setTab(.today, shown: false)
+        XCTAssertFalse(store.visibleTabs.contains(.tutoring))
+        XCTAssertTrue(store.visibleTabs.contains(.today))
+        store.show(.projects)
+        store.setTab(.projects, shown: false)
+        XCTAssertEqual(store.tab, .today)
     }
 
     func testStarterNeverWritesOverFiles() throws {
