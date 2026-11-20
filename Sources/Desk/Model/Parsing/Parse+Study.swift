@@ -40,8 +40,22 @@ extension Parse {
             exam: fields["exam"] ?? "", date: day(fields["date"], cal),
             planPerDay: min(maxPlanPerDay, max(0, fields["plan_per_day"].flatMap(Int.init) ?? 0)), planStart: day(fields["plan_start"], cal),
             theory: group("Theory"), problems: group("Problems"), papers: papers,
-            lists: studyLists(lines, from: bodyStart, cal)
+            lists: studyLists(lines, from: bodyStart, cal),
+            counts: studyCounts(fields["counts"])
         )
+    }
+
+    /// More extra figures than the exam card has room for.
+    static let maxStudyCounts = 4
+
+    /// `Carnicero = Hoja, Vídeos = Sesión` → caption and title prefix pairs; malformed pairs are skipped.
+    static func studyCounts(_ field: String?) -> [StudyFile.Count] {
+        let pairs = (field ?? "").split(separator: ",").compactMap { pair -> StudyFile.Count? in
+            let sides = pair.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+            guard sides.count == 2, !sides[0].isEmpty, !sides[1].isEmpty else { return nil }
+            return StudyFile.Count(caption: sides[0], prefix: sides[1])
+        }
+        return Array(pairs.prefix(maxStudyCounts))
     }
 
     static let studySections: Set<String> = ["Theory", "Problems", "Past papers"]

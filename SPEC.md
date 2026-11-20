@@ -76,7 +76,7 @@ A JSON array of rows. The web Desk reads the same file.
 
 ### Jose's files
 - `TASKS.md`: Markdown checkboxes under `##` sections. Due date as `📅 YYYY-MM-DD` (Obsidian Tasks format).
-- The study file (path in `settings.exam.file`): front matter `exam, date, plan_per_day, plan_start`; sections `## Theory` and `## Problems` (one checkbox per topic) and `## Past papers` (`- [x] June 2025 — 2026-11-08 — 6.5/10`; unticked papers have no date or score).
+- The study file (path in `settings.exam.file`): front matter `exam, date, plan_per_day, plan_start` and optional `counts` (`Carnicero = Hoja, Vídeos = Sesión`: an extra figure on the exam card per pair, counting list items whose title starts with the prefix); sections `## Theory` and `## Problems` (one checkbox per topic) and `## Past papers` (`- [x] June 2025 — 2026-11-08 — 6.5/10`; unticked papers have no date or score).
 - `projects/<slug>.md`: front matter `title, status (active|waiting|frozen|idea), next, next_date?, doc?` (`doc` is a vault path, e.g. `Research/EMG project.md`). Body: sub-items as checkboxes. Never restates the doc's facts.
 - `uni/<slug>.md`: front matter `title, deadline_row` (a snapshot `deadline` id) and `comparison_heading` (a `###` heading in `Masters/Programme comparison.md`). Body: the checklist (portal, CV, statement, letters, transcript, fee, submitted).
 - `internships/board.json` (Jose's, edited from Desk): `{openings: [{id, order, company, title, location, start, duration, language, eligType (graduate|convenio), eligibility, fit, url, status, notes, added}], targets: [{id, name, kind, track, place, placeOrder, priority, status, url, why, notes}]}`. Status words: Not started, Researching, Applied, Interviewing, Offer, Rejected / closed.

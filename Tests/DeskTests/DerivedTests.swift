@@ -118,6 +118,10 @@ final class DerivedTests: XCTestCase {
         // Overall counts his own lists too: 3 + 2 + 3 + 2 done of 8 + 8 + 12 + 7.
         XCTAssertEqual(d.listsProgress.text, "2/7")
         XCTAssertEqual(d.studyProgress.text, "10/35")
+        // `counts: Sheets = Sheet, Lectures = Lecture` adds figures over the lists.
+        XCTAssertEqual(d.extraCounts.map(\.caption), ["Sheets", "Lectures"])
+        XCTAssertEqual(d.extraCounts.map(\.progress.text), ["1/4", "1/3"])
+        XCTAssertEqual(Parse.studyCounts("A = x, broken, = y, B=z").map(\.caption), ["A", "B"])
         // The plan: 3 a day from 16 Nov, capped at the 12 papers.
         XCTAssertEqual(d.plannedPapers(by: demoNow), 0)
         XCTAssertEqual(at("2026-11-17T09:00:00+01:00").plannedPapers(by: Parse.day("2026-11-17", cal)!), 6)

@@ -26,6 +26,9 @@ struct StudyHero: View {
                         Figure(d.theoryProgress.text, caption: "Theory")
                         Figure(d.problemsProgress.text, caption: "Problems")
                         Figure(d.papersProgress.text, caption: "Papers")
+                        ForEach(d.extraCounts, id: \.caption) { count in
+                            Figure(count.progress.text, caption: count.caption)
+                        }
                     }
                 }
                 Spacer(minLength: 0)

@@ -28,6 +28,14 @@ extension Derived {
     /// Every checkbox in Jose's own lists (overdue work, videos, exercise sheets), done or not.
     var listsProgress: Progress { Self.progress((study?.lists ?? []).flatMap(\.items)) }
 
+    /// The extra figures from `counts:`, each over every list item whose title starts with its prefix.
+    var extraCounts: [(caption: String, progress: Progress)] {
+        let items = (study?.lists ?? []).flatMap(\.items)
+        return (study?.counts ?? []).map { count in
+            (count.caption, Self.progress(items.filter { $0.title.hasPrefix(count.prefix) }))
+        }
+    }
+
     /// Everything in the study file together: theory, problems, past papers and his own lists.
     var studyProgress: Progress {
         let parts = [theoryProgress, problemsProgress, papersProgress, listsProgress]

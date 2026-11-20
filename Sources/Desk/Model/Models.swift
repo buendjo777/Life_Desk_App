@@ -161,6 +161,14 @@ struct StudyFile {
     var papers: [Paper]
     /// Jose's own lists: every other `##` section with checkboxes, e.g. "This weekend — due 2026-11-15".
     var lists: [StudyList] = []
+    /// Extra figures on the exam card, from `counts: Carnicero = Hoja, Vídeos = Sesión`:
+    /// each counts the list items whose title starts with its prefix.
+    var counts: [Count] = []
+
+    struct Count: Hashable {
+        var caption: String
+        var prefix: String
+    }
 
     struct Paper: Identifiable, Hashable {
         var title: String

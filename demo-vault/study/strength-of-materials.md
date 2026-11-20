@@ -3,6 +3,7 @@ exam: Strength of Materials — retake
 date: 2026-11-27T10:30:00+01:00
 plan_per_day: 3
 plan_start: 2026-11-16
+counts: Sheets = Sheet, Lectures = Lecture
 ---
 
 ## This week — due 2026-11-15
