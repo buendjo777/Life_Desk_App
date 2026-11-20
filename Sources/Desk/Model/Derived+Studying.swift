@@ -25,10 +25,13 @@ extension Derived {
         Progress(done: study?.papers.filter(\.done).count ?? 0, total: study?.papers.count ?? 0)
     }
 
-    /// Theory, problems and past papers together.
+    /// Every checkbox in Jose's own lists (overdue work, videos, exercise sheets), done or not.
+    var listsProgress: Progress { Self.progress((study?.lists ?? []).flatMap(\.items)) }
+
+    /// Everything in the study file together: theory, problems, past papers and his own lists.
     var studyProgress: Progress {
-        Progress(done: theoryProgress.done + problemsProgress.done + papersProgress.done,
-                 total: theoryProgress.total + problemsProgress.total + papersProgress.total)
+        let parts = [theoryProgress, problemsProgress, papersProgress, listsProgress]
+        return Progress(done: parts.map(\.done).reduce(0, +), total: parts.map(\.total).reduce(0, +))
     }
 
     /// Papers the plan expects done by the end of `day`: `plan_per_day` from `plan_start`, capped at the total.

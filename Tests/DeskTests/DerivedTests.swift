@@ -115,6 +115,9 @@ final class DerivedTests: XCTestCase {
         XCTAssertEqual(d.problemsProgress.text, "2/8")
         XCTAssertEqual(d.papersProgress.text, "3/12")
         XCTAssertEqual(d.studyProgress.percent, "29%")
+        // Overall counts his own lists too: 3 + 2 + 3 + 2 done of 8 + 8 + 12 + 7.
+        XCTAssertEqual(d.listsProgress.text, "2/7")
+        XCTAssertEqual(d.studyProgress.text, "10/35")
         // The plan: 3 a day from 16 Nov, capped at the 12 papers.
         XCTAssertEqual(d.plannedPapers(by: demoNow), 0)
         XCTAssertEqual(at("2026-11-17T09:00:00+01:00").plannedPapers(by: Parse.day("2026-11-17", cal)!), 6)
