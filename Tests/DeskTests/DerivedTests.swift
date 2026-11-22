@@ -139,7 +139,14 @@ final class DerivedTests: XCTestCase {
         // A list left unfinished past its due day leads the card, and the day's papers follow it.
         let late = at("2026-11-17T09:00:00+01:00").studyTarget
         XCTAssertEqual(late?.headline, "5 overdue")
-        XCTAssertEqual(late?.checks.count, 6)
+        XCTAssertEqual(late?.checks.count, 5)
+        // Each paper has a day: 3 a day from Mon 16 in file order. On Wed 18 Tuesday's three are late.
+        let wednesday = plainAt("2026-11-18T09:00:00+01:00")
+        XCTAssertEqual(wednesday.latePapers.map(\.title), ["January 2024", "June 2023", "January 2023"])
+        XCTAssertEqual(wednesday.todaysPapers.count, 3)
+        XCTAssertEqual(wednesday.studyTarget?.headline, "3 papers late")
+        XCTAssertEqual(wednesday.studyTarget?.detail, "Then today's 3.")
+        XCTAssertEqual(wednesday.study?.papers.last.flatMap(wednesday.plannedDay).map { cal.isoDay($0) }, "2026-11-19")
         var noPapers = data
         noPapers.study?.papers = []
         noPapers.study?.lists = []

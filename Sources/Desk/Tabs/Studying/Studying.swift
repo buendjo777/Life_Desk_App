@@ -322,7 +322,7 @@ struct PaperList: View {
                 ForEach(papers.prefix(shown)) { paper in
                     let item = DeskItem.check(path: path, line: paper.line)
                     ListRow(leading: .tick(done: paper.done, toggle: { store.toggleCheck(path: path, line: paper.line) }),
-                            title: paper.title, subtitle: paper.date.map { "Done \(d.cal.weekdayDay($0))" } ?? "Not done yet",
+                            title: paper.title, subtitle: subtitle(paper, d),
                             selected: store.selection == item, action: { store.selection = item }) { selected in
                         if let score = paper.score, let outOf = paper.outOf {
                             Chip(text: "\(Parse.number(score))/\(Parse.number(outOf))",
@@ -336,5 +336,13 @@ struct PaperList: View {
             }
         }
         .frame(maxHeight: .infinity, alignment: .top)
+    }
+
+    /// "Done Tue 17", "Planned Mon 16 · late", "Planned today", "Planned Wed 25".
+    private func subtitle(_ paper: StudyFile.Paper, _ d: Derived) -> String {
+        if paper.done { return paper.date.map { "Done \(d.cal.weekdayDay($0))" } ?? "Done" }
+        guard let day = d.plannedDay(paper) else { return "Not done yet" }
+        if d.cal.startOfDay(day) == d.today { return "Planned today" }
+        return "Planned \(d.cal.weekdayDay(day))" + (day < d.today ? " · late" : "")
     }
 }

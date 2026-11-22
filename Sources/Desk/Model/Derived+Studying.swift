@@ -61,6 +61,23 @@ extension Derived {
         return min(study.papers.count, days * study.planPerDay)
     }
 
+    /// The day the plan gives a paper: `plan_per_day` papers a day from `plan_start`, in file order.
+    func plannedDay(_ paper: StudyFile.Paper) -> Date? {
+        guard let study, let start = study.planStart, study.planPerDay > 0,
+              let index = study.papers.firstIndex(where: { $0.line == paper.line }) else { return nil }
+        return cal.startOfDay(cal.add(days: index / study.planPerDay, to: start))
+    }
+
+    /// Open papers whose planned day has passed.
+    var latePapers: [StudyFile.Paper] {
+        (study?.papers ?? []).filter { paper in !paper.done && plannedDay(paper).map { $0 < today } == true }
+    }
+
+    /// Open papers planned for today.
+    var todaysPapers: [StudyFile.Paper] {
+        (study?.papers ?? []).filter { paper in !paper.done && plannedDay(paper).map { cal.startOfDay($0) == today } == true }
+    }
+
     /// Papers done by the end of `day`. A ticked paper with no date counts from today.
     func donePapers(by day: Date) -> Int {
         (study?.papers ?? []).filter { $0.done && cal.startOfDay($0.date ?? today) <= cal.startOfDay(day) }.count
@@ -239,10 +256,13 @@ extension Derived {
         // Past its due day, a list comes first, in file order; today's papers follow it.
         guard let late = overdueLists.first, let next = late.open.first else { return papers }
         let group = late.groups.first { $0.items.contains(next) }?.title ?? late.title
+        let latePaperCount = papersInList ? 0 : latePapers.count
+        let then = papersInList ? "" : latePaperCount > 0 ? " Then \(Self.plural(latePaperCount, "late paper")) and today's \(todaysPapers.count)."
+            : papers.checks.isEmpty ? " Then the past papers." : " Then \(Self.plural(papers.checks.count, "paper")) today."
         return StudyTarget(
-            headline: "\(late.open.count) overdue",
-            detail: "Next: \(group)." + (papersInList ? "" : papers.checks.isEmpty ? " Then the past papers." : " Then \(Self.plural(papers.checks.count, "paper")) today."),
-            checks: Array(late.open.prefix(Self.overdueShown)) + papers.checks
+            headline: "\(late.open.count + latePaperCount) overdue",
+            detail: "Next: \(group)." + then,
+            checks: Array(late.open.prefix(Self.overdueShown)) + papers.checks.prefix(2)
         )
     }
 
@@ -263,8 +283,8 @@ extension Derived {
                 items: Array(openTopics.prefix(3))
             )
         }
-        let gap = plannedPapers(by: today) - papersProgress.done
-        let count = min(openPapers.count, max(gap, 0))
+        let late = latePapers
+        let due = late + todaysPapers
         if study.papers.isEmpty {
             return StudyTarget(headline: "No past papers listed", detail: "Add them under ## Past papers in the study file.",
                                items: Array(openTopics.prefix(3)))
@@ -272,13 +292,15 @@ extension Derived {
         if openPapers.isEmpty {
             return StudyTarget(headline: "All papers done", detail: "Review the weakest topics.", items: Array(openTopics.prefix(3)))
         }
-        // Today's papers are ticked straight from the card (and from Today); on plan, the next one is a hint.
-        let next = openPapers.prefix(max(count, 1))
+        // Late papers first, then today's, ticked straight from the card (and from Today); on plan, the next one is a hint.
+        if due.isEmpty {
+            return StudyTarget(headline: "On plan", detail: "\(study.planPerDay) a day keeps the plan.",
+                               items: openPapers.prefix(1).map { "Next: \($0.title)" })
+        }
         return StudyTarget(
-            headline: count == 0 ? "On plan" : "\(Self.plural(count, "paper")) today",
-            detail: gap > study.planPerDay ? "Behind the plan by \(gap - study.planPerDay)." : "\(study.planPerDay) a day keeps the plan.",
-            items: count == 0 ? next.map { "Next: \($0.title)" } : [],
-            checks: count == 0 ? [] : next.map { Check(title: $0.title, done: $0.done, line: $0.line) }
+            headline: late.isEmpty ? "\(Self.plural(due.count, "paper")) today" : "\(Self.plural(late.count, "paper")) late",
+            detail: late.isEmpty ? "\(study.planPerDay) a day keeps the plan." : "Then today's \(todaysPapers.count).",
+            checks: due.prefix(Self.overdueShown).map { Check(title: $0.title, done: $0.done, line: $0.line) }
         )
     }
 
