@@ -98,4 +98,37 @@ final class OverdueStudyTests: XCTestCase {
         XCTAssertTrue(target.detail.hasPrefix("Next: 1 · Problems. Then 2 papers today."))
         XCTAssertEqual(target.checks.map(\.title), ["First", "Second", "Third", "Paper A", "Paper B"])
     }
+    /// Papers kept as a `### Past papers` group in an overdue list: still papers, worked in the list's order, counted once.
+    func testPapersInAnOverdueList() throws {
+        let cal = DeskCalendar(timeZone: "Europe/Madrid")
+        let text = """
+        ---
+        exam: Test
+        date: 2026-11-27T10:30:00+01:00
+        plan_per_day: 2
+        plan_start: 2026-11-16
+        ---
+        ## Overdue — due 2026-11-15
+        ### 1 · Sheets
+        - [x] Sheet 1
+        - [ ] Sheet 2
+        ### 2 · Past papers
+        - [x] Paper A — 2026-11-17 — 7/10
+        - [ ] Paper B
+        - [ ] Paper C
+        ## Past papers
+        """
+        var data = VaultData.load(VaultReader(root: DemoVault.url))
+        data.study = Parse.study(text, cal)
+        let derived = Derived(data: data, now: try XCTUnwrap(Parse.stamp("2026-11-22T09:00:00+01:00", cal)).date)
+        XCTAssertEqual(derived.study?.papers.map(\.title), ["Paper A", "Paper B", "Paper C"])
+        XCTAssertEqual(derived.study?.papers.first?.score, 7)
+        XCTAssertEqual(derived.papersProgress.text, "1/3")
+        XCTAssertEqual(derived.listsProgress.text, "1/2")
+        XCTAssertEqual(derived.studyProgress.text, "2/5")
+        let target = try XCTUnwrap(derived.studyTarget)
+        XCTAssertEqual(target.headline, "3 overdue")
+        XCTAssertEqual(target.detail, "Next: 1 · Sheets.")
+        XCTAssertEqual(target.checks.map(\.title), ["Sheet 2", "Paper B", "Paper C"])
+    }
 }

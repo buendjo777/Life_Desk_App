@@ -25,7 +25,10 @@ extension Parse {
         let all = checks(lines, from: bodyStart)
         guard !fields.isEmpty || !all.isEmpty else { return nil }
         func group(_ name: String) -> [Check] { all.filter { $0.section == name }.map(\.check) }
-        let papers = group("Past papers").map { check -> StudyFile.Paper in
+        let lists = studyLists(lines, from: bodyStart, cal)
+        // Papers may also sit in a list, as a `### Past papers` group (numbered or not), so they show as overdue there.
+        let listed = lists.flatMap(\.groups).filter(isPapersGroup).flatMap(\.items)
+        let papers = (group("Past papers") + listed).map { check -> StudyFile.Paper in
             // "June 2025 — 2026-11-08 — 6.5/10"; an unticked paper is the title alone.
             let parts = check.title.components(separatedBy: " — ").map { $0.trimmingCharacters(in: .whitespaces) }
             let score = parts.dropFirst().compactMap { $0.wholeMatch(of: /([\d.]+)\s*\/\s*([\d.]+)/) }.first
@@ -40,7 +43,7 @@ extension Parse {
             exam: fields["exam"] ?? "", date: day(fields["date"], cal),
             planPerDay: min(maxPlanPerDay, max(0, fields["plan_per_day"].flatMap(Int.init) ?? 0)), planStart: day(fields["plan_start"], cal),
             theory: group("Theory"), problems: group("Problems"), papers: papers,
-            lists: studyLists(lines, from: bodyStart, cal),
+            lists: lists,
             counts: studyCounts(fields["counts"])
         )
     }
@@ -59,6 +62,11 @@ extension Parse {
     }
 
     static let studySections: Set<String> = ["Theory", "Problems", "Past papers"]
+
+    /// "Past papers", "6 · Past papers": a list group that holds the paper plan.
+    static func isPapersGroup(_ group: StudyList.Group) -> Bool {
+        group.title.wholeMatch(of: /(?:\d+\s*·\s*)?Past papers/) != nil
+    }
 
     /// The study file's own lists: each other `##` section with checkboxes, its `###` headings as groups.
     /// "This weekend — due 2026-11-15" gives the title "This weekend" and the due day.

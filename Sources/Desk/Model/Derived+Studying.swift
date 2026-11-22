@@ -26,11 +26,23 @@ extension Derived {
     }
 
     /// Every checkbox in Jose's own lists (overdue work, videos, exercise sheets), done or not.
-    var listsProgress: Progress { Self.progress((study?.lists ?? []).flatMap(\.items)) }
+    var listsProgress: Progress { Self.progress(listItems) }
+
+    /// List items other than papers kept in a list, which count as papers.
+    private var listItems: [Check] {
+        let paperLines = Set((study?.papers ?? []).map(\.line))
+        return (study?.lists ?? []).flatMap(\.items).filter { !paperLines.contains($0.line) }
+    }
+
+    /// The papers sit in a list (`### Past papers`), so that list's order is the plan.
+    var papersInList: Bool {
+        let paperLines = Set((study?.papers ?? []).map(\.line))
+        return (study?.lists ?? []).flatMap(\.items).contains { paperLines.contains($0.line) }
+    }
 
     /// The extra figures from `counts:`, each over every list item whose title starts with its prefix.
     var extraCounts: [(caption: String, progress: Progress)] {
-        let items = (study?.lists ?? []).flatMap(\.items)
+        let items = listItems
         return (study?.counts ?? []).map { count in
             (count.caption, Self.progress(items.filter { $0.title.hasPrefix(count.prefix) }))
         }
@@ -222,13 +234,14 @@ extension Derived {
                 checks: share
             )
         }
-        let papers = paperTarget(study)
+        // Papers kept in a list are worked through in that list's order, not a separate daily share.
+        let papers = papersInList ? StudyTarget(headline: "", detail: "") : paperTarget(study)
         // Past its due day, a list comes first, in file order; today's papers follow it.
         guard let late = overdueLists.first, let next = late.open.first else { return papers }
         let group = late.groups.first { $0.items.contains(next) }?.title ?? late.title
         return StudyTarget(
             headline: "\(late.open.count) overdue",
-            detail: "Next: \(group). " + (papers.checks.isEmpty ? "Then the past papers." : "Then \(Self.plural(papers.checks.count, "paper")) today."),
+            detail: "Next: \(group)." + (papersInList ? "" : papers.checks.isEmpty ? " Then the past papers." : " Then \(Self.plural(papers.checks.count, "paper")) today."),
             checks: Array(late.open.prefix(Self.overdueShown)) + papers.checks
         )
     }
