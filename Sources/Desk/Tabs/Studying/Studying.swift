@@ -111,6 +111,74 @@ struct StudyTargetCard: View {
     }
 }
 
+/// `## Review`: concepts to practise through the papers, in two columns. Ticked when solid; not in the meter.
+struct StudyReview: View {
+    @Environment(Store.self) private var store
+    @Environment(\.theme) private var t
+
+    var body: some View {
+        let d = store.d
+        if let path = d.data.settings.exam?.file, let review = d.study?.review, !review.isEmpty {
+            let half = (review.count + 1) / 2
+            VStack(alignment: .leading, spacing: t.sp8) {
+                SectionHeader(title: "Review", subtitle: "\(d.reviewProgress.text) solid · practise in the papers · not in the meter")
+                SurfaceCard {
+                    HStack(alignment: .top, spacing: t.sp16) {
+                        column(review.prefix(half), path)
+                        column(review.dropFirst(half), path)
+                    }
+                }
+            }
+        }
+    }
+
+    private func column(_ concepts: ArraySlice<StudyFile.Concept>, _ path: String) -> some View {
+        VStack(alignment: .leading, spacing: t.sp4) {
+            ForEach(concepts) { concept in
+                ConceptRow(path: path, concept: concept)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// One review concept: its tick, and its notes behind a chevron.
+private struct ConceptRow: View {
+    @Environment(\.theme) private var t
+    @State private var open = false
+    let path: String
+    let concept: StudyFile.Concept
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: t.sp2) {
+            HStack(spacing: t.sp4) {
+                CheckLine(path: path, check: concept.check)
+                if !concept.notes.isEmpty {
+                    Button { open.toggle() } label: {
+                        Image(systemName: open ? "chevron.up" : "chevron.down")
+                            .font(.system(size: t.symbolSmall, weight: .bold))
+                            .foregroundStyle(t.inkMuted)
+                            .frame(width: t.symbol, height: t.symbol)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help(open ? "Hide notes" : "Show notes")
+                    .accessibilityLabel(Text(verbatim: (open ? "Hide notes for " : "Show notes for ") + concept.check.title))
+                }
+            }
+            if open {
+                VStack(alignment: .leading, spacing: t.sp2) {
+                    ForEach(Array(concept.notes.enumerated()), id: \.offset) { _, note in
+                        Text(verbatim: note).style(\.small, \.inkMuted).fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.leading, t.symbol + t.sp8 + t.sp6)
+                .padding(.bottom, t.sp4)
+            }
+        }
+    }
+}
+
 /// The study file's own lists ("This weekend — due 2026-11-15"): a card per `###` group, two side by side.
 struct StudyLists: View {
     @Environment(Store.self) private var store

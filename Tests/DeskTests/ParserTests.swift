@@ -272,6 +272,12 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(study.theory.map(\.title), ["T1 Statics"])
         XCTAssertEqual(Derived.minutes(study.lists[0].items[0]), 105)
         XCTAssertEqual(Parse.study("## Week — due 15 Nov 2026\n- [ ] One", cal)?.lists.first?.due, Parse.day("2026-11-15", cal))
+        // `## Review`: concepts with their indented bullets as notes; not a list.
+        let review = try XCTUnwrap(Parse.study("## Review\n- [ ] Mohr\n  - Plot γ/2\n  · Practise: sheet 2\nnot a note\n- [x] Units\n## Theory\n  - not a note", cal))
+        XCTAssertTrue(review.lists.isEmpty)
+        XCTAssertEqual(review.review.map(\.check.title), ["Mohr", "Units"])
+        XCTAssertEqual(review.review.map(\.notes), [["Plot γ/2", "Practise: sheet 2"], []])
+        XCTAssertEqual(review.review.map(\.check.done), [false, true])
         // Checkboxes, by hand: indented, starred, or not a box at all.
         XCTAssertEqual(Parse.checkbox("  * [X] Done")?.done, true)
         XCTAssertEqual(Parse.checkbox("- [ ] Spaced  ")?.title, "Spaced")

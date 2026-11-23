@@ -40,6 +40,9 @@ extension Derived {
         return (study?.lists ?? []).flatMap(\.items).contains { paperLines.contains($0.line) }
     }
 
+    /// Review concepts ticked as solid. Kept out of `studyProgress` on purpose.
+    var reviewProgress: Progress { Self.progress((study?.review ?? []).map(\.check)) }
+
     /// The extra figures from `counts:`, each over every list item whose title starts with its prefix.
     var extraCounts: [(caption: String, progress: Progress)] {
         let items = listItems

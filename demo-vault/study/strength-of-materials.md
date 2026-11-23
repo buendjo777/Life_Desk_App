@@ -52,3 +52,13 @@ counts: Sheets = Sheet, Lectures = Lecture
 - [ ] January 2021
 - [ ] June 2020
 - [ ] January 2020
+
+## Review
+- [x] Units before every exam
+  - kN·m to N·mm is ×10⁶; cm⁴ to mm⁴ is ×10⁴
+- [ ] Mohr's circle for strain
+  - Plot γ/2, not γ
+  - Practise: Sheet 2 and the strain gauge questions
+- [ ] Buckling inside a frame
+  - Check the weak axis first
+  - Practise: the buckling questions in June 2023

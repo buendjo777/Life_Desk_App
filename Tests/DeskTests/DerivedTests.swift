@@ -118,6 +118,8 @@ final class DerivedTests: XCTestCase {
         // Overall counts his own lists too: 3 + 2 + 3 + 2 done of 8 + 8 + 12 + 7.
         XCTAssertEqual(d.listsProgress.text, "2/7")
         XCTAssertEqual(d.studyProgress.text, "10/35")
+        // `## Review` concepts are tracked apart and stay out of the meter.
+        XCTAssertEqual(d.reviewProgress.text, "1/3")
         // `counts: Sheets = Sheet, Lectures = Lecture` adds figures over the lists.
         XCTAssertEqual(d.extraCounts.map(\.caption), ["Sheets", "Lectures"])
         XCTAssertEqual(d.extraCounts.map(\.progress.text), ["1/4", "1/3"])

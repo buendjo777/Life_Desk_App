@@ -16,6 +16,8 @@ file are in `demo-vault/` in the repository.
   with that word). Sections `## Theory`, `## Problems` and `## Past papers` hold checklists. Any other
   `## Title — due 2027-01-31` section is a to-do list with a due day; `### Group` splits it; `· 60 min` at the
   end of a line is a duration. A finished paper reads `- [x] June 2025 — 2027-01-12 — 7/10`.
+  `## Review` holds concepts to practise through the papers: a checkbox each, indented bullets as notes; it
+  shows first and never counts towards progress.
 - `uni/<name>.md`: front matter `title`, then a checklist of application steps.
 - `internships/board.json`, `contacts/board.json`, `tutoring/`: copy the shape from `demo-vault/`.
 

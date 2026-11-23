@@ -49,6 +49,7 @@ enum TabLayout {
             DeskSection("today.timeline", "Timeline", slot: .rail) { DayTimeline() },
         ]
         case .studying: [
+            DeskSection("study.review", "Review") { StudyReview() },
             DeskSection("study.hero", "Exam countdown", width: 500) { StudyHero() },
             DeskSection("study.target", "Today's target", width: 288) { StudyTargetCard() },
             DeskSection("study.lists", "Lists") { StudyLists() },

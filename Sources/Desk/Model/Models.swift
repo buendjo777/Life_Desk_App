@@ -164,10 +164,19 @@ struct StudyFile {
     /// Extra figures on the exam card, from `counts: Carnicero = Hoja, Vídeos = Sesión`:
     /// each counts the list items whose title starts with its prefix.
     var counts: [Count] = []
+    /// `## Review`: concepts to practise through the papers, ticked once they feel solid. Not part of any progress.
+    var review: [Concept] = []
 
     struct Count: Hashable {
         var caption: String
         var prefix: String
+    }
+
+    struct Concept: Identifiable, Hashable {
+        var check: Check
+        /// The indented bullets under it: what to remember, where to practise.
+        var notes: [String]
+        var id: Int { check.line }
     }
 
     struct Paper: Identifiable, Hashable {

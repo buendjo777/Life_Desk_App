@@ -44,8 +44,35 @@ extension Parse {
             planPerDay: min(maxPlanPerDay, max(0, fields["plan_per_day"].flatMap(Int.init) ?? 0)), planStart: day(fields["plan_start"], cal),
             theory: group("Theory"), problems: group("Problems"), papers: papers,
             lists: lists,
-            counts: studyCounts(fields["counts"])
+            counts: studyCounts(fields["counts"]),
+            review: studyReview(lines, from: bodyStart)
         )
+    }
+
+    /// `## Review`: each checkbox is a concept, and the indented bullets under it are its notes.
+    static func studyReview(_ lines: [String], from start: Int) -> [StudyFile.Concept] {
+        var concepts: [StudyFile.Concept] = []
+        var inReview = false
+        for index in lines.indices.dropFirst(start) {
+            let line = lines[index]
+            if let title = heading(line) {
+                inReview = title == "Review"
+            } else if inReview, let box = checkbox(line) {
+                concepts.append(StudyFile.Concept(check: Check(title: box.title, done: box.done, line: index), notes: []))
+            } else if inReview, !concepts.isEmpty, let note = reviewNote(line) {
+                concepts[concepts.count - 1].notes.append(note)
+            }
+        }
+        return concepts
+    }
+
+    /// "  - Practise: sheet 2" → "Practise: sheet 2". Only an indented bullet is a note.
+    private static func reviewNote(_ line: String) -> String? {
+        guard line.first?.isWhitespace == true else { return nil }
+        let rest = line.drop(while: \.isWhitespace)
+        guard let bullet = rest.first, "-*·".contains(bullet) else { return nil }
+        let text = rest.dropFirst().trimmingCharacters(in: .whitespaces)
+        return text.isEmpty ? nil : text
     }
 
     /// More extra figures than the exam card has room for.
@@ -61,7 +88,7 @@ extension Parse {
         return Array(pairs.prefix(maxStudyCounts))
     }
 
-    static let studySections: Set<String> = ["Theory", "Problems", "Past papers"]
+    static let studySections: Set<String> = ["Theory", "Problems", "Past papers", "Review"]
 
     /// "Past papers", "6 · Past papers": a list group that holds the paper plan.
     static func isPapersGroup(_ group: StudyList.Group) -> Bool {
